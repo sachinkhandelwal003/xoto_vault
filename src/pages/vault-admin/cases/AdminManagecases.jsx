@@ -6,18 +6,8 @@ import {
   Button, Typography, Spin, message, Modal, Input, Tag, Alert, Progress,
 } from 'antd';
 import {
-  UserOutlined, BankOutlined, FileTextOutlined,
-  CalendarOutlined, EyeOutlined, HomeOutlined,
-  DollarCircleOutlined, CheckCircleOutlined,
-  CloseCircleOutlined, ClockCircleOutlined, RocketOutlined,
-  SendOutlined, TeamOutlined, EditOutlined,
-  HistoryOutlined, FileDoneOutlined,
-  LoadingOutlined, ArrowRightOutlined, SyncOutlined,
-  WarningOutlined, UserAddOutlined, SwapOutlined,
-  ApartmentOutlined, UserSwitchOutlined, TrophyOutlined,
-  DollarOutlined, FundOutlined, PlusOutlined, GiftOutlined,
-  ReloadOutlined, SearchOutlined, PercentageOutlined,
-  RiseOutlined, FallOutlined, WalletOutlined, InfoCircleOutlined,
+  FileTextOutlined, CalendarOutlined, EyeOutlined,
+  ReloadOutlined, SearchOutlined,
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
@@ -25,7 +15,6 @@ import relativeTime from 'dayjs/plugin/relativeTime';
 dayjs.extend(relativeTime);
 
 const { Text } = Typography;
-const { TextArea } = Input;
 
 const PRIMARY       = '#5C039B';
 const GRAD          = 'linear-gradient(135deg,#5C039B 0%,#03A4F4 100%)';
@@ -122,14 +111,6 @@ const AdminManagecases = () => {
   const [activeStatus, setActiveStatus] = useState('all');
   const [search,       setSearch]      = useState('');
 
-  /* Preview Modal state — unchanged from original */
-  const [previewModalVisible, setPreviewModalVisible] = useState(false);
-  const [selectedCase,        setSelectedCase]        = useState(null);
-  const [previewLoading,      setPreviewLoading]      = useState(false);
-  const [commissionPreview,   setCommissionPreview]   = useState(null);
-  const [previewForm,         setPreviewForm]         = useState({
-    bankCommissionRate: '', actualBankCommission: '',
-  });
 
   /* ── Fetch Cases ── */
   const fetchCases = useCallback(async () => {
@@ -153,38 +134,6 @@ const AdminManagecases = () => {
 
   useEffect(() => { fetchCases(); }, [fetchCases]);
 
-  /* ── fetchCommissionPreview — UNCHANGED ── */
-  const fetchCommissionPreview = async () => {
-    if (!selectedCase) return;
-    setPreviewLoading(true);
-    try {
-      let payload = {};
-      if (previewForm.actualBankCommission) {
-        payload.customBankCommission = parseFloat(previewForm.actualBankCommission);
-      } else if (previewForm.bankCommissionRate) {
-        payload.customBankRate = parseFloat(previewForm.bankCommissionRate);
-      }
-      const response = await apiService.post(`/vault/commissions/admin/preview/${selectedCase._id}`, payload);
-      if (response?.success && response?.data) {
-        setCommissionPreview(response.data);
-      } else {
-        message.error(response?.message || 'Failed to preview commission');
-      }
-    } catch (err) {
-      console.error('Preview error:', err);
-      message.error(err.response?.data?.message || 'Error previewing commission');
-    } finally {
-      setPreviewLoading(false);
-    }
-  };
-
-  /* ── openPreviewModal — UNCHANGED ── */
-  const openPreviewModal = (caseItem) => {
-    setSelectedCase(caseItem);
-    setCommissionPreview(null);
-    setPreviewForm({ bankCommissionRate: '', actualBankCommission: '' });
-    setPreviewModalVisible(true);
-  };
 
   const handleSearchChange = (e) => {
     setSearch(e.target.value);
@@ -269,33 +218,17 @@ const AdminManagecases = () => {
           </div>
 
           {/* Row 5: actions */}
-          <div style={{ display: 'flex', gap: 8 }}>
-            <button
-              onClick={() => navigate(`/dashboard/vault-admin/case/view/${item._id}`)}
-              style={{
-                flex: 1, padding: '9px 0', borderRadius: 10, border: 'none',
-                background: GRAD, color: '#fff', cursor: 'pointer',
-                fontSize: 12, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
-                boxShadow: '0 3px 10px rgba(92,3,155,0.25)',
-              }}
-            >
-              <EyeOutlined /> View Full Case
-            </button>
-            {isDisbursed && (
-              <button
-                onClick={() => openPreviewModal(item)}
-                style={{
-                  padding: '9px 14px', borderRadius: 10, border: 'none',
-                  background: `linear-gradient(135deg,${GREEN},#10b981)`, color: '#fff',
-                  cursor: 'pointer', fontSize: 12, fontWeight: 700,
-                  display: 'flex', alignItems: 'center', gap: 5,
-                  boxShadow: '0 3px 10px rgba(5,150,105,0.3)',
-                }}
-              >
-                <DollarOutlined /> Commission
-              </button>
-            )}
-          </div>
+          <button
+            onClick={() => navigate(`/dashboard/vault-admin/case/view/${item._id}`)}
+            style={{
+              width: '100%', padding: '9px 0', borderRadius: 10, border: 'none',
+              background: GRAD, color: '#fff', cursor: 'pointer',
+              fontSize: 12, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
+              boxShadow: '0 3px 10px rgba(92,3,155,0.25)',
+            }}
+          >
+            <EyeOutlined /> View Full Case
+          </button>
         </div>
       </div>
     );
@@ -346,203 +279,6 @@ const AdminManagecases = () => {
     </div>
   );
 
-  /* ── renderPreviewModal — UNCHANGED from original ── */
-  const renderPreviewModal = () => (
-    <Modal
-      title={
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <EyeOutlined style={{ color: GREEN, fontSize: 24 }} />
-          <span style={{ fontSize: 18, fontWeight: 600 }}>Commission Preview</span>
-          <Tag color="success">Disbursed Case</Tag>
-        </div>
-      }
-      open={previewModalVisible}
-      onCancel={() => { setPreviewModalVisible(false); setSelectedCase(null); setCommissionPreview(null); }}
-      width={700}
-      footer={[
-        <Button key="close" type="primary" onClick={() => { setPreviewModalVisible(false); setSelectedCase(null); setCommissionPreview(null); }} style={{ background: PRIMARY }}>
-          Close
-        </Button>,
-      ]}
-    >
-      {selectedCase && (
-        <div>
-          {/* Case Summary */}
-          <div style={{ background: '#f5f0ff', padding: 16, borderRadius: 12, marginBottom: 20 }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-              <div>
-                <Text type="secondary" style={{ fontSize: 12 }}>Case Reference</Text>
-                <div><Text strong>{selectedCase.caseReference}</Text></div>
-              </div>
-              <div>
-                <Text type="secondary" style={{ fontSize: 12 }}>Client Name</Text>
-                <div><Text strong>{selectedCase.clientInfo?.fullName}</Text></div>
-              </div>
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginTop: 12 }}>
-              <div>
-                <Text type="secondary" style={{ fontSize: 12 }}>Disbursed Amount</Text>
-                <div><Text strong style={{ color: GREEN, fontSize: 16 }}>{formatCurrency(selectedCase.loanInfo?.disbursedAmount)}</Text></div>
-              </div>
-              <div>
-                <Text type="secondary" style={{ fontSize: 12 }}>Lead Source</Text>
-                <div><Tag color="green" icon={<CheckCircleOutlined />}>Has Lead</Tag></div>
-              </div>
-            </div>
-          </div>
-
-          {/* Bank Commission Input */}
-          <div style={{ marginBottom: 20 }}>
-            <Text strong>Enter Bank Commission Information to Preview</Text>
-            <div style={{ marginTop: 12 }}>
-              <div style={{ marginBottom: 12 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-                  <span style={{ minWidth: 180 }}>Bank Commission Rate:</span>
-                  <Input
-                    placeholder="Rate (%)"
-                    value={previewForm.bankCommissionRate}
-                    onChange={(e) => setPreviewForm({ ...previewForm, bankCommissionRate: e.target.value, actualBankCommission: '' })}
-                    suffix="%"
-                    style={{ width: 150 }}
-                    prefix={<PercentageOutlined />}
-                  />
-                </div>
-              </div>
-              <div style={{ textAlign: 'center', margin: '8px 0' }}>
-                <Text type="secondary">OR</Text>
-              </div>
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-                  <span style={{ minWidth: 180 }}>Actual Bank Commission Amount (AED):</span>
-                  <Input
-                    placeholder="Amount (AED)"
-                    value={previewForm.actualBankCommission}
-                    onChange={(e) => setPreviewForm({ ...previewForm, actualBankCommission: e.target.value, bankCommissionRate: '' })}
-                    prefix="AED"
-                    style={{ width: 200 }}
-                  />
-                </div>
-              </div>
-              <div style={{ marginTop: 16 }}>
-                <Button
-                  type="primary"
-                  onClick={fetchCommissionPreview}
-                  loading={previewLoading}
-                  icon={<EyeOutlined />}
-                  style={{ background: GREEN, width: '100%' }}
-                >
-                  Calculate Preview
-                </Button>
-              </div>
-            </div>
-          </div>
-
-          {commissionPreview && (
-            <div style={{ background: SUCCESS_LIGHT, padding: 16, borderRadius: 12, border: `1px solid ${GREEN}`, marginTop: 16 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-                <CheckCircleOutlined style={{ color: GREEN }} />
-                <Text strong style={{ color: GREEN, fontSize: 14 }}>Commission Calculation Result</Text>
-              </div>
-
-              {commissionPreview.note && (
-                <Alert message="Lead Source Info" description={commissionPreview.note} type="info" showIcon style={{ marginBottom: 16, borderRadius: 8 }} />
-              )}
-
-              {/* Bank Commission Info */}
-              <div style={{ background: '#fff', borderRadius: 12, padding: 12, marginBottom: 12 }}>
-                <Text strong style={{ display: 'block', marginBottom: 8 }}>Bank Commission Details</Text>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <BankOutlined style={{ color: PRIMARY }} />
-                    <div>
-                      <Text type="secondary" style={{ fontSize: 11 }}>Rate</Text>
-                      <div><Text strong>{commissionPreview.bankCommission?.ratePercentage}</Text></div>
-                    </div>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <DollarOutlined style={{ color: GREEN }} />
-                    <div>
-                      <Text type="secondary" style={{ fontSize: 11 }}>Xoto Receives</Text>
-                      <div><Text strong style={{ color: GREEN }}>{formatCurrency(commissionPreview.bankCommission?.calculatedAmount)}</Text></div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Recipient Info */}
-              <div style={{ background: '#fff', borderRadius: 12, padding: 12, marginBottom: 12 }}>
-                <Text strong style={{ display: 'block', marginBottom: 8 }}>Recipient Details</Text>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <UserOutlined style={{ color: PRIMARY }} />
-                    <div>
-                      <Text type="secondary" style={{ fontSize: 11 }}>Recipient</Text>
-                      <div><Text strong>{commissionPreview.recipient?.name}</Text></div>
-                    </div>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <PercentageOutlined style={{ color: WARNING_COLOR }} />
-                    <div>
-                      <Text type="secondary" style={{ fontSize: 11 }}>Percentage</Text>
-                      <div><Text strong>{commissionPreview.recipient?.percentage}%</Text></div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Commission Amount */}
-              <div style={{ background: '#fff', borderRadius: 12, padding: 16, textAlign: 'center', marginBottom: 12 }}>
-                <Text type="secondary">Commission Amount</Text>
-                <div style={{ fontSize: 32, fontWeight: 700, color: GREEN }}>
-                  {formatCurrency(commissionPreview.recipient?.commissionAmount)}
-                </div>
-                <Text type="secondary" style={{ fontSize: 12 }}>{commissionPreview.recipient?.formula}</Text>
-              </div>
-
-              {/* Xoto Profit */}
-              <div style={{ background: '#fff', borderRadius: 12, padding: 12 }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-                  <div style={{ textAlign: 'center' }}>
-                    <Text type="secondary" style={{ fontSize: 11 }}>Gross Commission</Text>
-                    <div><Text strong>{formatCurrency(commissionPreview.xoto?.grossCommission)}</Text></div>
-                  </div>
-                  <div style={{ textAlign: 'center' }}>
-                    <Text type="secondary" style={{ fontSize: 11 }}>Xoto Net Profit</Text>
-                    <div><Text strong style={{ color: GREEN }}>{formatCurrency(commissionPreview.xoto?.netProfit)}</Text></div>
-                    <Tag color={commissionPreview.xoto?.profitMargin === '100%' ? 'green' : 'blue'} style={{ marginTop: 4 }}>
-                      Margin: {commissionPreview.xoto?.profitMargin}
-                    </Tag>
-                  </div>
-                </div>
-              </div>
-
-              <div style={{ marginTop: 16, textAlign: 'center' }}>
-                <Text type="secondary" style={{ fontSize: 11 }}>
-                  <InfoCircleOutlined /> This is a preview only. No commission has been created.
-                </Text>
-              </div>
-            </div>
-          )}
-
-          {!commissionPreview && !previewLoading && (
-            <div style={{ textAlign: 'center', padding: 40, background: '#f8fafc', borderRadius: 12 }}>
-              <EyeOutlined style={{ fontSize: 48, color: '#9ca3af' }} />
-              <div style={{ marginTop: 12 }}>
-                <Text type="secondary">Enter bank commission details and click "Calculate Preview"</Text>
-              </div>
-            </div>
-          )}
-
-          {previewLoading && (
-            <div style={{ textAlign: 'center', padding: 40 }}>
-              <Spin size="large" />
-              <div style={{ marginTop: 12 }}>Calculating commission preview…</div>
-            </div>
-          )}
-        </div>
-      )}
-    </Modal>
-  );
 
   /* ── Render ── */
   return (
@@ -669,8 +405,6 @@ const AdminManagecases = () => {
         )}
       </div>
 
-      {/* Commission preview modal — UNCHANGED */}
-      {renderPreviewModal()}
     </div>
   );
 };

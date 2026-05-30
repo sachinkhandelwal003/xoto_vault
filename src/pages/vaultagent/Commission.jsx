@@ -32,37 +32,44 @@ const STATUS_STYLE = {
 
 const Commission = () => {
   const { user, token } = useSelector((s) => s.auth);
-  const [agentType, setAgentType] = useState(null);
 
-  useEffect(() => {
-    if (!token) return;
-    apiService.get("/profile/get-profile-data")
-      .then(res => setAgentType(res?.data?.agentType ?? null))
-      .catch(() => {});
-  }, [token]);
-
-  const agentTypeLabel = agentType === 'FreelanceAgent' ? 'Referral Partner' : 'Affiliated Agent';
-
-  const [loading, setLoading] = useState(true);
+  const [loading,    setLoading]    = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [stats, setStats] = useState(null);
-  const [data, setData] = useState([]);
+  const [stats,      setStats]      = useState(null);
+  const [data,       setData]       = useState([]);
+  const [isAffiliated, setIsAffiliated] = useState(false);
+  const [partnerCompany, setPartnerCompany] = useState(null);
+  const [apiNote, setApiNote] = useState(null);
   const [pagination, setPagination] = useState({ current: 1, pageSize: 10, total: 0 });
 
-  const [detailVisible, setDetailVisible] = useState(false);
+  const [detailVisible,      setDetailVisible]      = useState(false);
   const [selectedCommission, setSelectedCommission] = useState(null);
+
+  const getPartnerName = (partner) => {
+    if (!partner) return "your partner company";
+    if (typeof partner === "string") return partner;
+    if (typeof partner === "object") {
+      return partner.name || partner.companyName || partner.displayName || "your partner company";
+    }
+    return "your partner company";
+  };
+
+  const agentTypeLabel = user?.agentType === "PartnerAffiliatedAgent" ? "Affiliated Agent" : "Referral Partner";
 
   const fetchCommissions = useCallback(async (page = 1, isRefresh = false) => {
     isRefresh ? setRefreshing(true) : setLoading(true);
     try {
       const res = await apiService.get(`/vault/commissions/my?page=${page}&limit=${pagination.pageSize}`);
       if (res.success) {
+        setIsAffiliated(res.isAffiliated || false);
+        setPartnerCompany(res.partnerCompany || null);
+        setApiNote(res.note || null);
         setStats(res.summary);
-        setData(res.data);
+        setData(res.data || []);
         setPagination(prev => ({
           ...prev,
           current: page,
-          total: res.total || res.summary?.totalCount || res.data.length,
+          total: res.total || res.summary?.totalCount || res.summary?.leadsGenerated || (res.data || []).length,
         }));
       }
     } catch (err) {
@@ -83,10 +90,34 @@ const Commission = () => {
   };
 
   const kpiCards = [
-    { label: "Total Earned", value: `AED ${stats?.totalEarned?.toLocaleString() || 0}`, icon: Wallet, color: GN, bg: GNL },
-    { label: "Pending Payout", value: `AED ${stats?.pending?.toLocaleString() || 0}`, icon: Clock, color: AM, bg: AML },
-    { label: "Confirmed", value: stats?.confirmedCount || 0, icon: CheckCircle, color: BL, bg: BLL },
-    { label: "Total Cases", value: stats?.totalCount || 0, icon: Briefcase, color: P, bg: PL },
+    { 
+      label: isAffiliated ? "Generated for Partner" : "Total Earned", 
+      value: `AED ${stats?.totalEarned?.toLocaleString() || 0}`, 
+      icon: Wallet, 
+      color: GN, 
+      bg: GNL 
+    },
+    { 
+      label: isAffiliated ? "Pending Generated" : "Pending Payout", 
+      value: `AED ${stats?.pending?.toLocaleString() || 0}`, 
+      icon: Clock, 
+      color: AM, 
+      bg: AML 
+    },
+    { 
+      label: "Confirmed Cases", 
+      value: stats?.confirmedCount || 0, 
+      icon: CheckCircle, 
+      color: BL, 
+      bg: BLL 
+    },
+    { 
+      label: "Total Lead Cases", 
+      value: stats?.totalCount || 0, 
+      icon: Briefcase, 
+      color: P, 
+      bg: PL 
+    },
   ];
 
   const columns = [
@@ -112,7 +143,7 @@ const Commission = () => {
     },
     {
       key: "formattedCommissionAmount",
-      title: "Earned",
+      title: isAffiliated ? "Generated" : "Earned",
       render: (val) => <span className="font-black text-emerald-600 text-xs">{val}</span>,
     },
     {
@@ -188,6 +219,26 @@ const Commission = () => {
           </Button>
         </div>
       </motion.div>
+
+      {/* ── AFFILIATION ALERT ─────────────────────────────────────────── */}
+      {isAffiliated && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-purple-50/60 backdrop-blur-md border border-purple-100/80 rounded-[20px] p-6 mb-8 flex items-start gap-4 shadow-sm"
+        >
+          <div className="w-10 h-10 rounded-xl bg-purple-100/80 flex items-center justify-center flex-shrink-0 text-purple-600">
+            <Info size={20} />
+          </div>
+          <div>
+            <h4 className="font-bold text-purple-900 mb-1 text-sm">Partner-Affiliated Agent Account</h4>
+            <p className="text-purple-700/90 text-xs m-0 leading-relaxed font-medium">
+              As an affiliated agent, the commissions listed below are generated by your referred leads and paid directly to your partner company <strong>{getPartnerName(partnerCompany)}</strong>.
+              Your payouts and any internal commission split agreements are managed directly by your partner owner.
+            </p>
+          </div>
+        </motion.div>
+      )}
 
       {/* ── KPI CARDS ──────────────────────────────────────────────────── */}
       <Row gutter={[20, 20]} className="mb-8">
@@ -288,7 +339,9 @@ const Commission = () => {
                 <div className="bg-emerald-50 p-4 rounded-xl border border-emerald-100">
                   <div className="text-[10px] font-bold text-emerald-700 uppercase mb-2">Calculation Method</div>
                   <div className="font-bold text-emerald-800 italic text-xs mb-3">{selectedCommission.calculationFormula}</div>
-                  <div className="text-[10px] font-bold text-emerald-700 uppercase mb-1">Net Payout</div>
+                  <div className="text-[10px] font-bold text-emerald-700 uppercase mb-1">
+                    {isAffiliated ? "Commission Paid to Partner" : "Net Payout"}
+                  </div>
                   <div className="text-2xl font-black text-emerald-600">{selectedCommission.formattedCommissionAmount}</div>
                 </div>
               </Col>

@@ -151,7 +151,7 @@ const AdvisorViewCases = () => {
   const fetchCases = useCallback(async (showToast = false) => {
     setLoading(true);
     try {
-      const params = { page, limit: pageSize, status: 'Draft' };
+      const params = { page, limit: pageSize };
       if (search) params.search = search;
       const res = await apiService.get('/vault/cases', params);
       if (res?.success) {

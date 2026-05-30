@@ -50,28 +50,43 @@ const roleSlugMap = {
 };
 
 // Partner-specific statuses (No SLA/Advisor statuses)
+// Partner / Agent view — simplified statuses (PRD 4.3 Referral Partner view)
 const PARTNER_STATUS_CFG = {
-  New: { color: "blue", bg: "#EFF6FF", text: "#1D4ED8", icon: <FileTextOutlined /> },
-  Contacted: { color: "orange", bg: "#FFF7ED", text: "#C2410C", icon: <PhoneOutlined /> },
-  Qualified: { color: "geekblue", bg: "#EEF2FF", text: "#4338CA", icon: <CheckCircleOutlined /> },
-  "Collecting Documents": { color: "green", bg: "#F0FDF4", text: "#166534", icon: <FileTextOutlined /> },
-  "Documents Complete": { color: "cyan", bg: "#ECFEFF", text: "#0E7490", icon: <CheckCircleOutlined /> },
-  "Application Opened": { color: "volcano", bg: "#FFF5F3", text: "#C2410C", icon: <FileTextOutlined /> },
-  "Not Proceeding": { color: "red", bg: "#FEF2F2", text: "#B91C1C", icon: <CloseOutlined /> },
-  Disbursed: { color: "success", bg: "#ECFDF5", text: "#065F46", icon: <DollarOutlined /> },
+  "New":                  { color: "blue",     bg: "#EFF6FF", text: "#1D4ED8", icon: <FileTextOutlined /> },
+  "Contacted":            { color: "orange",   bg: "#FFF7ED", text: "#C2410C", icon: <PhoneOutlined /> },
+  "Qualified":            { color: "geekblue", bg: "#EEF2FF", text: "#4338CA", icon: <CheckCircleOutlined /> },
+  "Collecting Documents": { color: "green",    bg: "#F0FDF4", text: "#166534", icon: <FileTextOutlined /> },
+  "Documents Complete":   { color: "cyan",     bg: "#ECFEFF", text: "#0E7490", icon: <CheckCircleOutlined /> },
+  "Application Opened":   { color: "volcano",  bg: "#FFF5F3", text: "#C2410C", icon: <FileTextOutlined /> },
+  "Bank Application":     { color: "purple",   bg: "#EDE9FE", text: "#5B21B6", icon: <FileTextOutlined /> },
+  "Pre-Approved":         { color: "green",    bg: "#DCFCE7", text: "#166534", icon: <CheckCircleOutlined /> },
+  "Valuation":            { color: "orange",   bg: "#FEF3C7", text: "#92400E", icon: <FileTextOutlined /> },
+  "FOL Processed":        { color: "indigo",   bg: "#E0E7FF", text: "#3730A3", icon: <FileTextOutlined /> },
+  "FOL Issued":           { color: "indigo",   bg: "#E0E7FF", text: "#3730A3", icon: <FileTextOutlined /> },
+  "FOL Signed":           { color: "purple",   bg: "#F3E8FF", text: "#6B21A5", icon: <CheckCircleOutlined /> },
+  "Disbursed":            { color: "success",  bg: "#ECFDF5", text: "#065F46", icon: <DollarOutlined /> },
+  "Not Proceeding":       { color: "default",  bg: "#F3F4F6", text: "#6B7280", icon: <CloseOutlined /> },
+  "Lost":                 { color: "red",      bg: "#FEF2F2", text: "#B91C1C", icon: <CloseOutlined /> },
 };
 
-// Admin/Advisor statuses (Full workflow)
+// Admin/Advisor — full workflow statuses (PRD 6.1)
 const ADMIN_STATUS_CFG = {
-  New: { color: "blue", bg: "#EFF6FF", text: "#1D4ED8", icon: <FileTextOutlined /> },
-  Assigned: { color: "purple", bg: "#F5F0FF", text: "#6D28D9", icon: <UserOutlined /> },
-  Contacted: { color: "orange", bg: "#FFF7ED", text: "#C2410C", icon: <PhoneOutlined /> },
-  Qualified: { color: "geekblue", bg: "#EEF2FF", text: "#4338CA", icon: <CheckCircleOutlined /> },
-  "Collecting Documents": { color: "green", bg: "#F0FDF4", text: "#166534", icon: <FileTextOutlined /> },
-  "Documents Complete": { color: "cyan", bg: "#ECFEFF", text: "#0E7490", icon: <CheckCircleOutlined /> },
-  "Application Opened": { color: "volcano", bg: "#FFF5F3", text: "#C2410C", icon: <FileTextOutlined /> },
-  "Not Proceeding": { color: "red", bg: "#FEF2F2", text: "#B91C1C", icon: <CloseOutlined /> },
-  Disbursed: { color: "success", bg: "#ECFDF5", text: "#065F46", icon: <DollarOutlined /> },
+  "New":                  { color: "blue",     bg: "#EFF6FF", text: "#1D4ED8", icon: <FileTextOutlined /> },
+  "Assigned":             { color: "purple",   bg: "#F5F0FF", text: "#6D28D9", icon: <UserOutlined /> },
+  "Contacted":            { color: "orange",   bg: "#FFF7ED", text: "#C2410C", icon: <PhoneOutlined /> },
+  "Qualified":            { color: "geekblue", bg: "#EEF2FF", text: "#4338CA", icon: <CheckCircleOutlined /> },
+  "Collecting Documents": { color: "green",    bg: "#F0FDF4", text: "#166534", icon: <FileTextOutlined /> },
+  "Documents Complete":   { color: "cyan",     bg: "#ECFEFF", text: "#0E7490", icon: <CheckCircleOutlined /> },
+  "Application Opened":   { color: "volcano",  bg: "#FFF5F3", text: "#C2410C", icon: <FileTextOutlined /> },
+  "Bank Application":     { color: "purple",   bg: "#EDE9FE", text: "#5B21B6", icon: <FileTextOutlined /> },
+  "Pre-Approved":         { color: "green",    bg: "#DCFCE7", text: "#166534", icon: <CheckCircleOutlined /> },
+  "Valuation":            { color: "orange",   bg: "#FEF3C7", text: "#92400E", icon: <FileTextOutlined /> },
+  "FOL Processed":        { color: "indigo",   bg: "#E0E7FF", text: "#3730A3", icon: <FileTextOutlined /> },
+  "FOL Issued":           { color: "indigo",   bg: "#E0E7FF", text: "#3730A3", icon: <FileTextOutlined /> },
+  "FOL Signed":           { color: "purple",   bg: "#F3E8FF", text: "#6B21A5", icon: <CheckCircleOutlined /> },
+  "Disbursed":            { color: "success",  bg: "#ECFDF5", text: "#065F46", icon: <DollarOutlined /> },
+  "Not Proceeding":       { color: "default",  bg: "#F3F4F6", text: "#6B7280", icon: <CloseOutlined /> },
+  "Lost":                 { color: "red",      bg: "#FEF2F2", text: "#B91C1C", icon: <CloseOutlined /> },
 };
 
 const SOURCE_CFG = {

@@ -121,22 +121,9 @@ export default function VaultAgentlist() {
 
   const handleVerifyConfirm = async () => {
     const id = getAgentId(verifyModal);
-    const row = verifyModal;
     setActionLoading(id + "_verify");
-    
     try {
-      if (row.agentType === "FreelanceAgent") {
-        if (!row.isActive) {
-          await apiService.post(`/vault/agent/admin/verify/${id}`, { action: "approve_login" });
-        } else {
-          await apiService.post(`/vault/agent/admin/verify/${id}`, { action: "verify_profile" });
-        }
-      }
-
-      if (row.agentType === "PartnerAffiliatedAgent") {
-        await apiService.post(`/vault/agent/admin/verify/${id}`, { status: "verified" });
-      }
-
+      await apiService.post(`/vault/agent/admin/verify/${id}`, { action: "verify" });
       showToast("Agent verified successfully ðŸ›¡ï¸");
       fetchAgents(currentPage, itemsPerPage, activeTab);
       setVerifyModal(null);
@@ -212,7 +199,7 @@ export default function VaultAgentlist() {
               {getAgentName(row)}
             </p>
             <p style={{ fontSize: 11, color: "#6B7280", marginTop: 2 }}>
-              {row.agentType ? row.agentType.replace(/([A-Z])/g, ' $1').trim() : "Agent"} Â· {row.nationality || "Unknown Nat."}
+              {row.agentType === "ReferralPartner" ? "Referral Partner" : row.agentType === "PartnerAffiliatedAgent" ? "Partner Affiliated" : "Agent"} · {row.nationality || "—"}
             </p>
           </div>
         </div>
@@ -236,7 +223,25 @@ export default function VaultAgentlist() {
         </div>
       ),
     },
-   
+    {
+      key: "completion",
+      title: "Profile",
+      render: (_, row) => {
+        const pct = row.profileCompletionPercentage ?? 0;
+        const color = pct === 100 ? "#059669" : pct >= 60 ? "#D97706" : "#DC2626";
+        return (
+          <div style={{ minWidth: 90 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 3 }}>
+              <span style={{ fontSize: 11, color: "#6B7280" }}>Complete</span>
+              <span style={{ fontSize: 11, fontWeight: 700, color }}>{pct}%</span>
+            </div>
+            <div style={{ height: 5, background: "#F3F4F6", borderRadius: 3 }}>
+              <div style={{ width: `${pct}%`, height: "100%", background: color, borderRadius: 3, transition: "width .3s" }} />
+            </div>
+          </div>
+        );
+      },
+    },
     {
       key: "status",
       title: "Status",

@@ -151,6 +151,9 @@ const VaultAgentAnalytics     = lazy(() => import('./pages/vaultagent/Analytics'
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 const VaultAgentProfile       = lazy(() => import('./pages/vault-admin/profile/VaultAgentProfile'));
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
+const VaultAgentUpdateProfile = lazy(() => import('./pages/vaultagent/VaultAgentUpdateProfile'));
 // Other role dashboards
 const VaultOpsDashboard       = lazy(() => import('./pages/dashboard/VaultOpsDashboard'));
 const VaultAdvisorDashboard   = lazy(() => import('./pages/dashboard/VaultAdvisorDashboard'));
@@ -325,6 +328,7 @@ const App: React.FC = () => (
         element={<PrivateRoute allowedRoleCodes={['22']}><DashboardLayout /></PrivateRoute>}>
         <Route index element={<VaultAgentDashboard />} />
         <Route path="profile" element={<VaultAgentProfile />} />
+        <Route path="update-profile" element={<VaultAgentUpdateProfile />} />
 
         {/* ── Leads ── */}
         <Route path="leads/create" element={<VaultCreateLeads />} />

@@ -22,11 +22,14 @@ export default function PartnerAffiliatedAgents() {
   const [activeTab, setActiveTab]       = useState("all");
   const [toast, setToast]               = useState(null);
 
-  const [actionLoading, setActionLoading] = useState(null);
-  const [suspendModal, setSuspendModal]   = useState(null);
-  const [deleteModal, setDeleteModal]     = useState(null);
-  const [activateModal, setActivateModal] = useState(null);
-  const [suspendReason, setSuspendReason] = useState("");
+  const [actionLoading, setActionLoading]   = useState(null);
+  const [suspendModal, setSuspendModal]     = useState(null);
+  const [deleteModal, setDeleteModal]       = useState(null);
+  const [activateModal, setActivateModal]   = useState(null);
+  const [approveModal, setApproveModal]     = useState(null);
+  const [rejectModal, setRejectModal]       = useState(null);
+  const [rejectReason, setRejectReason]     = useState("");
+  const [suspendReason, setSuspendReason]   = useState("");
 
   const fetchAgents = async (page = 1, limit = 10, tab = activeTab) => {
     setLoading(true);
@@ -34,6 +37,7 @@ export default function PartnerAffiliatedAgents() {
       let url = `/vault/agent/partner/agents?page=${page}&limit=${limit}`;
       if (tab === "active")   url += "&isActive=true";
       if (tab === "inactive") url += "&isActive=false";
+      if (tab === "pending")  url += "&affiliationStatus=pending";
 
       const response = await apiService.get(url);
       const data = response?.data || response;
@@ -79,6 +83,38 @@ export default function PartnerAffiliatedAgents() {
   const showToast = (msg, type = "success") => {
     setToast({ message: msg, type });
     setTimeout(() => setToast(null), 3000);
+  };
+
+  const handleApproveAffiliation = async () => {
+    const id = getAgentId(approveModal);
+    setActionLoading(id + "_approve");
+    try {
+      await apiService.post(`/vault/agent/partner/verify/${id}`, { action: "approve" });
+      showToast("Affiliation approved successfully");
+      fetchAgents(currentPage, itemsPerPage, activeTab);
+      setApproveModal(null);
+    } catch (err) {
+      alert(err?.response?.data?.message || "Approval failed");
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleRejectAffiliation = async () => {
+    if (!rejectReason.trim()) { alert("Please provide a rejection reason."); return; }
+    const id = getAgentId(rejectModal);
+    setActionLoading(id + "_reject");
+    try {
+      await apiService.post(`/vault/agent/partner/verify/${id}`, { action: "reject", rejectionReason: rejectReason.trim() });
+      showToast("Affiliation rejected");
+      fetchAgents(currentPage, itemsPerPage, activeTab);
+      setRejectModal(null);
+      setRejectReason("");
+    } catch (err) {
+      alert(err?.response?.data?.message || "Rejection failed");
+    } finally {
+      setActionLoading(null);
+    }
   };
 
   const handleActivateConfirm = async () => {
@@ -196,15 +232,37 @@ export default function PartnerAffiliatedAgents() {
       key: "affiliation",
       title: "Affiliation",
       render: (_, row) => (
-        <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
           {affiliationBadge(row.affiliationStatus)}
-          <span style={{ fontSize: 11, color: "#6B7280", fontWeight: 500 }}>
-            Comm: {row.partnerInternalCommission?.percentage != null
-              ? <strong style={{ color: PURPLE }}>{row.partnerInternalCommission.percentage}%</strong>
-              : "Not set"}
-          </span>
+          {row.affiliationStatus === "pending" && (
+            <button
+              onClick={() => setApproveModal(row)}
+              style={{ fontSize: 11, fontWeight: 600, color: "#2563EB", background: "#EFF6FF", border: "1px solid #BFDBFE", borderRadius: 6, padding: "3px 8px", cursor: "pointer" }}
+            >
+              Approve
+            </button>
+          )}
         </div>
       ),
+    },
+    {
+      key: "completion",
+      title: "Profile",
+      render: (_, row) => {
+        const pct = row.profileCompletionPercentage ?? 0;
+        const color = pct === 100 ? "#059669" : pct >= 60 ? "#D97706" : "#DC2626";
+        return (
+          <div style={{ minWidth: 80 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 3 }}>
+              <span style={{ fontSize: 11, color: "#6B7280" }}>Complete</span>
+              <span style={{ fontSize: 11, fontWeight: 700, color }}>{pct}%</span>
+            </div>
+            <div style={{ height: 5, background: "#F3F4F6", borderRadius: 3 }}>
+              <div style={{ width: `${pct}%`, height: "100%", background: color, borderRadius: 3 }} />
+            </div>
+          </div>
+        );
+      },
     },
     {
       key: "status",
@@ -255,7 +313,17 @@ export default function PartnerAffiliatedAgents() {
               </button>
 
               {isOpen && (
-                <div style={{ position: "absolute", right: 0, top: 30, background: "#fff", border: "1px solid #E5E7EB", borderRadius: 10, boxShadow: "0 10px 30px rgba(0,0,0,0.1)", width: 180, zIndex: 10 }}>
+                <div style={{ position: "absolute", right: 0, top: 30, background: "#fff", border: "1px solid #E5E7EB", borderRadius: 10, boxShadow: "0 10px 30px rgba(0,0,0,0.1)", width: 190, zIndex: 10 }}>
+                  {row.affiliationStatus === "pending" && (
+                    <div onClick={() => { setApproveModal(row); setOpenMenuId(null); }} style={menuItemStyle("#2563EB")}>
+                      <CheckCircle size={14} /> Approve Affiliation
+                    </div>
+                  )}
+                  {row.affiliationStatus === "pending" && (
+                    <div onClick={() => { setRejectModal(row); setRejectReason(""); setOpenMenuId(null); }} style={menuItemStyle("#DC2626")}>
+                      <XCircle size={14} /> Reject Affiliation
+                    </div>
+                  )}
                   {!isActive && (
                     <div onClick={() => { setActivateModal(row); setOpenMenuId(null); }} style={menuItemStyle("#059669")}>
                       <CheckCircle size={14} /> Activate
@@ -324,6 +392,7 @@ export default function PartnerAffiliatedAgents() {
             { id: "all",      label: "All Agents" },
             { id: "active",   label: "Active" },
             { id: "inactive", label: "Inactive" },
+            { id: "pending",  label: "Pending Approval" },
           ].map((tab) => (
             <button
               key={tab.id}
@@ -416,6 +485,57 @@ export default function PartnerAffiliatedAgents() {
               <button onClick={handleDeleteConfirm} disabled={!!actionLoading} style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "10px 0", border: "none", borderRadius: 10, fontSize: 13, fontWeight: 600, color: "#fff", background: "#DC2626", cursor: "pointer", opacity: actionLoading ? 0.7 : 1 }}>
                 {actionLoading ? <Loader2 size={14} style={{ animation: "spin 1s linear infinite" }} /> : <Trash2 size={14} />}
                 Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Approve Affiliation Modal */}
+      {approveModal && (
+        <div style={{ position: "fixed", inset: 0, zIndex: 50, background: "rgba(0,0,0,0.45)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
+          <div style={{ background: "#fff", borderRadius: 16, width: "100%", maxWidth: 380, padding: 28, boxShadow: "0 20px 60px rgba(0,0,0,0.15)", textAlign: "center" }}>
+            <div style={{ width: 52, height: 52, borderRadius: "50%", background: "#EFF6FF", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 14px" }}>
+              <CheckCircle size={22} color="#2563EB" />
+            </div>
+            <h2 style={{ fontSize: 16, fontWeight: 700, color: "#111827", marginBottom: 8 }}>Approve Affiliation?</h2>
+            <p style={{ fontSize: 13, color: "#6B7280", marginBottom: 22 }}>
+              Approve <strong>{getAgentName(approveModal)}</strong> as an affiliated agent of your company?
+            </p>
+            <div style={{ display: "flex", gap: 10 }}>
+              <button onClick={() => setApproveModal(null)} style={{ flex: 1, padding: "10px 0", border: "1px solid #E5E7EB", borderRadius: 10, fontSize: 13, fontWeight: 600, color: "#374151", background: "#fff", cursor: "pointer" }}>Cancel</button>
+              <button onClick={handleApproveAffiliation} disabled={!!actionLoading} style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "10px 0", border: "none", borderRadius: 10, fontSize: 13, fontWeight: 600, color: "#fff", background: "#2563EB", cursor: "pointer", opacity: actionLoading ? 0.7 : 1 }}>
+                {actionLoading ? <Loader2 size={14} style={{ animation: "spin 1s linear infinite" }} /> : <CheckCircle size={14} />}
+                Confirm Approve
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Reject Affiliation Modal */}
+      {rejectModal && (
+        <div style={{ position: "fixed", inset: 0, zIndex: 50, background: "rgba(0,0,0,0.45)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
+          <div style={{ background: "#fff", borderRadius: 16, width: "100%", maxWidth: 400, padding: 28, boxShadow: "0 20px 60px rgba(0,0,0,0.15)", textAlign: "center" }}>
+            <div style={{ width: 52, height: 52, borderRadius: "50%", background: "#FEF2F2", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 14px" }}>
+              <XCircle size={22} color="#DC2626" />
+            </div>
+            <h2 style={{ fontSize: 16, fontWeight: 700, color: "#111827", marginBottom: 8 }}>Reject Affiliation?</h2>
+            <p style={{ fontSize: 13, color: "#6B7280", marginBottom: 12 }}>
+              <strong>{getAgentName(rejectModal)}</strong> will be notified. They can re-register with a different partner.
+            </p>
+            <textarea
+              rows={3}
+              placeholder="Reason for rejection (required)"
+              value={rejectReason}
+              onChange={(e) => setRejectReason(e.target.value)}
+              style={{ width: "100%", borderRadius: 8, border: "1px solid #E5E7EB", padding: "10px 12px", fontSize: 13, resize: "vertical", marginBottom: 18, boxSizing: "border-box" }}
+            />
+            <div style={{ display: "flex", gap: 10 }}>
+              <button onClick={() => setRejectModal(null)} style={{ flex: 1, padding: "10px 0", border: "1px solid #E5E7EB", borderRadius: 10, fontSize: 13, fontWeight: 600, color: "#374151", background: "#fff", cursor: "pointer" }}>Cancel</button>
+              <button onClick={handleRejectAffiliation} disabled={!!actionLoading || !rejectReason.trim()} style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "10px 0", border: "none", borderRadius: 10, fontSize: 13, fontWeight: 600, color: "#fff", background: !rejectReason.trim() ? "#FCA5A5" : "#DC2626", cursor: !rejectReason.trim() ? "not-allowed" : "pointer" }}>
+                {actionLoading ? <Loader2 size={14} style={{ animation: "spin 1s linear infinite" }} /> : <XCircle size={14} />}
+                Confirm Reject
               </button>
             </div>
           </div>

@@ -56,11 +56,8 @@ export default function PartnerAgentDetail() {
   const [actionLoading, setActionLoading]       = useState(false);
   const [verifyMessage, setVerifyMessage]       = useState({ type: "", text: "" });
 
-  const [showCommModal, setShowCommModal]       = useState(false);
-  const [commPct, setCommPct]                   = useState("");
-  const [commNotes, setCommNotes]               = useState("");
   const [commLoading, setCommLoading]           = useState(false);
-  const [commMessage, setCommMessage]           = useState({ type: "", text: "" });
+  const [docActionLoading, setDocActionLoading] = useState(null);
 
   const fetchAgent = async () => {
     setLoading(true);
@@ -128,32 +125,32 @@ export default function PartnerAgentDetail() {
     }
   };
 
-  const handleOpenCommModal = () => {
-    setCommPct(agent?.partnerInternalCommission?.percentage ?? "");
-    setCommNotes(agent?.partnerInternalCommission?.notes ?? "");
-    setCommMessage({ type: "", text: "" });
-    setShowCommModal(true);
-  };
-
-  const handleSetCommission = async () => {
-    const n = Number(commPct);
-    if (commPct === "" || isNaN(n) || n < 0 || n > 100) {
-      setCommMessage({ type: "error", text: "Enter a valid percentage (0–100)." });
-      return;
-    }
+  const handleConfirmCommission = async () => {
     setCommLoading(true);
     try {
-      await apiService.put(`/vault/agent/partner/agents/${id}/commission`, {
-        percentage: n,
-        notes: commNotes.trim() || undefined,
-      });
-      setCommMessage({ type: "success", text: `Commission set to ${n}% successfully.` });
+      await apiService.patch(`/vault/agent/partner/confirm-commission/${id}`);
+      setVerifyMessage({ type: "success", text: "Agent is now commission eligible!" });
       await fetchAgent();
-      setTimeout(() => { setShowCommModal(false); setCommMessage({ type: "", text: "" }); }, 1500);
     } catch (err) {
-      setCommMessage({ type: "error", text: err?.response?.data?.message || err?.message || "Failed to set commission." });
+      setVerifyMessage({ type: "error", text: err?.response?.data?.message || err?.message || "Failed to confirm commission eligibility" });
     } finally {
       setCommLoading(false);
+      setTimeout(() => setVerifyMessage({ type: "", text: "" }), 5000);
+    }
+  };
+
+  const handleDocVerify = async (docType, action) => {
+    const key = `${docType}_${action}`;
+    setDocActionLoading(key);
+    try {
+      await apiService.patch(`/vault/agent/partner/verify-document/${id}`, { documentType: docType, action });
+      setVerifyMessage({ type: "success", text: `${docType} ${action === "verify" ? "verified" : "rejected"} successfully.` });
+      await fetchAgent();
+    } catch (err) {
+      setVerifyMessage({ type: "error", text: err?.response?.data?.message || err?.message || "Action failed" });
+    } finally {
+      setDocActionLoading(null);
+      setTimeout(() => setVerifyMessage({ type: "", text: "" }), 4000);
     }
   };
 
@@ -298,30 +295,47 @@ export default function PartnerAgentDetail() {
                   <CheckCircle size={14} /> Affiliation Verified
                 </span>
               )}
-              {/* Set internal commission rate */}
-              <button
-                onClick={handleOpenCommModal}
-                style={{ display: "flex", alignItems: "center", gap: 7, padding: "9px 18px", background: C.white, color: C.primary, border: `1.5px solid ${C.primaryBord}`, borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: "pointer" }}
-              >
-                <Percent size={14} />
-                {agent?.partnerInternalCommission?.percentage != null
-                  ? `Commission: ${agent.partnerInternalCommission.percentage}%`
-                  : "Set Commission %"}
-              </button>
+              {/* Confirm Commission Eligible — only for ReferralPartner when all docs verified */}
+              {agent.agentType === "ReferralPartner" && (
+                agent.commissionEligible ? (
+                  <span style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 14px", background: C.greenSoft, color: C.green, borderRadius: 10, fontSize: 13, fontWeight: 600, border: `1px solid ${C.greenBord}` }}>
+                    <CheckCircle size={14} /> Commission Eligible
+                  </span>
+                ) : (
+                  <button
+                    onClick={handleConfirmCommission}
+                    disabled={commLoading || !agent.isVerified || !agent.emiratesId?.verified || !agent.bankDetails?.verified}
+                    title={
+                      !agent.isVerified ? "Account must be verified first" :
+                      !agent.emiratesId?.verified ? "Emirates ID must be verified first" :
+                      !agent.bankDetails?.verified ? "Bank details must be verified first" :
+                      "Confirm commission eligibility"
+                    }
+                    style={{
+                      display: "flex", alignItems: "center", gap: 7,
+                      padding: "9px 18px", borderRadius: 10, border: "none",
+                      fontSize: 13, fontWeight: 600,
+                      background: (agent.isVerified && agent.emiratesId?.verified && agent.bankDetails?.verified) ? "#F59E0B" : C.grayBord,
+                      color: (agent.isVerified && agent.emiratesId?.verified && agent.bankDetails?.verified) ? "#fff" : C.textMuted,
+                      cursor: (!agent.isVerified || !agent.emiratesId?.verified || !agent.bankDetails?.verified) ? "not-allowed" : "pointer",
+                      opacity: commLoading ? 0.7 : 1,
+                    }}
+                  >
+                    {commLoading ? <RefreshCw size={14} style={{ animation: "spin 1s linear infinite" }} /> : <CheckCircle size={14} />}
+                    Confirm Commission
+                  </button>
+                )
+              )}
             </div>
           </div>
         </div>
 
         {/* ── Stats row ── */}
-        <div className="pd-stats" style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 12, marginBottom: 16 }}>
-          <StatTile icon={TrendingUp}  color={C.primary} label="Commission Earned"  value={fmtAED(ag.totalCommissionEarned) || "AED 0"} />
-          <StatTile icon={Activity}    color="#0891B2"   label="Leads Submitted"    value={ag.totalLeadsSubmitted ?? 0} />
-          <StatTile icon={CheckCircle} color={C.green}   label="Disbursals"         value={ag.successfulDisbursals ?? 0} />
-          <StatTile icon={Percent}     color={C.amber}   label="Conversion Rate"    value={`${ag.conversionRate ?? 0}%`} />
-          <StatTile icon={Wallet}      color="#7C3AED"   label="Internal Comm. %"
-            value={agent?.partnerInternalCommission?.percentage != null
-              ? `${agent.partnerInternalCommission.percentage}%`
-              : "Not set"} />
+        <div className="pd-stats" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12, marginBottom: 16 }}>
+          <StatTile icon={TrendingUp}  color={C.primary} label="Commission Earned" value={fmtAED(ag.totalCommissionEarned) || "AED 0"} />
+          <StatTile icon={Activity}    color="#0891B2"   label="Leads Submitted"   value={ag.totalLeadsSubmitted ?? 0} />
+          <StatTile icon={CheckCircle} color={C.green}   label="Disbursals"        value={ag.successfulDisbursals ?? 0} />
+          <StatTile icon={Percent}     color={C.amber}   label="Conversion Rate"   value={`${ag.conversionRate ?? 0}%`} />
         </div>
 
         {/* ── Tabs ── */}
@@ -430,14 +444,16 @@ export default function PartnerAgentDetail() {
                   <DRow label="Issue Date"  value={fmtDate(agent.emiratesId?.issuanceDate)} />
                   <DRow label="Expiry Date" value={fmtDate(agent.emiratesId?.expiryDate)} />
                   <DRow label="Verified"    value={boolLabel(agent.emiratesId?.verified)} highlight={agent.emiratesId?.verified} />
-                  {(agent.emiratesId?.frontImageUrl || agent.emiratesId?.backImageUrl) && (
+                  {(agent.emiratesId?.frontImageUrl || agent.emiratesId?.backImageUrl) ? (
                     <div style={{ display: "flex", gap: 12, marginTop: 12, flexWrap: "wrap" }}>
                       {agent.emiratesId.frontImageUrl && <DocImage label="Front" url={agent.emiratesId.frontImageUrl} />}
                       {agent.emiratesId.backImageUrl  && <DocImage label="Back"  url={agent.emiratesId.backImageUrl} />}
                     </div>
-                  )}
-                  {!agent.emiratesId?.frontImageUrl && !agent.emiratesId?.backImageUrl && (
+                  ) : (
                     <div style={{ marginTop: 10 }}><EmptyNote msg="No Emirates ID documents uploaded" /></div>
+                  )}
+                  {(agent.emiratesId?.frontImageUrl || agent.emiratesId?.number) && (
+                    <DocVerifyButtons docKey="emiratesId" verified={!!agent.emiratesId?.verified} loading={docActionLoading} onVerify={handleDocVerify} C={C} />
                   )}
                 </Section>
 
@@ -449,17 +465,9 @@ export default function PartnerAgentDetail() {
                   {agent.passport?.imageUrl
                     ? <div style={{ marginTop: 12 }}><DocImage label="Passport" url={agent.passport.imageUrl} /></div>
                     : <div style={{ marginTop: 10 }}><EmptyNote msg="No passport document uploaded" /></div>}
-                </Section>
-
-                <Section icon={Globe} title="Visa / Residency">
-                  <DRow label="Visa Number"      value={show(agent.visa?.number)} copy />
-                  <DRow label="Residency Status" value={show(agent.visa?.residencyStatus)} />
-                  <DRow label="Sponsor"          value={show(agent.visa?.sponsor)} />
-                  <DRow label="Expiry Date"      value={fmtDate(agent.visa?.expiryDate)} />
-                  <DRow label="Verified"         value={boolLabel(agent.visa?.verified)} highlight={agent.visa?.verified} />
-                  {agent.visa?.imageUrl
-                    ? <div style={{ marginTop: 12 }}><DocImage label="Visa" url={agent.visa.imageUrl} /></div>
-                    : <div style={{ marginTop: 10 }}><EmptyNote msg="No visa document uploaded" /></div>}
+                  {agent.passport?.imageUrl && (
+                    <DocVerifyButtons docKey="passport" verified={!!agent.passport?.verified} loading={docActionLoading} onVerify={handleDocVerify} C={C} />
+                  )}
                 </Section>
               </div>
             </div>
@@ -469,15 +477,14 @@ export default function PartnerAgentDetail() {
           {activeTab === "financial" && (
             <div className="pd-grid-2" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
               <Section icon={Banknote} title="Bank Details">
-                {bk.bankName || bk.accountNumber ? (
+                {bk.bankName || bk.accountNumber || bk.iban ? (
                   <>
                     <DRow label="Beneficiary"  value={show(bk.beneficiaryName)} copy />
                     <DRow label="Bank Name"    value={show(bk.bankName)} />
                     <DRow label="Account No."  value={show(bk.accountNumber)} copy />
                     <DRow label="IBAN"         value={show(bk.iban)} copy />
-                    <DRow label="SWIFT"        value={show(bk.swiftCode)} copy />
-                    <DRow label="Account Type" value={show(bk.accountType)} />
                     <DRow label="Verified"     value={boolLabel(bk.verified)} highlight={bk.verified} />
+                    <DocVerifyButtons docKey="bankDetails" verified={!!bk.verified} loading={docActionLoading} onVerify={handleDocVerify} C={C} />
                   </>
                 ) : <EmptyNote msg="No bank details added" />}
               </Section>
@@ -615,74 +622,35 @@ export default function PartnerAgentDetail() {
         </div>
       )}
 
-      {/* ── Set Internal Commission Modal ── */}
-      {showCommModal && (
-        <div style={{ position: "fixed", inset: 0, zIndex: 50, background: "rgba(0,0,0,0.45)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
-          <div style={{ background: C.white, borderRadius: 18, width: "100%", maxWidth: 420, padding: 28, boxShadow: "0 20px 60px rgba(0,0,0,0.18)" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
-              <div style={{ width: 42, height: 42, borderRadius: 12, background: C.primarySoft, border: `1px solid ${C.primaryBord}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <Percent size={20} color={C.primary} />
-              </div>
-              <div>
-                <div style={{ fontWeight: 700, fontSize: 16, color: C.text }}>Set Internal Commission</div>
-                <div style={{ fontSize: 12, color: C.gray }}>Commission paid by your company to this agent</div>
-              </div>
-            </div>
-
-            <div style={{ background: C.primarySoft, border: `1px solid ${C.primaryBord}`, borderRadius: 10, padding: "10px 14px", marginBottom: 18, fontSize: 12, color: C.primary, fontWeight: 500 }}>
-              Xoto pays the full commission to your company. You decide what % to share with this agent internally.
-              This is for your reference — Xoto does not process this payment.
-            </div>
-
-            <div style={{ marginBottom: 14 }}>
-              <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: C.textSub, marginBottom: 6 }}>Commission Percentage (0–100)</label>
-              <div style={{ display: "flex", alignItems: "center", border: `1.5px solid ${C.grayBord}`, borderRadius: 10, overflow: "hidden" }}>
-                <input
-                  type="number" min={0} max={100} value={commPct}
-                  onChange={e => setCommPct(e.target.value)}
-                  placeholder="e.g. 30"
-                  style={{ flex: 1, border: "none", outline: "none", padding: "10px 14px", fontSize: 15, fontWeight: 600 }}
-                />
-                <div style={{ padding: "0 14px", color: C.primary, fontWeight: 700, fontSize: 15 }}>%</div>
-              </div>
-            </div>
-
-            <div style={{ marginBottom: 18 }}>
-              <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: C.textSub, marginBottom: 6 }}>Notes (optional)</label>
-              <textarea
-                rows={2} value={commNotes} onChange={e => setCommNotes(e.target.value)}
-                placeholder="e.g. Agreed in April 2026 contract"
-                style={{ width: "100%", border: `1.5px solid ${C.grayBord}`, borderRadius: 10, padding: "10px 14px", fontSize: 13, resize: "vertical", outline: "none", fontFamily: "inherit", boxSizing: "border-box" }}
-              />
-            </div>
-
-            {commMessage.text && (
-              <div style={{ marginBottom: 14, padding: "8px 12px", borderRadius: 8, fontSize: 12, fontWeight: 600,
-                background: commMessage.type === "success" ? C.greenSoft : C.redSoft,
-                color: commMessage.type === "success" ? C.green : C.red }}>
-                {commMessage.text}
-              </div>
-            )}
-
-            <div style={{ display: "flex", gap: 10 }}>
-              <button onClick={() => setShowCommModal(false)} disabled={commLoading}
-                style={{ flex: 1, padding: "11px 0", border: `1px solid ${C.grayBord}`, borderRadius: 10, fontSize: 13, fontWeight: 600, color: C.text, background: C.white, cursor: "pointer" }}>
-                Cancel
-              </button>
-              <button onClick={handleSetCommission} disabled={commLoading}
-                style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "11px 0", border: "none", borderRadius: 10, fontSize: 13, fontWeight: 600, color: "#fff", background: C.primary, cursor: "pointer" }}>
-                {commLoading ? <RefreshCw size={14} style={{ animation: "spin 1s linear infinite" }} /> : <Check size={14} />}
-                Save Commission
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
 
-// ── Sub-components (identical to admin agent detail) ─────────────────────────
+// ── Sub-components ────────────────────────────────────────────────────────────
+
+function DocVerifyButtons({ docKey, verified, loading, onVerify, C }) {
+  return (
+    <div style={{ display: "flex", gap: 8, marginTop: 14 }}>
+      <button
+        disabled={verified || !!loading}
+        onClick={() => onVerify(docKey, "verify")}
+        style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "8px 0", borderRadius: 8, border: "none", background: verified ? C.greenSoft : C.green, color: verified ? C.green : "#fff", fontSize: 12, fontWeight: 600, cursor: verified ? "not-allowed" : "pointer", opacity: loading === `${docKey}_verify` ? 0.7 : 1 }}
+      >
+        {loading === `${docKey}_verify`
+          ? <RefreshCw size={12} style={{ animation: "spin 1s linear infinite" }} />
+          : <CheckCircle size={12} />}
+        {verified ? "Verified" : `Verify`}
+      </button>
+      <button
+        disabled={!verified || !!loading}
+        onClick={() => onVerify(docKey, "reject")}
+        style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "8px 0", borderRadius: 8, border: `1px solid ${C.grayBord}`, background: C.white, color: C.red, fontSize: 12, fontWeight: 600, cursor: !verified ? "not-allowed" : "pointer", opacity: (!verified || !!loading) ? 0.5 : 1 }}
+      >
+        <XCircle size={12} /> Reject
+      </button>
+    </div>
+  );
+}
 
 function Section({ icon: Icon, title, children }) {
   return (

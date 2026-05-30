@@ -866,12 +866,17 @@ export default function OpsAssignedReview() {
             {tab === 'overview' && (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(280px,1fr))', gap: 16 }}>
                 <SCard title="Client Information" icon={<UserOutlined />} accent={BL}>
-                  <InfoRow label="Full Name"   value={ci.fullName}        bold />
-                  <InfoRow label="Email"        value={ci.email}           />
-                  <InfoRow label="Mobile"       value={ci.mobile}          />
-                  <InfoRow label="Nationality"  value={ci.nationality}     />
-                  <InfoRow label="Residency"    value={ci.residencyStatus} />
-                  <InfoRow label="Employment"   value={ci.employmentStatus}/>
+                  <InfoRow label="Full Name"            value={ci.fullName || [ci.firstName, ci.lastName].filter(Boolean).join(' ')} bold />
+                  <InfoRow label="Email"                value={ci.email}           />
+                  <InfoRow label="Mobile"               value={ci.phone || ci.mobile} />
+                  <InfoRow label="Nationality"          value={ci.nationality}     />
+                  <InfoRow label="Residency"            value={ci.residencyStatus} />
+                  <InfoRow label="Employment"           value={ci.employmentStatus}/>
+                  <InfoRow label="Monthly Salary"       value={ci.monthlySalary || ci.fixedMonthlySalary ? `AED ${Number(ci.monthlySalary || ci.fixedMonthlySalary).toLocaleString()}` : null} />
+                  <InfoRow label="Salary Bank"          value={ci.salaryBankName} />
+                  <InfoRow label="Liabilities/mo"       value={ci.existingLiabilities ? `AED ${Number(ci.existingLiabilities).toLocaleString()}` : null} />
+                  <InfoRow label="Mortgage Term"        value={ci.mortgageTerm ? `${ci.mortgageTerm} years` : null} />
+                  <InfoRow label="Fee Financing"        value={ci.feeFinancingRequired != null ? (ci.feeFinancingRequired ? 'Yes' : 'No') : null} />
                 </SCard>
                 <SCard title="Property & Loan" icon={<HomeOutlined />} accent={AM}>
                   <InfoRow label="Property Value" value={fmtAED(pi.propertyValue)} bold />
@@ -914,6 +919,24 @@ export default function OpsAssignedReview() {
                     {bd.decisionNotes    && <InfoRow label="Notes"           value={bd.decisionNotes} />}
                   </SCard>
                 )}
+                {/* Ops internal notes (not visible to Advisor/Partner) */}
+                {caseData.opsNotes && (
+                  <SCard title="Ops Internal Notes" icon={<InfoCircleOutlined />} accent="#7c3aed">
+                    <div style={{ background: '#f5f3ff', borderRadius: 8, padding: '10px 14px', fontSize: 12, color: '#4c1d95', fontStyle: 'italic' }}>
+                      {caseData.opsNotes}
+                    </div>
+                  </SCard>
+                )}
+
+                {/* Submission notes from Advisor/Partner */}
+                {caseData.submissionNotes && (
+                  <SCard title="Submission Notes" icon={<InfoCircleOutlined />} accent="#2563eb">
+                    <div style={{ background: '#eff6ff', borderRadius: 8, padding: '10px 14px', fontSize: 12, color: '#1d4ed8' }}>
+                      {caseData.submissionNotes}
+                    </div>
+                  </SCard>
+                )}
+
                 {(caseData.internalNotes?.length > 0 || caseData.customerNotes?.length > 0) && (
                   <SCard title="Notes" icon={<InfoCircleOutlined />} accent={SL}>
                     {caseData.internalNotes?.map((n, i) => (
@@ -945,6 +968,23 @@ export default function OpsAssignedReview() {
                 <TlItem label="FOL Issued"        date={tl.folIssuedAt}        done={!!tl.folIssuedAt} />
                 <TlItem label="FOL Signed"        date={tl.folSignedAt}        done={!!tl.folSignedAt} />
                 <TlItem label="Disbursed"         date={tl.disbursedAt}        done={!!tl.disbursedAt} />
+
+                {/* Status change history */}
+                {caseData.statusHistory?.length > 0 && (
+                  <div style={{ marginTop: 24 }}>
+                    <div style={{ fontWeight: 700, fontSize: 13, color: '#374151', marginBottom: 10 }}>Status History</div>
+                    {caseData.statusHistory.map((h, i) => (
+                      <div key={i} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', marginBottom: 8, padding: '8px 12px', background: '#f8fafc', borderRadius: 8 }}>
+                        <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#5c039b', marginTop: 6, flexShrink: 0 }} />
+                        <div>
+                          <div style={{ fontWeight: 700, fontSize: 12, color: '#1e293b' }}>{h.status}</div>
+                          <div style={{ fontSize: 11, color: '#64748b' }}>{h.changedByName} · {h.changedAt ? new Date(h.changedAt).toLocaleString('en-AE') : ''}</div>
+                          {h.notes && <div style={{ fontSize: 11, color: '#374151', fontStyle: 'italic', marginTop: 2 }}>{h.notes}</div>}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
           </div>

@@ -3,12 +3,12 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   ChevronLeft, User, Mail, Phone, Globe, Calendar,
-  CreditCard, FileText, Banknote, ShieldCheck, Heart, Users,
-  AlertCircle, Building2, CheckCircle, XCircle, MapPin,
-  Clock, Star, DollarSign, Percent, Info, AlertTriangle,
-  BadgeCheck, Activity, TrendingUp, Wallet, RefreshCw,
-  Shield, Layers, BarChart2, Lock, Check, Copy, ExternalLink,
-  CheckSquare, Tag, Hash,
+  CreditCard, FileText, Banknote, ShieldCheck,
+  AlertCircle, Building2, CheckCircle, XCircle,
+  DollarSign, Percent, Info, AlertTriangle,
+  BadgeCheck, Activity, TrendingUp, RefreshCw,
+  Shield, Layers, BarChart2, Check, Copy, ExternalLink,
+  Tag, Hash,
 } from "lucide-react";
 import { apiService } from "@/api/apiService";
 import { Tabs } from "antd";
@@ -55,12 +55,46 @@ export default function VaultAgentdetail() {
   const [error, setError]       = useState("");
   const [activeTab, setActiveTab] = useState("overview");
 
-  // Verify/Reject modal
+  // Account verify/reject modal
   const [showVerifyModal, setShowVerifyModal]   = useState(false);
   const [rejectMode, setRejectMode]             = useState(false);
   const [rejectionReason, setRejectionReason]   = useState("");
   const [actionLoading, setActionLoading]       = useState(false);
   const [verifyMessage, setVerifyMessage]       = useState({ type: "", text: "" });
+
+  // Document verify
+  const [docActionLoading, setDocActionLoading] = useState(null);
+  // Commission eligible confirm
+  const [commLoading, setCommLoading]           = useState(false);
+
+  const handleConfirmCommission = async () => {
+    setCommLoading(true);
+    try {
+      await apiService.patch(`/vault/agent/admin/confirm-commission/${id}`);
+      setVerifyMessage({ type: "success", text: "Agent is now commission eligible!" });
+      await fetchAgent();
+    } catch (err) {
+      setVerifyMessage({ type: "error", text: err?.response?.data?.message || err?.message || "Failed to confirm commission eligibility" });
+    } finally {
+      setCommLoading(false);
+      setTimeout(() => setVerifyMessage({ type: "", text: "" }), 5000);
+    }
+  };
+
+  const handleDocVerify = async (docType, action) => {
+    const key = `${docType}_${action}`;
+    setDocActionLoading(key);
+    try {
+      await apiService.patch(`/vault/agent/admin/verify-document/${id}`, { documentType: docType, action });
+      setVerifyMessage({ type: "success", text: `${docType} ${action === "verify" ? "verified" : "rejected"} successfully.` });
+      await fetchAgent();
+    } catch (err) {
+      setVerifyMessage({ type: "error", text: err?.response?.data?.message || err?.message || "Action failed" });
+    } finally {
+      setDocActionLoading(null);
+      setTimeout(() => setVerifyMessage({ type: "", text: "" }), 4000);
+    }
+  };
 
   const fetchAgent = async () => {
     setLoading(true);
@@ -297,9 +331,9 @@ export default function VaultAgentdetail() {
               </div>
             </div>
 
-            {/* Profile completion + verify button */}
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 12, flexShrink: 0 }}>
-              {/* Verify button */}
+            {/* Actions column */}
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 10, flexShrink: 0 }}>
+              {/* Verify / Verified button */}
               {!agent.isVerified ? (
                 <button
                   onClick={handleOpenVerifyModal}
@@ -313,8 +347,41 @@ export default function VaultAgentdetail() {
                 </span>
               )}
 
-              {/* Progress bar */}
-             
+              {/* Confirm Commission Eligible button — only for ReferralPartner when all docs verified */}
+              {agent.agentType === "ReferralPartner" && (
+                agent.commissionEligible ? (
+                  <span style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 14px", background: C.greenSoft, color: C.green, borderRadius: 10, fontSize: 13, fontWeight: 600, border: `1px solid ${C.greenBord}` }}>
+                    <CheckCircle size={14} /> Commission Eligible
+                  </span>
+                ) : (
+                  <button
+                    onClick={handleConfirmCommission}
+                    disabled={commLoading || !agent.isVerified || !agent.emiratesId?.verified || !agent.bankDetails?.verified}
+                    title={
+                      !agent.isVerified ? "Account must be verified first" :
+                      !agent.emiratesId?.verified ? "Emirates ID must be verified first" :
+                      !agent.bankDetails?.verified ? "Bank details must be verified first" :
+                      "Confirm commission eligibility"
+                    }
+                    style={{
+                      display: "flex", alignItems: "center", gap: 7,
+                      padding: "9px 18px", borderRadius: 10, border: "none",
+                      fontSize: 13, fontWeight: 600,
+                      background: (agent.isVerified && agent.emiratesId?.verified && agent.bankDetails?.verified)
+                        ? "#F59E0B" : C.grayBord,
+                      color: (agent.isVerified && agent.emiratesId?.verified && agent.bankDetails?.verified)
+                        ? "#fff" : C.textMuted,
+                      cursor: (!agent.isVerified || !agent.emiratesId?.verified || !agent.bankDetails?.verified) ? "not-allowed" : "pointer",
+                      opacity: commLoading ? 0.7 : 1,
+                    }}
+                  >
+                    {commLoading
+                      ? <RefreshCw size={14} style={{ animation: "spin 1s linear infinite" }} />
+                      : <CheckCircle size={14} />}
+                    Confirm Commission
+                  </button>
+                )
+              )}
             </div>
           </div>
         </div>
@@ -358,60 +425,63 @@ export default function VaultAgentdetail() {
           {/* ── OVERVIEW ─────────────────────────────────────────── */}
           {activeTab === "overview" && (
             <div className="pd-grid-2" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+              {/* Personal Info */}
               <Section icon={User} title="Personal Information">
-                <DRow label="First Name"               value={show(firstName)} />
-                <DRow label="Last Name"                value={show(lastName)} />
-                <DRow label="Gender"                   value={show(agent.gender)} />
-                <DRow label="Date of Birth"            value={fmtDate(agent.dateOfBirth)} />
-                <DRow label="Nationality"              value={show(agent.nationality)} />
-                <DRow label="Marital Status"           value={show(agent.maritalStatus)} />
-                <DRow label="Dependents"               value={show(agent.numberOfDependents ?? 0)} />
-                <DRow label="Language"                 value={show(agent.languagePreference)} />
-                <DRow label="Communication Pref"       value={show(agent.communicationPreference)} />
-                <DRow label="Profile Completion"       value={`${agent.profileCompletionPercentage ?? 0}%`} />
+                <DRow label="First Name"         value={show(firstName)} />
+                <DRow label="Last Name"          value={show(lastName)} />
+                <DRow label="Email"              value={show(agent.email)} copy />
+                <DRow label="Phone"              value={show(phoneStr)} copy />
+                <DRow label="Gender"             value={show(agent.gender)} />
+                <DRow label="Date of Birth"      value={fmtDate(agent.dateOfBirth)} />
+                <DRow label="Nationality"        value={show(agent.nationality)} />
+                <DRow label="Profile Completion" value={`${agent.profileCompletionPercentage ?? 0}%`} highlight={agent.profileCompletionPercentage === 100} />
               </Section>
 
-              <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-                <Section icon={MapPin} title="Address">
-                  {agent.address && (agent.address.building || agent.address.city) ? (
-                    <>
-                      <DRow label="Building"  value={show(agent.address.building)} />
-                      <DRow label="Apartment" value={show(agent.address.apartment)} />
-                      <DRow label="Area"      value={show(agent.address.area)} />
-                      <DRow label="City"      value={show(agent.address.city)} />
-                      <DRow label="Country"   value={show(agent.address.country)} />
-                    </>
-                  ) : <EmptyNote msg="No address on record" />}
-                </Section>
+              {/* Agent Type & Status */}
+              <Section icon={Building2} title="Agent & Affiliation">
+                <DRow label="Agent Type"
+                  value={agent.agentType === "ReferralPartner" ? "Referral Partner" : agent.agentType === "PartnerAffiliatedAgent" ? "Partner Affiliated Agent" : show(agent.agentType)}
+                />
+                <DRow label="Affiliation Status"
+                  value={agent.affiliationStatus === "none" ? "N/A" : show(agent.affiliationStatus)}
+                  badge={
+                    agent.affiliationStatus === "verified" ? { bg: C.greenSoft, color: C.green } :
+                    agent.affiliationStatus === "pending"  ? { bg: C.amberSoft, color: C.amber } :
+                    agent.affiliationStatus === "rejected" ? { bg: C.redSoft,   color: C.red   } : undefined
+                  }
+                />
+                <DRow label="Partner"            value={show(agent.partnerId?.companyName)} />
+                <DRow label="Account Verified"   value={boolLabel(agent.isVerified)}  highlight={agent.isVerified} />
+                <DRow label="Commission Eligible" value={boolLabel(agent.commissionEligible)} highlight={agent.commissionEligible} />
+                {agent.commissionEligibilityReason && (
+                  <DRow label="Eligibility Note" value={show(agent.commissionEligibilityReason)} />
+                )}
+                <DRow label="Account Active"     value={boolLabel(agent.isActive)} highlight={agent.isActive} />
+                <DRow label="Last Login"         value={agent.lastLoginAt ? new Date(agent.lastLoginAt).toLocaleString() : null} />
+              </Section>
 
-                <Section icon={Heart} title="Emergency Contact">
-                  {agent.emergencyContact && (agent.emergencyContact.name || agent.emergencyContact.phone) ? (
-                    <>
-                      <DRow label="Name"         value={show(agent.emergencyContact.name)} />
-                      <DRow label="Relationship" value={show(agent.emergencyContact.relationship)} />
-                      <DRow label="Phone"        value={show(agent.emergencyContact.phone)} copy />
-                    </>
-                  ) : <EmptyNote msg="No emergency contact added" />}
+              {/* Verification flags — full width */}
+              <div style={{ gridColumn: "1 / -1" }}>
+                <Section icon={ShieldCheck} title="Verification Flags">
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 8 }}>
+                    {[
+                      { label: "Account Verified",    val: agent.isVerified },
+                      { label: "Email Verified",      val: agent.isEmailVerified },
+                      { label: "Phone Verified",      val: agent.isPhoneVerified },
+                      { label: "Emirates ID Verified", val: agent.emiratesId?.verified },
+                      { label: "Passport Verified",   val: agent.passport?.verified },
+                      { label: "Bank Verified",       val: agent.bankDetails?.verified },
+                      { label: "Commission Eligible", val: agent.commissionEligible },
+                      { label: "Account Active",      val: agent.isActive },
+                    ].map(({ label, val }) => (
+                      <div key={label} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", borderRadius: 10, background: val ? C.greenSoft : C.redSoft, border: `1px solid ${val ? C.greenBord : "#FECACA"}` }}>
+                        {val ? <CheckCircle size={14} color={C.green} /> : <XCircle size={14} color={C.red} />}
+                        <span style={{ fontSize: 12, fontWeight: 600, color: val ? C.green : C.red }}>{label}</span>
+                      </div>
+                    ))}
+                  </div>
                 </Section>
               </div>
-
-              {/* Dependents — full width */}
-              {agent.dependents && agent.dependents.length > 0 && (
-                <div style={{ gridColumn: "1 / -1" }}>
-                  <Section icon={Users} title={`Dependents (${agent.dependents.length})`}>
-                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))", gap: 12 }}>
-                      {agent.dependents.map((dep, idx) => (
-                        <div key={idx} style={{ background: C.grayLight, borderRadius: 10, padding: "12px 16px", border: `1px solid ${C.grayBord}` }}>
-                          <DRow label="Name"         value={show(dep.name)} />
-                          <DRow label="Age"          value={show(dep.age)} />
-                          <DRow label="Relationship" value={show(dep.relationship)} />
-                          <DRow label="Location"     value={show(dep.location)} />
-                        </div>
-                      ))}
-                    </div>
-                  </Section>
-                </div>
-              )}
             </div>
           )}
 
@@ -419,17 +489,14 @@ export default function VaultAgentdetail() {
           {activeTab === "documents" && (
             <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
 
-              {/* Verification badges row */}
+              {/* Verification status row */}
               <div style={{ background: C.white, borderRadius: 14, border: `1px solid ${C.grayBord}`, padding: "16px 20px" }}>
-                <GroupLabel label="Verification Status" />
+                <GroupLabel label="Document Verification Status" />
                 <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 8 }}>
-                  <VerificationBadge label="Email"       verified={agent.isEmailVerified} />
-                  <VerificationBadge label="Phone"       verified={agent.isPhoneVerified} />
                   <VerificationBadge label="Emirates ID" verified={agent.emiratesId?.verified} />
                   <VerificationBadge label="Passport"    verified={agent.passport?.verified} />
-                  <VerificationBadge label="Visa"        verified={agent.visa?.verified} />
-                  <VerificationBadge label="Bank"        verified={agent.bankDetails?.verified} />
-                  <VerificationBadge label="Agent"       verified={agent.isVerified} />
+                  <VerificationBadge label="Bank Details" verified={agent.bankDetails?.verified} />
+                  <VerificationBadge label="Account"     verified={agent.isVerified} />
                 </div>
                 {agent.rejectionReason && (
                   <div style={{ marginTop: 12, padding: "10px 14px", background: C.redSoft, borderRadius: 8, border: "1px solid #FECACA", fontSize: 13, color: "#991B1B", display: "flex", gap: 8, alignItems: "flex-start" }}>
@@ -456,6 +523,26 @@ export default function VaultAgentdetail() {
                   {!agent.emiratesId?.frontImageUrl && !agent.emiratesId?.backImageUrl && (
                     <div style={{ marginTop: 10 }}><EmptyNote msg="No Emirates ID documents uploaded" /></div>
                   )}
+                  {/* Admin verify/reject buttons */}
+                  {(agent.emiratesId?.frontImageUrl || agent.emiratesId?.number) && (
+                    <div style={{ display: "flex", gap: 8, marginTop: 14 }}>
+                      <button
+                        disabled={agent.emiratesId?.verified || !!docActionLoading}
+                        onClick={() => handleDocVerify("emiratesId", "verify")}
+                        style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "8px 0", borderRadius: 8, border: "none", background: agent.emiratesId?.verified ? C.greenSoft : C.green, color: agent.emiratesId?.verified ? C.green : "#fff", fontSize: 12, fontWeight: 600, cursor: agent.emiratesId?.verified ? "not-allowed" : "pointer", opacity: docActionLoading === "emiratesId_verify" ? 0.7 : 1 }}
+                      >
+                        {docActionLoading === "emiratesId_verify" ? <RefreshCw size={12} style={{ animation: "spin 1s linear infinite" }} /> : <CheckCircle size={12} />}
+                        {agent.emiratesId?.verified ? "Verified" : "Verify EID"}
+                      </button>
+                      <button
+                        disabled={!agent.emiratesId?.verified || !!docActionLoading}
+                        onClick={() => handleDocVerify("emiratesId", "reject")}
+                        style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "8px 0", borderRadius: 8, border: `1px solid ${C.grayBord}`, background: C.white, color: C.red, fontSize: 12, fontWeight: 600, cursor: !agent.emiratesId?.verified ? "not-allowed" : "pointer", opacity: (!agent.emiratesId?.verified || !!docActionLoading) ? 0.5 : 1 }}
+                      >
+                        <XCircle size={12} /> Reject
+                      </button>
+                    </div>
+                  )}
                 </Section>
 
                 {/* Passport */}
@@ -471,22 +558,27 @@ export default function VaultAgentdetail() {
                   ) : (
                     <div style={{ marginTop: 10 }}><EmptyNote msg="No passport document uploaded" /></div>
                   )}
-                </Section>
-
-                {/* Visa */}
-                <Section icon={Globe} title="Visa / Residency">
-                  <DRow label="Visa Number"      value={show(agent.visa?.number)} copy />
-                  <DRow label="Residency Status" value={show(agent.visa?.residencyStatus)} />
-                  <DRow label="Sponsor"          value={show(agent.visa?.sponsor)} />
-                  <DRow label="Expiry Date"      value={fmtDate(agent.visa?.expiryDate)} />
-                  <DRow label="Verified"         value={boolLabel(agent.visa?.verified)} highlight={agent.visa?.verified} />
-                  <DRow label="Verified At"      value={fmtDate(agent.visa?.verifiedAt)} />
-                  {agent.visa?.imageUrl ? (
-                    <div style={{ marginTop: 12 }}><DocImage label="Visa" url={agent.visa.imageUrl} /></div>
-                  ) : (
-                    <div style={{ marginTop: 10 }}><EmptyNote msg="No visa document uploaded" /></div>
+                  {agent.passport?.imageUrl && (
+                    <div style={{ display: "flex", gap: 8, marginTop: 14 }}>
+                      <button
+                        disabled={agent.passport?.verified || !!docActionLoading}
+                        onClick={() => handleDocVerify("passport", "verify")}
+                        style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "8px 0", borderRadius: 8, border: "none", background: agent.passport?.verified ? C.greenSoft : C.green, color: agent.passport?.verified ? C.green : "#fff", fontSize: 12, fontWeight: 600, cursor: agent.passport?.verified ? "not-allowed" : "pointer", opacity: docActionLoading === "passport_verify" ? 0.7 : 1 }}
+                      >
+                        {docActionLoading === "passport_verify" ? <RefreshCw size={12} style={{ animation: "spin 1s linear infinite" }} /> : <CheckCircle size={12} />}
+                        {agent.passport?.verified ? "Verified" : "Verify Passport"}
+                      </button>
+                      <button
+                        disabled={!agent.passport?.verified || !!docActionLoading}
+                        onClick={() => handleDocVerify("passport", "reject")}
+                        style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "8px 0", borderRadius: 8, border: `1px solid ${C.grayBord}`, background: C.white, color: C.red, fontSize: 12, fontWeight: 600, cursor: !agent.passport?.verified ? "not-allowed" : "pointer", opacity: (!agent.passport?.verified || !!docActionLoading) ? 0.5 : 1 }}
+                      >
+                        <XCircle size={12} /> Reject
+                      </button>
+                    </div>
                   )}
                 </Section>
+
               </div>
             </div>
           )}
@@ -496,16 +588,31 @@ export default function VaultAgentdetail() {
             <div className="pd-grid-2" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
 
               <Section icon={Banknote} title="Bank Details">
-                {bk.bankName || bk.accountNumber ? (
+                {bk.bankName || bk.accountNumber || bk.iban ? (
                   <>
-                    <DRow label="Beneficiary"   value={show(bk.beneficiaryName)} copy />
-                    <DRow label="Bank Name"     value={show(bk.bankName)} />
+                    <DRow label="Beneficiary"  value={show(bk.beneficiaryName)} copy />
+                    <DRow label="Bank Name"    value={show(bk.bankName)} />
                     <DRow label="Account No."  value={show(bk.accountNumber)} copy />
-                    <DRow label="IBAN"          value={show(bk.iban)} copy />
-                    <DRow label="SWIFT"         value={show(bk.swiftCode)} copy />
-                    <DRow label="Account Type" value={show(bk.accountType)} />
+                    <DRow label="IBAN"         value={show(bk.iban)} copy />
                     <DRow label="Verified"     value={boolLabel(bk.verified)} highlight={bk.verified} />
                     {bk.verifiedAt && <DRow label="Verified At" value={fmtDate(bk.verifiedAt)} />}
+                    <div style={{ display: "flex", gap: 8, marginTop: 14 }}>
+                      <button
+                        disabled={bk.verified || !!docActionLoading}
+                        onClick={() => handleDocVerify("bankDetails", "verify")}
+                        style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "8px 0", borderRadius: 8, border: "none", background: bk.verified ? C.greenSoft : C.green, color: bk.verified ? C.green : "#fff", fontSize: 12, fontWeight: 600, cursor: bk.verified ? "not-allowed" : "pointer", opacity: docActionLoading === "bankDetails_verify" ? 0.7 : 1 }}
+                      >
+                        {docActionLoading === "bankDetails_verify" ? <RefreshCw size={12} style={{ animation: "spin 1s linear infinite" }} /> : <CheckCircle size={12} />}
+                        {bk.verified ? "Verified" : "Verify Bank"}
+                      </button>
+                      <button
+                        disabled={!bk.verified || !!docActionLoading}
+                        onClick={() => handleDocVerify("bankDetails", "reject")}
+                        style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "8px 0", borderRadius: 8, border: `1px solid ${C.grayBord}`, background: C.white, color: C.red, fontSize: 12, fontWeight: 600, cursor: !bk.verified ? "not-allowed" : "pointer", opacity: (!bk.verified || !!docActionLoading) ? 0.5 : 1 }}
+                      >
+                        <XCircle size={12} /> Reject
+                      </button>
+                    </div>
                   </>
                 ) : <EmptyNote msg="No bank details added" />}
               </Section>
@@ -519,31 +626,38 @@ export default function VaultAgentdetail() {
                 <DRow label="Leaderboard Rank"   value={show(ag.leaderboardRank)} />
               </Section>
 
-              {/* Freelance commission — full width */}
-              {fc && (
+              {/* Referral Partner commission rates */}
+              {fc && agent.agentType === "ReferralPartner" && (
                 <div style={{ gridColumn: "1 / -1" }}>
-                  <Section icon={Percent} title="Freelance Commission Rates">
+                  <Section icon={Percent} title="Commission Rates (Referral Partner)">
                     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
                       <div style={{ background: C.primarySoft, borderRadius: 12, padding: "14px 16px", border: `1px solid ${C.primaryBord}` }}>
                         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
                           <div style={{ width: 24, height: 24, borderRadius: 7, background: C.primary, display: "flex", alignItems: "center", justifyContent: "center" }}>
                             <Tag size={12} color="#fff" />
                           </div>
-                          <span style={{ fontWeight: 700, fontSize: 13, color: C.primary }}>Referral Only</span>
+                          <span style={{ fontWeight: 700, fontSize: 13, color: C.primary }}>Loans ≤ AED 5M</span>
                         </div>
-                        <DRow label="Below AED 5M" value={fc.referralOnly?.below5M !== undefined ? `${fc.referralOnly.below5M}%` : null} />
-                        <DRow label="Above AED 5M" value={fc.referralOnly?.above5M !== undefined ? `${fc.referralOnly.above5M}%` : null} />
+                        <DRow label="Commission %" value={fc.below5M !== undefined ? `${fc.below5M}%` : "40%"} highlight />
                       </div>
                       <div style={{ background: C.greenSoft, borderRadius: 12, padding: "14px 16px", border: `1px solid ${C.greenBord}` }}>
                         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
                           <div style={{ width: 24, height: 24, borderRadius: 7, background: C.green, display: "flex", alignItems: "center", justifyContent: "center" }}>
                             <Tag size={12} color="#fff" />
                           </div>
-                          <span style={{ fontWeight: 700, fontSize: 13, color: "#065F46" }}>Referral + Documents</span>
+                          <span style={{ fontWeight: 700, fontSize: 13, color: "#065F46" }}>Loans &gt; AED 5M</span>
                         </div>
-                        <DRow label="Below AED 5M" value={fc.referralPlusDocs?.below5M !== undefined ? `${fc.referralPlusDocs.below5M}%` : null} />
-                        <DRow label="Above AED 5M" value={fc.referralPlusDocs?.above5M !== undefined ? `${fc.referralPlusDocs.above5M}%` : null} />
+                        <DRow label="Commission %" value={fc.above5M !== undefined ? `${fc.above5M}%` : "50%"} highlight />
                       </div>
+                    </div>
+                  </Section>
+                </div>
+              )}
+              {agent.agentType === "PartnerAffiliatedAgent" && (
+                <div style={{ gridColumn: "1 / -1" }}>
+                  <Section icon={Percent} title="Commission (Partner Affiliated Agent)">
+                    <div style={{ background: C.blueSoft, borderRadius: 10, padding: "12px 16px", border: `1px solid #BFDBFE`, fontSize: 13, color: "#1d4ed8" }}>
+                      Commission for leads from affiliated agents is paid to the partner company. The agent does not receive direct Xoto commission.
                     </div>
                   </Section>
                 </div>
@@ -554,31 +668,33 @@ export default function VaultAgentdetail() {
           {/* ── AFFILIATION ──────────────────────────────────────── */}
           {activeTab === "affiliation" && (
             <div className="pd-grid-2" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
-              <Section icon={Building2} title="Agent & Affiliation">
-                <DRow label="Agent Type"          value={show(agent.agentType?.replace(/([A-Z])/g, ' $1').trim())} />
-                <DRow label="Affiliation Status"  value={show(agent.affiliationStatus)}
+              <Section icon={Building2} title="Agent Type & Affiliation">
+                <DRow label="Agent Type"
+                  value={agent.agentType === "ReferralPartner" ? "Referral Partner" : agent.agentType === "PartnerAffiliatedAgent" ? "Partner Affiliated Agent" : show(agent.agentType)}
+                />
+                <DRow label="Affiliation Status"
+                  value={agent.affiliationStatus === "none" ? "N/A — Referral Partner" : show(agent.affiliationStatus)}
                   badge={
-                    agent.affiliationStatus?.toLowerCase() === "verified"  ? { bg: C.greenSoft, color: C.green } :
-                    agent.affiliationStatus?.toLowerCase() === "rejected"  ? { bg: C.redSoft,   color: C.red   } :
-                    agent.affiliationStatus?.toLowerCase() === "pending"   ? { bg: C.amberSoft, color: C.amber } : undefined
+                    agent.affiliationStatus === "verified" ? { bg: C.greenSoft, color: C.green } :
+                    agent.affiliationStatus === "rejected" ? { bg: C.redSoft,   color: C.red   } :
+                    agent.affiliationStatus === "pending"  ? { bg: C.amberSoft, color: C.amber } : undefined
                   }
                 />
-                <DRow label="Commission Eligible" value={boolLabel(agent.commissionEligible)} highlight={agent.commissionEligible} />
-                {agent.commissionEligibilityReason && <DRow label="Eligibility Reason"  value={show(agent.commissionEligibilityReason)} />}
-                {agent.affiliationRejectionReason  && <DRow label="Rejection Reason"    value={show(agent.affiliationRejectionReason)} />}
-                {agent.affiliationVerifiedAt && (
-                  <DRow label="Affiliation Verified" value={new Date(agent.affiliationVerifiedAt).toLocaleString()} />
-                )}
-                {agent.affiliationVerifiedBy && <DRow label="Verified By" value={show(agent.affiliationVerifiedBy)} />}
+                <DRow label="Commission Eligible"    value={boolLabel(agent.commissionEligible)} highlight={agent.commissionEligible} />
+                {agent.commissionEligibilityReason && <DRow label="Eligibility Note" value={show(agent.commissionEligibilityReason)} />}
+                {agent.affiliationRejectionReason  && <DRow label="Rejection Reason" value={show(agent.affiliationRejectionReason)} />}
+                {agent.affiliationVerifiedAt && <DRow label="Affiliation Approved" value={new Date(agent.affiliationVerifiedAt).toLocaleString()} />}
+                {agent.affiliationTerminatedAt && <DRow label="Affiliation Terminated" value={new Date(agent.affiliationTerminatedAt).toLocaleString()} />}
+                {agent.affiliationRequestedAt  && <DRow label="Affiliation Requested"  value={new Date(agent.affiliationRequestedAt).toLocaleString()} />}
               </Section>
 
-              <Section icon={Hash} title="Partner Link">
-                <DRow label="Partner Company" value={show(agent.partnerId?.companyName)} />
-                <DRow label="Partner Status"  value={show(agent.partnerId?.status)} />
-                <DRow label="Partner ID"      value={show(agent.partnerId?._id)} copy />
-                <DRow label="Role"            value={show(agent.role?.name)} />
-                <DRow label="Role Code"       value={show(agent.role?.code)} />
-              </Section>
+              {agent.agentType === "PartnerAffiliatedAgent" && (
+                <Section icon={Hash} title="Partner Details">
+                  <DRow label="Partner Company" value={show(agent.partnerId?.companyName)} />
+                  <DRow label="Partner Status"  value={show(agent.partnerId?.status)} />
+                  <DRow label="Partner ID"      value={show(typeof agent.partnerId === "string" ? agent.partnerId : agent.partnerId?._id)} copy />
+                </Section>
+              )}
             </div>
           )}
 
@@ -587,11 +703,11 @@ export default function VaultAgentdetail() {
             <div className="pd-grid-2" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
               <Section icon={Shield} title="System Information">
                 <DRow label="Agent ID"    value={show(agent._id)} copy />
-                <DRow label="Version"     value={agent.__v !== undefined ? `v${agent.__v}` : null} />
                 <DRow label="Created At"  value={agent.createdAt ? new Date(agent.createdAt).toLocaleString() : null} />
                 <DRow label="Updated At"  value={agent.updatedAt ? new Date(agent.updatedAt).toLocaleString() : null} />
+                <DRow label="Last Login"  value={agent.lastLoginAt ? new Date(agent.lastLoginAt).toLocaleString() : null} />
                 <DRow label="Verified At" value={agent.verifiedAt ? new Date(agent.verifiedAt).toLocaleString() : null} />
-                <DRow label="Verified By" value={show(agent.verifiedBy)} />
+                <DRow label="Verified By (ID)" value={show(typeof agent.verifiedBy === "string" ? agent.verifiedBy : agent.verifiedBy?._id)} copy />
                 <DRow label="Deleted"     value={boolLabel(agent.isDeleted)} />
                 {agent.suspendedAt && (
                   <>

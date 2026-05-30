@@ -40,19 +40,22 @@ const roleSlugMap = {
 };
 
 const STATUS_CFG = {
-  New: { color: "blue", bg: "#EFF6FF", text: "#1D4ED8", icon: <PlusCircleOutlined /> },
-  Assigned: { color: "purple", bg: "#F5F0FF", text: "#6D28D9", icon: <UserOutlined /> },
-  Contacted: { color: "orange", bg: "#FFF7ED", text: "#C2410C", icon: <PhoneOutlined /> },
-  Qualified: { color: "geekblue", bg: "#EEF2FF", text: "#4338CA", icon: <CheckCircleOutlined /> },
-  "Collecting Documents": { color: "purple", bg: "#FAF5FF", text: "#581C87", icon: <FileTextOutlined /> },
-  "Bank Application": { color: "violet", bg: "#EDE9FE", text: "#5B21B6", icon: <FileTextOutlined /> },
-  "Pre-Approved": { color: "green", bg: "#DCFCE7", text: "#166534", icon: <CheckCircleOutlined /> },
-  Valuation: { color: "orange", bg: "#FEF3C7", text: "#92400E", icon: <ClockCircleOutlined /> },
-  "FOL Processed": { color: "indigo", bg: "#E0E7FF", text: "#3730A3", icon: <FileTextOutlined /> },
-  "FOL Issued": { color: "indigo", bg: "#E0E7FF", text: "#3730A3", icon: <FileTextOutlined /> },
-  "FOL Signed": { color: "purple", bg: "#F3E8FF", text: "#6B21A5", icon: <CheckCircleOutlined /> },
-  Disbursed: { color: "success", bg: "#ECFDF5", text: "#065F46", icon: <DollarOutlined /> },
-  Lost: { color: "red", bg: "#FEF2F2", text: "#991B1B", icon: <CloseOutlined /> },
+  "New":                   { color: "blue",     bg: "#EFF6FF", text: "#1D4ED8", icon: <PlusCircleOutlined /> },
+  "Assigned":              { color: "purple",   bg: "#F5F0FF", text: "#6D28D9", icon: <UserOutlined /> },
+  "Contacted":             { color: "orange",   bg: "#FFF7ED", text: "#C2410C", icon: <PhoneOutlined /> },
+  "Qualified":             { color: "geekblue", bg: "#EEF2FF", text: "#4338CA", icon: <CheckCircleOutlined /> },
+  "Collecting Documents":  { color: "purple",   bg: "#FAF5FF", text: "#581C87", icon: <FileTextOutlined /> },
+  "Documents Complete":    { color: "cyan",     bg: "#F0FDF4", text: "#15803D", icon: <CheckCircleOutlined /> },
+  "Application Opened":    { color: "volcano",  bg: "#FFF5F3", text: "#C2410C", icon: <FileTextOutlined /> },
+  "Bank Application":      { color: "violet",   bg: "#EDE9FE", text: "#5B21B6", icon: <FileTextOutlined /> },
+  "Pre-Approved":          { color: "green",    bg: "#DCFCE7", text: "#166534", icon: <CheckCircleOutlined /> },
+  "Valuation":             { color: "orange",   bg: "#FEF3C7", text: "#92400E", icon: <ClockCircleOutlined /> },
+  "FOL Processed":         { color: "indigo",   bg: "#E0E7FF", text: "#3730A3", icon: <FileTextOutlined /> },
+  "FOL Issued":            { color: "indigo",   bg: "#E0E7FF", text: "#3730A3", icon: <FileTextOutlined /> },
+  "FOL Signed":            { color: "purple",   bg: "#F3E8FF", text: "#6B21A5", icon: <CheckCircleOutlined /> },
+  "Disbursed":             { color: "success",  bg: "#ECFDF5", text: "#065F46", icon: <DollarOutlined /> },
+  "Not Proceeding":        { color: "default",  bg: "#F3F4F6", text: "#6B7280", icon: <CloseOutlined /> },
+  "Lost":                  { color: "red",      bg: "#FEF2F2", text: "#991B1B", icon: <CloseOutlined /> },
 };
 
 const SOURCE_CFG = {

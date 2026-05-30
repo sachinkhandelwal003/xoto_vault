@@ -39,9 +39,6 @@ export default function PartnerOnboardAgent() {
         phone_number: values.phone_number,
         country_code: values.country_code || "+971",
         password:     values.password,
-        ...(values.internalCommissionPercentage != null && values.internalCommissionPercentage !== ""
-          ? { internalCommissionPercentage: Number(values.internalCommissionPercentage) }
-          : {}),
       };
 
       await apiService.post("/vault/agent/partner/onboard-affiliate", payload);
@@ -136,54 +133,12 @@ export default function PartnerOnboardAgent() {
 
             <Divider style={{ margin: "24px 0 0" }} />
 
-            {/* Internal Commission */}
-            <div style={{ padding: "16px 24px" }}>
-              <Title level={5} style={{ color: "#000", marginBottom: 12 }}>Internal Commission Rate</Title>
-              <Row gutter={[24, 0]} align="bottom">
-                <Col xs={24} sm={10}>
-                  <Form.Item
-                    name="internalCommissionPercentage"
-                    label="Agent Commission %"
-                    tooltip="What percentage of the commission Xoto pays your company will you pass on to this agent? Leave blank to use your company default."
-                    rules={[{
-                      validator: (_, v) => {
-                        if (v === undefined || v === null || v === "") return Promise.resolve();
-                        const n = Number(v);
-                        if (isNaN(n) || n < 0 || n > 100) return Promise.reject("Must be 0–100");
-                        return Promise.resolve();
-                      }
-                    }]}
-                  >
-                    <Input
-                      size="large"
-                      type="number"
-                      min={0}
-                      max={100}
-                      placeholder="e.g. 30"
-                      suffix="%"
-                      style={{ borderRadius: 8 }}
-                    />
-                  </Form.Item>
-                </Col>
-                <Col xs={24} sm={14}>
-                  <div style={{ background: "#F5F0FF", border: "1px solid #E9D5FF", borderRadius: 10, padding: "10px 14px", marginBottom: 24 }}>
-                    <Text style={{ fontSize: 12, color: BRAND_PURPLE, fontWeight: 600 }}>
-                      Commission is paid by Xoto to your company. You decide what % to share with this agent internally.
-                      This is tracked for your reference only — Xoto does not process this payment.
-                    </Text>
-                  </div>
-                </Col>
-              </Row>
-            </div>
-
-            <Divider style={{ margin: "0 0 0" }} />
-
             <div style={{ padding: "16px 24px", background: "#fafafa" }}>
               <div style={{ background: "#F5F0FF", border: "1px solid #E9D5FF", borderRadius: 10, padding: "12px 16px" }}>
-                <Text style={{ fontSize: 13, color: BRAND_PURPLE, fontWeight: 600 }}>Affiliated Agent Access</Text>
+                <Text style={{ fontSize: 13, color: BRAND_PURPLE, fontWeight: 600 }}>After Onboarding</Text>
                 <br />
                 <Text type="secondary" style={{ fontSize: 12 }}>
-                  After onboarding, the agent logs in and completes their profile including Emirates ID, Passport, Visa, and bank details from their profile page.
+                  The agent will be immediately verified and active. They log in and complete their profile (Emirates ID, Passport, Bank Details) from their profile page. Commission for their leads is paid to your company.
                 </Text>
               </div>
             </div>

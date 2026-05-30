@@ -3,6 +3,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { apiService } from "@/api/apiService";
 import { useSelector } from 'react-redux';
+import CustomTable from '@/components/common/CustomTable';
 import {
   Card, Steps, Button, Typography, Row, Col, Avatar,
   Tag, Divider, Spin, message, Input, Select,
@@ -311,8 +312,12 @@ const CreateCase = () => {
       numberOfDependents: ci.numberOfDependents || 0,
       occupation: ci.occupation || '',
       employer: ci.employer || '',
-      monthlySalary: ci.monthlySalary || 0,
-      existingLiabilities: ci.existingMonthlyLiabilities || 0,
+      monthlySalary:        ci.monthlySalary || 0,
+      fixedMonthlySalary:   ci.monthlySalary || 0,
+      salaryBankName:       ci.salaryBankName || '',
+      existingLiabilities:  ci.existingLiabilities ?? ci.existingMonthlyLiabilities ?? 0,
+      feeFinancingRequired: ci.feeFinancingRequired ?? false,
+      mortgageTerm:         ci.mortgageTerm || lr.preferredTenureYears || 25,
       // Property Info
       propertyValue: propertyValue,
       downPayment: downPayment,
@@ -394,18 +399,26 @@ const CreateCase = () => {
         sourceLeadId: selectedLead._id,
         caseReference: formData.caseReference,
 
-        // Client info — prefer form values, fall back to lead
+        // Client info — prefer form values, fall back to lead (PRD 5.3 Step 1)
         clientInfo: {
-          fullName:         formData.fullName || `${ci.firstName || ''} ${ci.lastName || ''}`.trim(),
-          email:            formData.email            || ci.email            || null,
-          mobile:           formData.mobile           || ci.mobileNumber     || null,
-          nationality:      formData.nationality      || ci.nationality      || null,
-          residencyStatus:  formData.residencyStatus  || ci.residencyStatus  || null,
-          employmentStatus: formData.employmentStatus || ci.employmentStatus || null,
-          dateOfBirth:      formData.dateOfBirth ? dayjs(formData.dateOfBirth).toISOString() : (ci.dateOfBirth || null),
-          employer:         formData.employer         || ci.employer         || null,
-          monthlySalary:    formData.monthlySalary    || ci.monthlySalary    || null,
-          gender:           formData.gender           || ci.gender           || null,
+          firstName:           formData.firstName           || ci.firstName      || null,
+          lastName:            formData.lastName            || ci.lastName       || null,
+          fullName:            formData.fullName            || `${ci.firstName || ''} ${ci.lastName || ''}`.trim(),
+          email:               formData.email               || ci.email          || null,
+          phone:               formData.mobile              || ci.mobileNumber   || null,
+          mobile:              formData.mobile              || ci.mobileNumber   || null,
+          nationality:         formData.nationality         || ci.nationality    || null,
+          residencyStatus:     formData.residencyStatus     || ci.residencyStatus  || null,
+          employmentStatus:    formData.employmentStatus    || ci.employmentStatus || null,
+          dateOfBirth:         formData.dateOfBirth ? dayjs(formData.dateOfBirth).toISOString() : (ci.dateOfBirth || null),
+          employer:            formData.employer            || ci.employer         || null,
+          monthlySalary:       formData.monthlySalary       || ci.monthlySalary    || null,
+          fixedMonthlySalary:  formData.fixedMonthlySalary  || formData.monthlySalary || ci.monthlySalary || null,
+          salaryBankName:      formData.salaryBankName      || ci.salaryBankName   || null,
+          existingLiabilities: formData.existingLiabilities ?? ci.existingLiabilities ?? null,
+          mortgageTerm:        formData.mortgageTerm        || formData.preferredTenureYears || 25,
+          feeFinancingRequired: formData.feeFinancingRequired ?? false,
+          gender:              formData.gender              || ci.gender           || null,
         },
 
         // Property info — optional; use form values or lead property details
@@ -553,48 +566,101 @@ const CreateCase = () => {
   // ==================== RENDER FUNCTIONS ====================
   
   // Step 0: Select Lead
+  const leadColumns = [
+    {
+      key: 'client',
+      title: 'Client',
+      render: (_, row) => (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{ width: 36, height: 36, borderRadius: '50%', background: selectedLead?._id === row._id ? P : '#f3f4f6', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <UserOutlined style={{ color: selectedLead?._id === row._id ? '#fff' : '#6b7280', fontSize: 15 }} />
+          </div>
+          <div>
+            <div style={{ fontWeight: 700, fontSize: 13, color: '#1e293b' }}>{row.customerInfo?.fullName || '—'}</div>
+            <div style={{ fontSize: 11, color: '#94a3b8' }}>{row.customerInfo?.email || row.customerInfo?.mobile || '—'}</div>
+          </div>
+        </div>
+      ),
+    },
+    {
+      key: 'property',
+      title: 'Property Value',
+      render: (_, row) => (
+        <div>
+          <div style={{ fontWeight: 700, fontSize: 13, color: P }}>AED {(row.propertyDetails?.propertyValue || 0).toLocaleString()}</div>
+          <div style={{ fontSize: 11, color: '#94a3b8' }}>{row.propertyDetails?.propertyType || '—'}</div>
+        </div>
+      ),
+    },
+    {
+      key: 'salary',
+      title: 'Monthly Salary',
+      render: (_, row) => (
+        <div style={{ fontWeight: 600, fontSize: 13 }}>AED {(row.customerInfo?.monthlySalary || 0).toLocaleString()}</div>
+      ),
+    },
+    {
+      key: 'eligibility',
+      title: 'Eligibility',
+      render: (_, row) => row.eligibility?.isEligible ? (
+        <span style={{ fontSize: 11, padding: '3px 10px', borderRadius: 20, background: '#ecfdf5', color: '#059669', fontWeight: 700, border: '1px solid #a7f3d0' }}>
+          ✓ Eligible — DBR {row.eligibility.dbrPercentage}%
+        </span>
+      ) : (
+        <span style={{ fontSize: 11, padding: '3px 10px', borderRadius: 20, background: '#fef2f2', color: '#dc2626', fontWeight: 700 }}>Not Eligible</span>
+      ),
+    },
+    {
+      key: 'action',
+      title: 'Select',
+      render: (_, row) => (
+        <button
+          onClick={() => setSelectedLead(row)}
+          style={{
+            padding: '7px 16px', borderRadius: 8, border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: 12,
+            background: selectedLead?._id === row._id ? P : '#f5f0ff',
+            color: selectedLead?._id === row._id ? '#fff' : P,
+            boxShadow: selectedLead?._id === row._id ? `0 3px 10px ${P}40` : 'none',
+          }}
+        >
+          {selectedLead?._id === row._id ? '✓ Selected' : 'Select'}
+        </button>
+      ),
+    },
+  ];
+
   const renderLeadSelect = () => (
     <div>
-      <Title level={4} style={{ color: P, marginBottom: 24 }}>Step 1: Select Qualified Lead</Title>
-      
-      {/* Search bar */}
-      <div style={{ display: 'flex', gap: 12, marginBottom: 20 }}>
-        <Input
-          placeholder="Search qualified leads by name or phone..."
-          value={searchQuery}
-          onChange={e => setSearchQuery(e.target.value)}
-          onPressEnter={() => fetchQualifiedLeads(searchQuery)}
-          allowClear
-          style={{ borderRadius: 10, maxWidth: 400 }}
-        />
-        <Button 
-          type="primary" 
-          onClick={() => fetchQualifiedLeads(searchQuery)}
-          style={{ borderRadius: 10, background: P, borderColor: P }}
-        >
-          Search
-        </Button>
-      </div>
+      <Title level={4} style={{ color: P, marginBottom: 8 }}>Step 1: Select Qualified Lead</Title>
+      <p style={{ color: '#94a3b8', fontSize: 13, marginBottom: 20 }}>
+        Select a qualified lead to create a mortgage case. Only leads with "Qualified" status are shown.
+      </p>
 
-      {fetchingLeads ? <div style={{ textAlign: 'center', padding: 60 }}><Spin size="large" /></div>
-        : qualifiedLeads.length === 0 ? (
-          <Alert 
-            message={searchQuery ? "No Matching Leads" : "No Qualified Leads"} 
-            description={searchQuery ? "No qualified leads match your search query." : "No qualified leads available for case creation."} 
-            type="info" 
-            showIcon 
-          />
-        )
-        : (
-          <Row gutter={[16, 16]}>
-            {qualifiedLeads.map(lead => (
-              <Col xs={24} md={12} lg={8} key={lead._id}>
-                <LeadCard lead={lead} isSelected={selectedLead?._id === lead._id} onSelect={setSelectedLead} />
-              </Col>
-            ))}
-          </Row>
-        )}
-      <NavBar onNext={() => { if (!selectedLead) { message.error('Please select a lead'); return; } setStep(1); }} nextLabel="Continue →" nextDisabled={!selectedLead} />
+      {selectedLead && (
+        <div style={{ background: '#ecfdf5', border: '1px solid #a7f3d0', borderRadius: 12, padding: '12px 16px', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 10 }}>
+          <CheckCircleOutlined style={{ color: '#059669', fontSize: 16 }} />
+          <span style={{ fontWeight: 700, fontSize: 13, color: '#059669' }}>
+            Selected: {selectedLead.customerInfo?.fullName} — AED {(selectedLead.propertyDetails?.propertyValue || 0).toLocaleString()}
+          </span>
+          <button onClick={() => setSelectedLead(null)} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: '#dc2626', cursor: 'pointer', fontSize: 12, fontWeight: 600 }}>✕ Clear</button>
+        </div>
+      )}
+
+      <CustomTable
+        columns={leadColumns}
+        data={qualifiedLeads}
+        loading={fetchingLeads}
+        showSearch={true}
+        totalItems={qualifiedLeads.length}
+        currentPage={1}
+        itemsPerPage={10}
+      />
+
+      <NavBar
+        onNext={() => { if (!selectedLead) { message.error('Please select a qualified lead first'); return; } setStep(1); }}
+        nextLabel="Continue →"
+        nextDisabled={!selectedLead}
+      />
     </div>
   );
 
@@ -782,11 +848,26 @@ const CreateCase = () => {
                 </Col>
                 <Col span={12}>
                   <Text type="secondary" style={{ fontSize: 11 }}>Monthly Salary (AED)</Text>
-                  <InputNumber value={formData.monthlySalary} onChange={v => setFormData(p => ({ ...p, monthlySalary: v || 0 }))} style={{ width: '100%' }} formatter={v => `${v}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')} />
+                  <InputNumber value={formData.monthlySalary} onChange={v => setFormData(p => ({ ...p, monthlySalary: v || 0, fixedMonthlySalary: v || 0 }))} style={{ width: '100%' }} formatter={v => `${v}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')} />
                 </Col>
                 <Col span={12}>
-                  <Text type="secondary" style={{ fontSize: 11 }}>Existing Liabilities (AED)</Text>
+                  <Text type="secondary" style={{ fontSize: 11 }}>Salary Bank</Text>
+                  <Input value={formData.salaryBankName} onChange={e => setFormData(p => ({ ...p, salaryBankName: e.target.value }))} placeholder="e.g. Emirates NBD" />
+                </Col>
+                <Col span={12}>
+                  <Text type="secondary" style={{ fontSize: 11 }}>Existing Liabilities / Month (AED)</Text>
                   <InputNumber value={formData.existingLiabilities} onChange={v => setFormData(p => ({ ...p, existingLiabilities: v || 0 }))} style={{ width: '100%' }} />
+                </Col>
+                <Col span={12}>
+                  <Text type="secondary" style={{ fontSize: 11 }}>Mortgage Term (Years)</Text>
+                  <InputNumber value={formData.mortgageTerm} min={5} max={25} onChange={v => setFormData(p => ({ ...p, mortgageTerm: v || 25, preferredTenureYears: v || 25 }))} style={{ width: '100%' }} />
+                </Col>
+                <Col span={12}>
+                  <Text type="secondary" style={{ fontSize: 11 }}>Fee Financing Required?</Text>
+                  <Select value={formData.feeFinancingRequired} onChange={v => setFormData(p => ({ ...p, feeFinancingRequired: v }))} style={{ width: '100%' }}>
+                    <Option value={true}>Yes</Option>
+                    <Option value={false}>No</Option>
+                  </Select>
                 </Col>
               </Row>
             </Card>

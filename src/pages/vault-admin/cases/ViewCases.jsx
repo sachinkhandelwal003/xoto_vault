@@ -109,7 +109,7 @@ const ViewCases = () => {
   const fetchCases = useCallback(async (page) => {
     setLoading(true);
     try {
-      const res = await apiService.get(`/vault/cases?page=${page}&limit=10&status=Draft`);
+      const res = await apiService.get(`/vault/cases?page=${page}&limit=10`);
       if (res?.success) {
         setCases(res.data || []);
         setTotalItems(res.total || 0);
@@ -297,7 +297,14 @@ const ViewCases = () => {
                 <Text type="secondary" style={{ fontSize: 11 }}>Case: {caseItem.caseReference}</Text>
               </div>
             </div>
-            <Badge status="default" text={<span style={{ fontSize: 11 }}>Draft</span>} />
+            <Badge
+              status={
+                selectedCase?.currentStatus === 'Disbursed' ? 'success' :
+                ['Lost','Declined','Rejected'].includes(selectedCase?.currentStatus) ? 'error' :
+                selectedCase?.currentStatus === 'Draft' ? 'default' : 'processing'
+              }
+              text={<span style={{ fontSize: 11 }}>{selectedCase?.currentStatus || 'Draft'}</span>}
+            />
           </div>
 
           {/* Key Metrics */}

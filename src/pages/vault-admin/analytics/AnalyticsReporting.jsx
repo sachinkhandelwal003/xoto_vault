@@ -177,11 +177,12 @@ export default function AnalyticsReporting() {
 
   const commissionChartData = useMemo(() => {
     if (!reportData || reportType !== "commission_report") return [];
-    const { received = 0, paidOut = 0, outstanding = 0 } = reportData;
+    const { xotoNetProfit = 0, totalPaidOut = 0, totalOutstanding = 0, xotoInternalProfit = 0 } = reportData;
     return [
-      { name: "Net Profit", value: received - paidOut },
-      { name: "Paid Out", value: paidOut },
-      { name: "Outstanding", value: outstanding }
+      { name: "Xoto Net Profit",   value: xotoNetProfit },
+      { name: "Paid Out",          value: totalPaidOut },
+      { name: "Outstanding",       value: totalOutstanding },
+      { name: "Internal (Admin)",  value: xotoInternalProfit },
     ];
   }, [reportData, reportType]);
 
@@ -489,59 +490,195 @@ export default function AnalyticsReporting() {
           </Row>
         );
 
-      case "commission_report":
-        const { received = 0, paidOut = 0, outstanding = 0, totalRecords = 0 } = reportData;
-        const totalProfit = received - paidOut;
+      case "commission_report": {
+        const {
+          totalBankToXoto = 0, totalPaidOut = 0, totalOutstanding = 0,
+          xotoInternalProfit = 0, xotoNetProfit = 0, totalRecords = 0,
+          sourceBreakdown = [], recipientBreakdown = [], records = [],
+        } = reportData;
+
+        const SOURCE_LABEL = {
+          admin:                   { label: "Admin Lead",             color: "#6B7280", bg: "#F3F4F6" },
+          referral_partner:        { label: "Referral Partner",       color: "#5C039B", bg: "#F5F0FF" },
+          partner_affiliated_agent:{ label: "Affiliated Agent",       color: "#2563EB", bg: "#EFF6FF" },
+          individual_partner:      { label: "Partner (Individual)",   color: "#D97706", bg: "#FFFBEB" },
+          website:                 { label: "Website",                color: "#6B7280", bg: "#F3F4F6" },
+        };
+        const ROLE_LABEL = {
+          internal:        { label: "Xoto Internal", color: "#059669", bg: "#ECFDF5" },
+          partner:         { label: "Partner",        color: "#2563EB", bg: "#EFF6FF" },
+          referral_partner:{ label: "Referral Agent", color: "#5C039B", bg: "#F5F0FF" },
+        };
+        const STATUS_COLOR = {
+          Pending:    { color: "#D97706", bg: "#FFFBEB" },
+          Confirmed:  { color: "#2563EB", bg: "#EFF6FF" },
+          Paid:       { color: "#059669", bg: "#ECFDF5" },
+          Completed:  { color: "#059669", bg: "#ECFDF5" },
+          Processing: { color: "#7C3AED", bg: "#F5F0FF" },
+          Failed:     { color: "#DC2626", bg: "#FEF2F2" },
+        };
+
         return (
-          <Row gutter={[24, 24]}>
-            <Col xs={24} lg={10}>
-              <Card title={<span style={{ fontWeight: 700, color: P }}>Commission Breakdown</span>} bordered={false} style={{ borderRadius: 12, border: '1px solid #ede9f6' }}>
-                {totalRecords > 0 ? (
-                  <ResponsiveContainer width="100%" height={260}>
-                    <PieChart>
-                      <Pie
-                        data={commissionChartData}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={50}
-                        outerRadius={75}
-                        paddingAngle={3}
-                        dataKey="value"
-                      >
-                        <Cell fill="#10b981" />
-                        <Cell fill="#3b82f6" />
-                        <Cell fill="#f59e0b" />
-                      </Pie>
-                      <ChartTooltip contentStyle={{ borderRadius: 8 }} formatter={(v) => `AED ${Number(v).toLocaleString()}`} />
-                      <Legend iconType="circle" wrapperStyle={{ fontSize: 11 }} />
-                    </PieChart>
-                  </ResponsiveContainer>
-                ) : <Empty description="No commission records found" />}
-              </Card>
-            </Col>
-            <Col xs={24} lg={14}>
-              <div style={{ padding: "0 10px" }}>
-                <Row gutter={[16, 16]}>
-                  {[
-                    { label: "Received from Banks", value: received, color: P, bg: PL },
-                    { label: "Paid Out to Partners/Referrals", value: paidOut, color: "#2563eb", bg: "#eff6ff" },
-                    { label: "Outstanding Owed", value: outstanding, color: "#d97706", bg: "#fffbeb" },
-                    { label: "Net Xoto Earnings", value: totalProfit, color: "#10b981", bg: "#ecfdf5" }
-                  ].map(card => (
-                    <Col xs={24} sm={12} key={card.label}>
-                      <div style={{ background: card.bg, borderRadius: 16, padding: "20px 24px", border: "1px solid #ede9f6" }}>
-                        <div style={{ fontSize: 11, fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", marginBottom: 8 }}>{card.label}</div>
-                        <div style={{ fontSize: 22, fontWeight: 800, color: card.color }}>AED {Number(card.value).toLocaleString()}</div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+            {/* ── Summary cards ── */}
+            <Row gutter={[12, 12]}>
+              {[
+                { label: "Bank Commission Received by Xoto", value: totalBankToXoto,    color: P,        bg: PL,        tip: "Total 1% bank commission Xoto received across all disbursed cases" },
+                { label: "Paid Out to Partners/Agents",      value: totalPaidOut,        color: "#2563eb", bg: "#eff6ff", tip: "Commission already paid to referral partners and company partners" },
+                { label: "Outstanding / Pending",            value: totalOutstanding,    color: "#d97706", bg: "#fffbeb", tip: "Commission owed but not yet paid" },
+                { label: "Xoto Internal (Admin Leads)",      value: xotoInternalProfit, color: "#059669", bg: "#ecfdf5", tip: "Leads created by Admin — Xoto keeps 100% of commission" },
+                { label: "Xoto Net Profit",                  value: xotoNetProfit,       color: "#5b21b6", bg: "#f5f3ff", tip: "Bank commission received minus all payouts" },
+              ].map(card => (
+                <Col xs={24} sm={12} lg={5} key={card.label}>
+                  <Tooltip title={card.tip}>
+                    <div style={{ background: card.bg, borderRadius: 14, padding: "16px 18px", border: "1px solid #ede9f6", cursor: "default" }}>
+                      <div style={{ fontSize: 10, fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 6 }}>{card.label}</div>
+                      <div style={{ fontSize: 20, fontWeight: 800, color: card.color }}>AED {Number(card.value).toLocaleString()}</div>
+                    </div>
+                  </Tooltip>
+                </Col>
+              ))}
+            </Row>
+
+            {/* ── Charts row ── */}
+            <Row gutter={[20, 20]}>
+              {/* By lead source */}
+              <Col xs={24} lg={12}>
+                <Card title={<span style={{ fontWeight: 700, color: P }}>Commission by Lead Source</span>} bordered={false} style={{ borderRadius: 12, border: "1px solid #ede9f6" }}>
+                  {sourceBreakdown.length > 0 ? (
+                    <ResponsiveContainer width="100%" height={220}>
+                      <BarChart data={sourceBreakdown} margin={{ left: -10 }}>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                        <XAxis dataKey="source" tick={{ fontSize: 10, fill: "#64748b" }} tickLine={false} axisLine={false} />
+                        <YAxis tick={{ fontSize: 10, fill: "#64748b" }} tickLine={false} axisLine={false} tickFormatter={v => `AED ${(v/1000).toFixed(0)}k`} />
+                        <ChartTooltip contentStyle={{ borderRadius: 8 }} formatter={(v, n) => [`AED ${Number(v).toLocaleString()}`, n]} />
+                        <Legend iconType="circle" wrapperStyle={{ fontSize: 11 }} />
+                        <Bar dataKey="bank"       fill={P}        name="Bank to Xoto"   radius={[4,4,0,0]} />
+                        <Bar dataKey="payout"     fill="#3b82f6"  name="Paid to Recipient" radius={[4,4,0,0]} />
+                        <Bar dataKey="xotoProfit" fill="#10b981"  name="Xoto Profit"    radius={[4,4,0,0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  ) : <Empty description="No data" style={{ padding: 40 }} />}
+                </Card>
+              </Col>
+
+              {/* By recipient */}
+              <Col xs={24} lg={12}>
+                <Card title={<span style={{ fontWeight: 700, color: P }}>Commission by Recipient</span>} bordered={false} style={{ borderRadius: 12, border: "1px solid #ede9f6" }}>
+                  {recipientBreakdown.length > 0 ? (
+                    <ResponsiveContainer width="100%" height={220}>
+                      <PieChart>
+                        <Pie data={recipientBreakdown.map(r => ({ name: r.name, value: r.total }))}
+                          cx="50%" cy="50%" innerRadius={50} outerRadius={80} paddingAngle={3} dataKey="value">
+                          {recipientBreakdown.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+                        </Pie>
+                        <ChartTooltip contentStyle={{ borderRadius: 8 }} formatter={v => `AED ${Number(v).toLocaleString()}`} />
+                        <Legend iconType="circle" wrapperStyle={{ fontSize: 11 }} />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  ) : <Empty description="No data" style={{ padding: 40 }} />}
+                </Card>
+              </Col>
+            </Row>
+
+            {/* ── Records table ── */}
+            <Card title={<span style={{ fontWeight: 700, color: P }}>All Commission Records ({totalRecords})</span>} bordered={false} style={{ borderRadius: 12, border: "1px solid #ede9f6" }}>
+              <CustomTable
+                data={records}
+                showSearch
+                columns={[
+                  {
+                    key: "caseReference", title: "Case",
+                    render: (_, r) => (
+                      <div>
+                        <div style={{ fontWeight: 700, fontSize: 12, color: "#1a0533" }}>{r.caseReference}</div>
+                        <div style={{ fontSize: 11, color: "#9ca3af" }}>{r.customerName}</div>
                       </div>
-                    </Col>
-                  ))}
-                </Row>
-                <Divider style={{ margin: "24px 0" }} />
-                <Text type="secondary">Evaluation includes {totalRecords} active commission files matching current filters.</Text>
-              </div>
-            </Col>
-          </Row>
+                    ),
+                  },
+                  {
+                    key: "leadSource", title: "Lead Created By",
+                    render: (_, r) => {
+                      const src = SOURCE_LABEL[r.leadSource] || { label: r.leadSource || "—", color: "#6B7280", bg: "#F3F4F6" };
+                      return (
+                        <div>
+                          <span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 20, fontWeight: 600, background: src.bg, color: src.color, display: "inline-block", marginBottom: 3 }}>
+                            {src.label}
+                          </span>
+                          {r.sourceAgentName && <div style={{ fontSize: 11, color: "#6B7280" }}>{r.sourceAgentName}</div>}
+                        </div>
+                      );
+                    },
+                  },
+                  {
+                    key: "recipientName", title: "Commission Recipient",
+                    render: (_, r) => {
+                      const role = ROLE_LABEL[r.recipientRole] || { label: r.recipientRole, color: "#6B7280", bg: "#F3F4F6" };
+                      return (
+                        <div>
+                          <div style={{ fontWeight: 600, fontSize: 12, color: "#1a0533" }}>{r.recipientName}</div>
+                          <span style={{ fontSize: 10, padding: "1px 7px", borderRadius: 20, fontWeight: 600, background: role.bg, color: role.color, display: "inline-block" }}>
+                            {role.label}
+                          </span>
+                        </div>
+                      );
+                    },
+                  },
+                  {
+                    key: "loanAmount", title: "Loan / Bank Commission",
+                    render: (_, r) => (
+                      <div>
+                        <div style={{ fontWeight: 600, fontSize: 12, color: P }}>AED {Number(r.loanAmount || 0).toLocaleString()}</div>
+                        <div style={{ fontSize: 11, color: "#6B7280" }}>{r.loanTier}</div>
+                        <div style={{ fontSize: 11, color: "#059669", fontWeight: 600 }}>Bank→Xoto: AED {Number(r.bankCommissionToXoto || 0).toLocaleString()}</div>
+                      </div>
+                    ),
+                  },
+                  {
+                    key: "commissionAmount", title: "Payout / Xoto Profit",
+                    render: (_, r) => (
+                      <div>
+                        {!r.isInternal ? (
+                          <>
+                            <div style={{ fontWeight: 700, fontSize: 13, color: "#2563eb" }}>
+                              AED {Number(r.commissionAmount || 0).toLocaleString()}
+                              <span style={{ fontSize: 10, color: "#9ca3af", marginLeft: 4 }}>({r.recipientPercentage}%)</span>
+                            </div>
+                            <div style={{ fontSize: 11, color: "#059669" }}>Xoto: AED {Number(r.xotoEarnings || 0).toLocaleString()}</div>
+                          </>
+                        ) : (
+                          <div style={{ fontWeight: 700, fontSize: 13, color: "#059669" }}>
+                            AED {Number(r.bankCommissionToXoto || 0).toLocaleString()}
+                            <div style={{ fontSize: 10, fontWeight: 500, color: "#9ca3af" }}>100% Xoto Profit</div>
+                          </div>
+                        )}
+                        <div style={{ fontSize: 10, color: "#9ca3af", marginTop: 2, fontStyle: "italic" }}>{r.calculationFormula}</div>
+                      </div>
+                    ),
+                  },
+                  {
+                    key: "status", title: "Status",
+                    render: (_, r) => {
+                      const s = STATUS_COLOR[r.status] || { color: "#6B7280", bg: "#F3F4F6" };
+                      return (
+                        <span style={{ fontSize: 11, padding: "3px 10px", borderRadius: 20, fontWeight: 700, background: s.bg, color: s.color, whiteSpace: "nowrap" }}>
+                          {r.status}
+                        </span>
+                      );
+                    },
+                  },
+                  {
+                    key: "disbursedAt", title: "Disbursed",
+                    render: (_, r) => r.disbursedAt ? (
+                      <span style={{ fontSize: 11, color: "#6B7280" }}>{dayjs(r.disbursedAt).format("DD MMM YYYY")}</span>
+                    ) : "—",
+                  },
+                ]}
+              />
+            </Card>
+          </div>
         );
+      }
 
       default:
         return null;

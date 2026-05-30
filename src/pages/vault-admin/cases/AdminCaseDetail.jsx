@@ -22,29 +22,46 @@ const GREEN   = '#059669';
 
 /* ─── All statuses ─── */
 const ALL_STATUSES = [
-  'Draft', 'Submitted to Xoto', 'In Ops Queue - Pending Pick-up',
-  'Assigned - Pending Review', 'Under Review', 'Returned - Pending Correction',
-  'Submitted to Bank', 'Pre-Approved', 'Valuation', 'FOL Processed',
-  'FOL Issued', 'FOL Signed', 'Disbursed', 'Lost', 'Rejected',
+  'Draft',
+  'Submitted to Xoto',
+  'In Ops Queue - Pending Pick-up',
+  'Assigned - Pending Review',
+  'Under Review',
+  'Returned - Pending Correction',
+  'Resubmitted-After Correction',
+  'Submitted to Bank',
+  'Bank Application',
+  'Pre-Approved',
+  'Valuation',
+  'FOL Processed',
+  'FOL Issued',
+  'FOL Signed',
+  'Disbursed',
+  'Declined',
+  'Lost',
+  'Rejected',
 ];
 
 /* ─── Status colour map ─── */
 const SC = {
-  Draft:                             { color: '#64748b', bg: '#f1f5f9' },
-  'Submitted to Xoto':               { color: '#2563eb', bg: '#eff6ff' },
-  'In Ops Queue - Pending Pick-up':  { color: '#d97706', bg: '#fffbeb' },
-  'Assigned - Pending Review':       { color: '#7c3aed', bg: '#f5f3ff' },
-  'Under Review':                    { color: '#7c3aed', bg: '#f5f3ff' },
-  'Returned - Pending Correction':   { color: '#dc2626', bg: '#fef2f2' },
-  'Submitted to Bank':               { color: '#0891b2', bg: '#ecfeff' },
-  'Pre-Approved':                    { color: GREEN,     bg: '#ecfdf5' },
-  Valuation:                         { color: '#ea580c', bg: '#fff7ed' },
-  'FOL Processed':                   { color: '#059669', bg: '#ecfdf5' },
-  'FOL Issued':                      { color: '#4338ca', bg: '#eef2ff' },
-  'FOL Signed':                      { color: '#be185d', bg: '#fdf2f8' },
-  Disbursed:                         { color: GREEN,     bg: '#ecfdf5' },
-  Lost:                              { color: '#dc2626', bg: '#fef2f2' },
-  Rejected:                          { color: '#dc2626', bg: '#fef2f2' },
+  'Draft':                             { color: '#64748b', bg: '#f1f5f9' },
+  'Submitted to Xoto':                 { color: '#2563eb', bg: '#eff6ff' },
+  'In Ops Queue - Pending Pick-up':    { color: '#d97706', bg: '#fffbeb' },
+  'Assigned - Pending Review':         { color: '#7c3aed', bg: '#f5f3ff' },
+  'Under Review':                      { color: '#7c3aed', bg: '#f5f3ff' },
+  'Returned - Pending Correction':     { color: '#dc2626', bg: '#fef2f2' },
+  'Resubmitted-After Correction':      { color: '#0891b2', bg: '#ecfeff' },
+  'Submitted to Bank':                 { color: '#0891b2', bg: '#ecfeff' },
+  'Bank Application':                  { color: '#5b21b6', bg: '#ede9fe' },
+  'Pre-Approved':                      { color: GREEN,     bg: '#ecfdf5' },
+  'Valuation':                         { color: '#ea580c', bg: '#fff7ed' },
+  'FOL Processed':                     { color: '#059669', bg: '#ecfdf5' },
+  'FOL Issued':                        { color: '#4338ca', bg: '#eef2ff' },
+  'FOL Signed':                        { color: '#be185d', bg: '#fdf2f8' },
+  'Disbursed':                         { color: GREEN,     bg: '#ecfdf5' },
+  'Declined':                          { color: '#dc2626', bg: '#fef2f2' },
+  'Lost':                              { color: '#dc2626', bg: '#fef2f2' },
+  'Rejected':                          { color: '#dc2626', bg: '#fef2f2' },
 };
 
 /* ─── Helpers ─── */
@@ -164,12 +181,17 @@ const OverviewTab = ({ data, onStatusUpdate }) => {
         {/* Left col */}
         <div>
           <SectionCard title="Client Information" icon={<UserOutlined />}>
-            <InfoRow label="Full Name"         value={c.fullName}         icon={<UserOutlined />} />
-            <InfoRow label="Email"             value={c.email}            icon={<MailOutlined />} />
-            <InfoRow label="Mobile"            value={c.mobile}           icon={<PhoneOutlined />} />
-            <InfoRow label="Nationality"       value={c.nationality}      icon={<GlobalOutlined />} />
-            <InfoRow label="Residency Status"  value={c.residencyStatus}  icon={<SafetyOutlined />} />
-            <InfoRow label="Employment"        value={c.employmentStatus} icon={<AuditOutlined />} />
+            <InfoRow label="Full Name"            value={c.fullName || [c.firstName, c.lastName].filter(Boolean).join(' ')} icon={<UserOutlined />} />
+            <InfoRow label="Email"                value={c.email}                  icon={<MailOutlined />} />
+            <InfoRow label="Mobile"               value={c.phone || c.mobile}      icon={<PhoneOutlined />} />
+            <InfoRow label="Nationality"          value={c.nationality}            icon={<GlobalOutlined />} />
+            <InfoRow label="Residency"            value={c.residencyStatus}        icon={<SafetyOutlined />} />
+            <InfoRow label="Employment"           value={c.employmentStatus}       icon={<AuditOutlined />} />
+            <InfoRow label="Monthly Salary"       value={c.monthlySalary || c.fixedMonthlySalary ? `AED ${Number(c.monthlySalary || c.fixedMonthlySalary).toLocaleString()}` : null} />
+            <InfoRow label="Salary Bank"          value={c.salaryBankName} />
+            <InfoRow label="Existing Liabilities" value={c.existingLiabilities ? `AED ${Number(c.existingLiabilities).toLocaleString()}` : null} />
+            <InfoRow label="Mortgage Term"        value={c.mortgageTerm ? `${c.mortgageTerm} years` : null} />
+            <InfoRow label="Fee Financing"        value={c.feeFinancingRequired != null ? (c.feeFinancingRequired ? 'Yes' : 'No') : null} />
           </SectionCard>
 
           <SectionCard title="Property Information" icon={<HomeOutlined />}>
@@ -418,7 +440,7 @@ const DocumentsTab = ({ documents, onView }) => {
 };
 
 /* ─── Tab 3: Timeline ─── */
-const TimelineTab = ({ timeline = {} }) => {
+const TimelineTab = ({ timeline = {}, statusHistory = [], returnedToSubmitterNotes, submissionNotes }) => {
   const items = [
     { label: 'Created',           date: timeline.createdAt },
     { label: 'Submitted to Xoto', date: timeline.submittedToXotoAt },
@@ -433,6 +455,18 @@ const TimelineTab = ({ timeline = {} }) => {
 
   return (
     <div style={{ background: '#fff', borderRadius: 14, padding: '24px 28px', boxShadow: '0 2px 12px rgba(0,0,0,0.05)' }}>
+      {/* Submission / correction notes */}
+      {submissionNotes && (
+        <div style={{ background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 10, padding: '10px 14px', marginBottom: 16, fontSize: 12, color: '#1d4ed8' }}>
+          <strong>Submission Notes:</strong> {submissionNotes}
+        </div>
+      )}
+      {returnedToSubmitterNotes && (
+        <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 10, padding: '10px 14px', marginBottom: 16, fontSize: 12, color: '#dc2626' }}>
+          <strong>Correction Notes (from Ops):</strong> {returnedToSubmitterNotes}
+        </div>
+      )}
+
       <div style={{ fontSize: 14, fontWeight: 700, color: '#1e293b', marginBottom: 20 }}>Case Timeline</div>
       <div style={{ position: 'relative' }}>
         {/* Vertical line */}
@@ -470,6 +504,28 @@ const TimelineTab = ({ timeline = {} }) => {
           );
         })}
       </div>
+
+      {/* Status history audit trail */}
+      {statusHistory.length > 0 && (
+        <div style={{ marginTop: 28 }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: '#1e293b', marginBottom: 12 }}>Status History</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {statusHistory.map((h, i) => (
+              <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '10px 14px', background: '#f8fafc', borderRadius: 10, border: '1px solid #f1f5f9' }}>
+                <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#5c039b', marginTop: 5, flexShrink: 0 }} />
+                <div style={{ flex: 1 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 4 }}>
+                    <span style={{ fontWeight: 700, fontSize: 12, color: '#1e293b' }}>{h.status}</span>
+                    <span style={{ fontSize: 11, color: '#94a3b8' }}>{h.changedAt ? dayjs(h.changedAt).format('DD MMM YYYY, HH:mm') : ''}</span>
+                  </div>
+                  {h.changedByName && <div style={{ fontSize: 11, color: '#64748b', marginTop: 2 }}>By: {h.changedByName} ({h.changedByRole})</div>}
+                  {h.notes && <div style={{ fontSize: 12, color: '#374151', marginTop: 4, fontStyle: 'italic' }}>{h.notes}</div>}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
@@ -649,7 +705,12 @@ const AdminCaseDetail = () => {
           />
         )}
         {activeTab === 'timeline' && (
-          <TimelineTab timeline={caseData.timeline || {}} />
+          <TimelineTab
+            timeline={caseData.timeline || {}}
+            statusHistory={caseData.statusHistory || []}
+            submissionNotes={caseData.submissionNotes}
+            returnedToSubmitterNotes={caseData.returnedToSubmitterNotes}
+          />
         )}
       </div>
 

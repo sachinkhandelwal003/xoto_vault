@@ -44,19 +44,22 @@ const C = {
 
 // ─── PRD Section 4.3 - Lead Statuses (13 statuses) ─────────────────────────
 const STATUS_CFG = {
-  "New": { bg: "#EFF6FF", color: "#1D4ED8", border: "#93C5FD", icon: "🆕" },
-  "Assigned": { bg: C.primarySoft, color: C.primary, border: C.primaryBord, icon: "👤" },
-  "Contacted": { bg: "#FFF7ED", color: "#C2410C", border: "#FED7AA", icon: "📞" },
-  "Qualified": { bg: "#EEF2FF", color: "#4338CA", border: "#C7D2FE", icon: "⭐" },
-  "Collecting Documents": { bg: "#FAF5FF", color: "#581C87", border: "#E9D5FF", icon: "📄" },
-  "Bank Application": { bg: "#EDE9FE", color: "#5B21B6", border: "#C7D2FE", icon: "🏦" },
-  "Pre-Approved": { bg: "#DCFCE7", color: "#166534", border: "#BBF7D0", icon: "✅" },
-  "Valuation": { bg: "#FEF3C7", color: "#92400E", border: "#FDE68A", icon: "📊" },
-  "FOL Processed": { bg: "#E0E7FF", color: "#3730A3", border: "#C7D2FE", icon: "📝" },
-  "FOL Issued": { bg: "#E0E7FF", color: "#3730A3", border: "#C7D2FE", icon: "📜" },
-  "FOL Signed": { bg: "#F3E8FF", color: "#6B21A5", border: "#E9D5FF", icon: "✍️" },
-  "Disbursed": { bg: "#ECFDF5", color: "#065F46", border: "#D1FAE5", icon: "💰" },
-  "Lost": { bg: "#FEF2F2", color: "#991B1B", border: "#FECACA", icon: "❌" },
+  "New":                   { bg: "#EFF6FF", color: "#1D4ED8", border: "#93C5FD",  icon: "🆕" },
+  "Assigned":              { bg: C.primarySoft, color: C.primary, border: C.primaryBord, icon: "👤" },
+  "Contacted":             { bg: "#FFF7ED", color: "#C2410C", border: "#FED7AA",  icon: "📞" },
+  "Qualified":             { bg: "#EEF2FF", color: "#4338CA", border: "#C7D2FE",  icon: "⭐" },
+  "Collecting Documents":  { bg: "#FAF5FF", color: "#581C87", border: "#E9D5FF",  icon: "📄" },
+  "Documents Complete":    { bg: "#F0FDF4", color: "#166534", border: "#BBF7D0",  icon: "✅" },
+  "Application Opened":    { bg: "#FFF5F3", color: "#C2410C", border: "#FECACA",  icon: "📂" },
+  "Bank Application":      { bg: "#EDE9FE", color: "#5B21B6", border: "#C7D2FE",  icon: "🏦" },
+  "Pre-Approved":          { bg: "#DCFCE7", color: "#166534", border: "#BBF7D0",  icon: "✅" },
+  "Valuation":             { bg: "#FEF3C7", color: "#92400E", border: "#FDE68A",  icon: "📊" },
+  "FOL Processed":         { bg: "#E0E7FF", color: "#3730A3", border: "#C7D2FE",  icon: "📝" },
+  "FOL Issued":            { bg: "#E0E7FF", color: "#3730A3", border: "#C7D2FE",  icon: "📜" },
+  "FOL Signed":            { bg: "#F3E8FF", color: "#6B21A5", border: "#E9D5FF",  icon: "✍️" },
+  "Disbursed":             { bg: "#ECFDF5", color: "#065F46", border: "#D1FAE5",  icon: "💰" },
+  "Not Proceeding":        { bg: "#F3F4F6", color: "#6B7280", border: "#E5E7EB",  icon: "🚫" },
+  "Lost":                  { bg: "#FEF2F2", color: "#991B1B", border: "#FECACA",  icon: "❌" },
 };
 
 const SOURCE_LABELS = {
@@ -342,12 +345,14 @@ export default function VaultAdminLeadDetail() {
                   <Row label="Nationality" value={ci.nationality} />
                   <Row label="Residency" value={ci.residencyStatus} />
                   <Row label="Employment" value={ci.employmentStatus} />
-                  <Row label="Monthly Salary" value={ci.monthlySalary ? `AED ${fmt(ci.monthlySalary)}` : null} />
-                  <Row label="Date of Birth" value={fmtDate(ci.dateOfBirth)} />
-                  <Row label="Marital Status" value={ci.maritalStatus} />
-                  <Row label="Dependents" value={ci.numberOfDependents} />
-                  <Row label="Occupation" value={ci.occupation} />
-                  <Row label="Employer" value={ci.employer} />
+                  <Row label="Monthly Salary"       value={ci.monthlySalary       ? `AED ${fmt(ci.monthlySalary)}`       : null} />
+                  <Row label="Salary Bank"          value={ci.salaryBankName}                                                       />
+                  <Row label="Existing Liabilities" value={ci.existingLiabilities ? `AED ${fmt(ci.existingLiabilities)}` : null} />
+                  <Row label="Date of Birth"        value={fmtDate(ci.dateOfBirth)}                                                  />
+                  <Row label="Marital Status"       value={ci.maritalStatus}                                                         />
+                  <Row label="Dependents"           value={ci.numberOfDependents}                                                    />
+                  <Row label="Occupation"           value={ci.occupation}                                                            />
+                  <Row label="Employer"             value={ci.employer}                                                              />
                 </div>
               </div>
 
@@ -390,6 +395,18 @@ export default function VaultAdminLeadDetail() {
                     </div>
                     <div style={{ padding: "16px 20px", background: C.primarySoft, fontSize: 13, color: C.textSub }}>
                       {lead.notesToXoto}
+                    </div>
+                  </div>
+                )}
+
+                {/* Not Proceeding reason — shown when lead is closed */}
+                {lead.notProceedingReason && (
+                  <div style={{ background: C.white, borderRadius: 14, border: "1px solid #FECACA", overflow: "hidden" }}>
+                    <div style={{ padding: "12px 20px", background: "#FEF2F2", borderBottom: "1px solid #FECACA", display: "flex", alignItems: "center", gap: 8 }}>
+                      <span style={{ fontSize: 14 }}>🚫</span> <span style={{ fontWeight: 700, color: "#991B1B" }}>Not Proceeding — Reason</span>
+                    </div>
+                    <div style={{ padding: "16px 20px", background: "#FFF5F5", fontSize: 13, color: "#7F1D1D" }}>
+                      {lead.notProceedingReason}
                     </div>
                   </div>
                 )}

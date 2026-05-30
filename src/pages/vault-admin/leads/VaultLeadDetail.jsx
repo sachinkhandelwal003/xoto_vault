@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { useQuery } from '@tanstack/react-query';
 import { apiService } from '@/api/apiService';
-import { Modal, message } from 'antd';
+import { Modal, message, Select } from 'antd';
 import LinkedProposalsCases from '@/components/common/LinkedProposalsCases';
 
 import {
@@ -38,18 +38,38 @@ import {
 } from 'lucide-react';
 
 const STATUS_MAP = {
-  New: { bg: 'bg-blue-50', color: 'text-blue-700', dot: 'bg-blue-500', border: 'border-blue-200' },
-  Contacted: { bg: 'bg-amber-50', color: 'text-amber-700', dot: 'bg-amber-500', border: 'border-amber-200' },
-  Qualified: { bg: 'bg-emerald-50', color: 'text-emerald-700', dot: 'bg-emerald-500', border: 'border-emerald-200' },
-  'Collecting Documentation': { bg: 'bg-purple-50', color: 'text-purple-700', dot: 'bg-purple-500', border: 'border-purple-200' },
-  Disbursed: { bg: 'bg-sky-50', color: 'text-sky-700', dot: 'bg-sky-500', border: 'border-sky-200' },
-  'Under Review': { bg: 'bg-indigo-50', color: 'text-indigo-700', dot: 'bg-indigo-500', border: 'border-indigo-200' },
-  'Bank Application': { bg: 'bg-violet-50', color: 'text-violet-700', dot: 'bg-violet-500', border: 'border-violet-200' },
-  'Pre-Approved': { bg: 'bg-green-50', color: 'text-green-700', dot: 'bg-green-500', border: 'border-green-200' },
-  Valuation: { bg: 'bg-orange-50', color: 'text-orange-700', dot: 'bg-orange-500', border: 'border-orange-200' },
-  Rejected: { bg: 'bg-red-50', color: 'text-red-700', dot: 'bg-red-500', border: 'border-red-200' },
-  Lost: { bg: 'bg-gray-50', color: 'text-gray-700', dot: 'bg-gray-500', border: 'border-gray-200' },
+  'New':                   { bg: 'bg-blue-50',    color: 'text-blue-700',    dot: 'bg-blue-500',    border: 'border-blue-200'    },
+  'Assigned':              { bg: 'bg-indigo-50',  color: 'text-indigo-700',  dot: 'bg-indigo-500',  border: 'border-indigo-200'  },
+  'Contacted':             { bg: 'bg-amber-50',   color: 'text-amber-700',   dot: 'bg-amber-500',   border: 'border-amber-200'   },
+  'Qualified':             { bg: 'bg-emerald-50', color: 'text-emerald-700', dot: 'bg-emerald-500', border: 'border-emerald-200' },
+  'Collecting Documents':  { bg: 'bg-purple-50',  color: 'text-purple-700',  dot: 'bg-purple-500',  border: 'border-purple-200'  },
+  'Documents Complete':    { bg: 'bg-teal-50',    color: 'text-teal-700',    dot: 'bg-teal-500',    border: 'border-teal-200'    },
+  'Application Opened':   { bg: 'bg-sky-50',     color: 'text-sky-700',     dot: 'bg-sky-500',     border: 'border-sky-200'     },
+  'Bank Application':     { bg: 'bg-violet-50',  color: 'text-violet-700',  dot: 'bg-violet-500',  border: 'border-violet-200'  },
+  'Pre-Approved':          { bg: 'bg-green-50',   color: 'text-green-700',   dot: 'bg-green-500',   border: 'border-green-200'   },
+  'Valuation':             { bg: 'bg-orange-50',  color: 'text-orange-700',  dot: 'bg-orange-500',  border: 'border-orange-200'  },
+  'FOL Processed':         { bg: 'bg-lime-50',    color: 'text-lime-700',    dot: 'bg-lime-500',    border: 'border-lime-200'    },
+  'FOL Issued':            { bg: 'bg-cyan-50',    color: 'text-cyan-700',    dot: 'bg-cyan-500',    border: 'border-cyan-200'    },
+  'FOL Signed':            { bg: 'bg-fuchsia-50', color: 'text-fuchsia-700', dot: 'bg-fuchsia-500', border: 'border-fuchsia-200' },
+  'Disbursed':             { bg: 'bg-emerald-50', color: 'text-emerald-700', dot: 'bg-emerald-600', border: 'border-emerald-300' },
+  'Not Proceeding':        { bg: 'bg-red-50',     color: 'text-red-700',     dot: 'bg-red-500',     border: 'border-red-200'     },
+  'Lost':                  { bg: 'bg-gray-50',    color: 'text-gray-700',    dot: 'bg-gray-500',    border: 'border-gray-200'    },
 };
+
+// What a user can manually move to from each status
+const NEXT_STATUS_MAP = {
+  'New':                  ['Contacted'],
+  'Assigned':             ['Contacted'],
+  'Contacted':            ['Qualified', 'Not Proceeding'],
+  'Qualified':            ['Collecting Documents', 'Not Proceeding'],
+  'Collecting Documents': ['Documents Complete', 'Not Proceeding'],
+  'Documents Complete':   [], // → create Case (Application Opened is auto)
+};
+
+// Pipeline stages shown as a progress bar (Advisor/Partner view)
+const PIPELINE_STAGES = [
+  'New', 'Contacted', 'Qualified', 'Collecting Documents', 'Documents Complete', 'Application Opened',
+];
 
 const StatusBadge = ({ status }) => {
   const s = STATUS_MAP[status] || { bg: 'bg-gray-50', color: 'text-gray-700', dot: 'bg-gray-500', border: 'border-gray-200' };
@@ -295,6 +315,179 @@ const DocumentsList = ({ leadId }) => {
   );
 };
 
+// ── Status Pipeline Bar ──────────────────────────────────────────────────────
+const LeadStatusPanel = ({ lead, roleCode, onRefetch }) => {
+  const [updating, setUpdating]         = useState(false);
+  const [reason, setReason]             = useState('');
+  const [showReasonFor, setShowReasonFor] = useState(null); // 'Not Proceeding'
+
+  const currentStatus = lead?.currentStatus || 'New';
+  const isLocked      = lead?.conversionInfo?.convertedToApplication || false;
+  const nextStatuses  = NEXT_STATUS_MAP[currentStatus] || [];
+  const stageIdx      = PIPELINE_STAGES.indexOf(currentStatus);
+
+  // Pick endpoint by role
+  const statusEndpoint = (leadId) => {
+    if (roleCode === '18') return `/vault/lead/admin/${leadId}/status`;
+    return `/vault/lead/advisorOrpartner/lead/${leadId}/status`;
+  };
+
+  const handleStatusUpdate = async (newStatus) => {
+    if (newStatus === 'Not Proceeding' && !reason.trim()) {
+      setShowReasonFor('Not Proceeding');
+      return;
+    }
+    setUpdating(true);
+    try {
+      const payload = { status: newStatus };
+      if (newStatus === 'Not Proceeding') payload.notProceedingReason = reason.trim();
+      await apiService.put(statusEndpoint(lead._id), payload);
+      message.success(`Status updated to "${newStatus}"`);
+      setShowReasonFor(null);
+      setReason('');
+      onRefetch();
+    } catch (err) {
+      message.error(err?.response?.data?.message || 'Failed to update status');
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  const statusColors = {
+    Contacted:            { bg: '#fef3c7', color: '#d97706', border: '#fde68a' },
+    Qualified:            { bg: '#ecfdf5', color: '#059669', border: '#a7f3d0' },
+    'Collecting Documents': { bg: '#f5f3ff', color: '#7c3aed', border: '#ddd6fe' },
+    'Documents Complete':  { bg: '#f0fdf4', color: '#16a34a', border: '#bbf7d0' },
+    'Not Proceeding':     { bg: '#fef2f2', color: '#dc2626', border: '#fecaca' },
+  };
+
+  return (
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm mb-6 overflow-hidden">
+      {/* Pipeline bar */}
+      <div className="px-6 pt-5 pb-3">
+        <div className="flex items-center justify-between mb-3">
+          <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Lead Pipeline</span>
+          {lead?.sla?.breached && (
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-red-50 text-red-600 text-xs font-semibold border border-red-200">
+              <Clock size={11} /> SLA Breached
+            </span>
+          )}
+          {lead?.sla?.deadline && !lead?.sla?.breached && currentStatus === 'New' && (
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-50 text-amber-600 text-xs font-semibold border border-amber-200">
+              <Clock size={11} /> SLA: {new Date(lead.sla.deadline).toLocaleString('en-AE', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: 'short' })}
+            </span>
+          )}
+        </div>
+
+        <div className="flex items-center gap-0">
+          {PIPELINE_STAGES.map((stage, idx) => {
+            const done    = idx < stageIdx || (currentStatus === 'Disbursed' || currentStatus === 'Application Opened');
+            const active  = stage === currentStatus;
+            const future  = idx > stageIdx;
+            return (
+              <React.Fragment key={stage}>
+                <div className="flex flex-col items-center" style={{ flex: 1, minWidth: 0 }}>
+                  <div
+                    className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
+                    style={{
+                      background: done ? '#059669' : active ? '#5c039b' : '#e5e7eb',
+                      color: done || active ? '#fff' : '#9ca3af',
+                      boxShadow: active ? '0 0 0 3px rgba(92,3,155,0.15)' : 'none',
+                    }}
+                  >
+                    {done ? <CheckCircle size={13} /> : idx + 1}
+                  </div>
+                  <span
+                    className="text-center mt-1.5 leading-tight"
+                    style={{ fontSize: 9, fontWeight: active ? 700 : 500, color: done ? '#059669' : active ? '#5c039b' : '#9ca3af', maxWidth: 70 }}
+                  >
+                    {stage}
+                  </span>
+                </div>
+                {idx < PIPELINE_STAGES.length - 1 && (
+                  <div style={{ flex: '0 0 20px', height: 2, background: idx < stageIdx ? '#059669' : '#e5e7eb', marginBottom: 20 }} />
+                )}
+              </React.Fragment>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Actions */}
+      {!isLocked && nextStatuses.length > 0 && roleCode !== '18' && (
+        <div className="px-6 pb-5 border-t border-gray-50 pt-4">
+          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Update Status</p>
+
+          {showReasonFor === 'Not Proceeding' ? (
+            <div className="space-y-3">
+              <textarea
+                placeholder="Reason for not proceeding (required)..."
+                value={reason}
+                onChange={e => setReason(e.target.value)}
+                rows={3}
+                className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm resize-none focus:outline-none focus:border-red-400 focus:ring-2 focus:ring-red-100"
+              />
+              <div className="flex gap-2">
+                <button
+                  onClick={() => { setShowReasonFor(null); setReason(''); }}
+                  className="px-4 py-2 rounded-xl border border-gray-200 text-gray-600 text-sm font-semibold hover:bg-gray-50 transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  disabled={!reason.trim() || updating}
+                  onClick={() => handleStatusUpdate('Not Proceeding')}
+                  className="px-4 py-2 rounded-xl text-sm font-semibold transition"
+                  style={{ background: reason.trim() ? '#dc2626' : '#fecaca', color: '#fff', border: 'none', cursor: reason.trim() ? 'pointer' : 'not-allowed' }}
+                >
+                  {updating ? 'Saving...' : 'Confirm Not Proceeding'}
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-wrap gap-2">
+              {nextStatuses.map(s => {
+                const c = statusColors[s] || { bg: '#f5f0ff', color: '#5c039b', border: '#ddd0ff' };
+                return (
+                  <button
+                    key={s}
+                    disabled={updating}
+                    onClick={() => s === 'Not Proceeding' ? setShowReasonFor('Not Proceeding') : handleStatusUpdate(s)}
+                    className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition hover:opacity-80"
+                    style={{ background: c.bg, color: c.color, border: `1px solid ${c.border}`, cursor: updating ? 'not-allowed' : 'pointer' }}
+                  >
+                    <ChevronRight size={13} /> Mark as {s}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Locked message */}
+      {isLocked && (
+        <div className="px-6 pb-4 pt-3 border-t border-gray-50">
+          <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-sky-50 border border-sky-200">
+            <Shield size={14} className="text-sky-600 flex-shrink-0" />
+            <span className="text-xs text-sky-700 font-semibold">Status locked — this lead is linked to an active Case.</span>
+          </div>
+        </div>
+      )}
+
+      {/* Not Proceeding reason */}
+      {currentStatus === 'Not Proceeding' && lead?.notProceedingReason && (
+        <div className="px-6 pb-4 pt-3 border-t border-gray-50">
+          <div className="px-4 py-3 rounded-xl bg-red-50 border border-red-200">
+            <p className="text-xs font-bold text-red-500 uppercase tracking-wider mb-1">Not Proceeding Reason</p>
+            <p className="text-sm text-red-700">{lead.notProceedingReason}</p>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 const roleSlugMap = {
   '18': 'vault-admin',
   '21': 'vaultpartner',
@@ -374,16 +567,21 @@ const VaultLeadDetail = () => {
 
         {lead && !isLoading && (
           <>
+            {/* ── Status pipeline panel ── */}
+            <LeadStatusPanel lead={lead} roleCode={roleCode} onRefetch={refetch} />
+
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <DetailCard icon={User} title="Customer Information" accentColor="#5c039b">
-                <InfoRow label="Full Name" value={customerInfo.fullName} icon={UserCheck} />
-                <InfoRow label="Email" value={customerInfo.email} icon={Mail} />
-                <InfoRow label="Mobile" value={customerInfo.mobileNumber || customerInfo.mobile} icon={Phone} />
-                <InfoRow label="WhatsApp" value={customerInfo.whatsappNumber} icon={Heart} />
-                <InfoRow label="Nationality" value={customerInfo.nationality} icon={Users} />
-                <InfoRow label="Marital Status" value={customerInfo.maritalStatus} />
-                <InfoRow label="Employer" value={customerInfo.employer} icon={Building} />
-                <InfoRow label="Monthly Salary" value={formatCurrency(customerInfo.monthlySalary)} icon={Banknote} last />
+                <InfoRow label="Full Name"       value={customerInfo.fullName || [customerInfo.firstName, customerInfo.lastName].filter(Boolean).join(' ')} icon={UserCheck} />
+                <InfoRow label="Email"           value={customerInfo.email} icon={Mail} />
+                <InfoRow label="Mobile"          value={customerInfo.mobileNumber || customerInfo.mobile} icon={Phone} />
+                <InfoRow label="Nationality"     value={customerInfo.nationality} icon={Users} />
+                <InfoRow label="Residency"       value={customerInfo.residencyStatus} />
+                <InfoRow label="Employment"      value={customerInfo.employmentStatus} icon={Building} />
+                <InfoRow label="Monthly Salary"  value={formatCurrency(customerInfo.monthlySalary)} icon={Banknote} />
+                <InfoRow label="Salary Bank"     value={customerInfo.salaryBankName} icon={Building} />
+                <InfoRow label="Liabilities/mo"  value={formatCurrency(customerInfo.existingLiabilities ?? customerInfo.existingMonthlyLiabilities)} icon={DollarSign} />
+                <InfoRow label="Employer"        value={customerInfo.employer} last />
               </DetailCard>
 
               <DetailCard icon={Home} title="Property Details" accentColor="#10b981">

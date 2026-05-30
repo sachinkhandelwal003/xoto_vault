@@ -103,7 +103,6 @@ const VAULT_NAV: Record<string, MenuItem[]> = {
         { title: 'My Leads',    to: '/dashboard/vaultagent/leads' },
       ],
     },
-    { title: 'Bank Products', icon: 'fas fa-university', to: '/dashboard/vaultagent/bank/products' },
     { title: 'Commission',    icon: 'fas fa-percentage', to: '/dashboard/vaultagent/commission' },
     { title: 'Analytics',     icon: 'fas fa-chart-bar',  to: '/dashboard/vaultagent/analytics' },
     { title: 'Notifications', icon: 'fas fa-bell',       to: '/dashboard/vaultagent/notifications' },
@@ -123,7 +122,6 @@ const VAULT_NAV: Record<string, MenuItem[]> = {
 
   // ── Partner Company (21_company) ──────────────────────────────────────────
   '21_company': [
-    { title: 'Customer Management', icon: 'fas fa-user-friends', to: '/dashboard/vaultpartner/customers' },
     {
       title: 'Lead Management', icon: 'fas fa-filter',
       submenus: [
@@ -149,9 +147,8 @@ const VAULT_NAV: Record<string, MenuItem[]> = {
     {
       title: 'Agent Team', icon: 'fas fa-users',
       submenus: [
-        { title: 'Onboard Agent',  to: '/dashboard/vaultpartner/agents/onboard' },
-        { title: 'All Agents',     to: '/dashboard/vaultpartner/agents/list' },
-        { title: 'Team Analytics', to: '/dashboard/vaultpartner/agents/analytics' },
+        { title: 'Onboard Agent', to: '/dashboard/vaultpartner/agents/onboard' },
+        { title: 'All Agents',    to: '/dashboard/vaultpartner/agents/list' },
       ],
     },
     { title: 'Commission',    icon: 'fas fa-percentage', to: '/dashboard/vaultpartner/commission' },
@@ -161,7 +158,6 @@ const VAULT_NAV: Record<string, MenuItem[]> = {
 
   // ── Partner Individual (21_individual) ────────────────────────────────────
   '21_individual': [
-    { title: 'Customer Management', icon: 'fas fa-user-friends', to: '/dashboard/vaultpartner/customers' },
     {
       title: 'Lead Management', icon: 'fas fa-filter',
       submenus: [
@@ -235,7 +231,6 @@ const VAULT_NAV: Record<string, MenuItem[]> = {
 
   // ── Xoto Advisor (26) ─────────────────────────────────────────────────────
   '26': [
-    { title: 'Customer Management', icon: 'fas fa-user-friends', to: '/dashboard/vault-advisor/customers' },
     {
       title: 'Lead Management', icon: 'fas fa-filter',
       submenus: [
@@ -376,46 +371,52 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, mobileOpen, onCloseMobile 
           .sb-scroll { scrollbar-width: thin; scrollbar-color: rgba(139,92,246,0.3) transparent; }
         `}</style>
 
-        {/* ── Logo / Brand ─────────────────────────────────────────────── */}
+        {/* ── Logo + Role ──────────────────────────────────────────────── */}
         <div
-          className="flex-shrink-0 flex items-center justify-between px-4 py-4"
-          style={{ borderBottom: '1px solid rgba(139,92,246,0.15)' }}
+          className="flex-shrink-0 relative flex flex-col items-center"
+          style={{
+            padding: collapsed ? '14px 0 10px' : '20px 0 14px',
+            borderBottom: '1px solid rgba(139,92,246,0.15)',
+          }}
         >
-          <div className="flex items-center gap-3 min-w-0">
-            <div
-              className="flex-shrink-0 flex items-center justify-center rounded-xl"
-              style={{
-                width: 40, height: 40,
-                background: 'linear-gradient(135deg, #5C039B, #7c3aed)',
-                boxShadow: '0 4px 12px rgba(92,3,155,0.5)',
-              }}
-            >
-              <img src="/vault-logo.png" alt="Vault" style={{ width: 24, height: 24, objectFit: 'contain' }} />
-            </div>
-            {!collapsed && (
-              <div className="min-w-0">
-                <div style={{ fontSize: 15, fontWeight: 800, color: '#fff', letterSpacing: '-0.3px', lineHeight: 1 }}>
-                  Xoto Vault
-                </div>
-                <div style={{ fontSize: 10, color: 'rgba(196,167,255,0.6)', textTransform: 'uppercase', letterSpacing: 1.5, marginTop: 2 }}>
-                  {displayName}
-                </div>
-              </div>
-            )}
-          </div>
           {mobileOpen && (
             <button
               onClick={onCloseMobile}
-              className="lg:hidden flex-shrink-0 p-1.5 rounded-lg"
+              className="lg:hidden absolute top-3 right-3 p-1.5 rounded-lg"
               style={{ color: 'rgba(196,167,255,0.7)', background: 'rgba(139,92,246,0.1)' }}
             >
               <FiX size={16} />
             </button>
           )}
+
+          {/* Vault logo — big & centered */}
+          <img
+            src="/vault-logo.png"
+            alt="Xoto Vault"
+            style={{
+              width:  collapsed ? 44 : 110,
+              height: collapsed ? 44 : 110,
+              objectFit: 'contain',
+              display: 'block',
+              transition: 'all 0.3s',
+            }}
+          />
+
+          {/* Role name — only when expanded */}
+          {!collapsed && (
+            <div style={{
+              marginTop: 8, fontSize: 11, fontWeight: 700,
+              color: 'rgba(196,167,255,0.6)',
+              textTransform: 'capitalize', letterSpacing: 0.4,
+              textAlign: 'center',
+            }}>
+              {displayName}
+            </div>
+          )}
         </div>
 
         {/* ── User Card ─────────────────────────────────────────────────── */}
-        {!collapsed && (
+        {/* {!collapsed && (
           <div
             className="flex-shrink-0 mx-3 my-3 px-3 py-3 rounded-xl flex items-center gap-3"
             style={{ background: 'rgba(139,92,246,0.1)', border: '1px solid rgba(139,92,246,0.2)' }}
@@ -452,7 +453,7 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, mobileOpen, onCloseMobile 
               </span>
             )}
           </div>
-        )}
+        )} */}
 
         {/* ── Nav ──────────────────────────────────────────────────────── */}
         <nav className="flex-1 overflow-y-auto sb-scroll px-2.5 pb-4 space-y-0.5">

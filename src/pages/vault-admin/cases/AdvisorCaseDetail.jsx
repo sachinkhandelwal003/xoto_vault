@@ -311,12 +311,17 @@ const CaseOverview = ({ data }) => {
       <Row gutter={[14, 0]}>
         <Col xs={24} md={12}>
           <SectionCard title="Client Information" icon={<UserOutlined />}>
-            <InfoRow label="Full Name" value={c.fullName} icon={<UserOutlined />} />
-            <InfoRow label="Email" value={c.email} icon={<MailOutlined />} />
-            <InfoRow label="Mobile" value={c.mobile} icon={<PhoneOutlined />} />
-            <InfoRow label="Nationality" value={c.nationality} icon={<GlobalOutlined />} />
-            <InfoRow label="Residency Status" value={c.residencyStatus} icon={<SafetyOutlined />} />
-            <InfoRow label="Employment" value={c.employmentStatus} icon={<AuditOutlined />} />
+            <InfoRow label="Full Name"            value={c.fullName || [c.firstName, c.lastName].filter(Boolean).join(' ')} icon={<UserOutlined />} />
+            <InfoRow label="Email"                value={c.email}                    icon={<MailOutlined />} />
+            <InfoRow label="Mobile"               value={c.phone || c.mobile}        icon={<PhoneOutlined />} />
+            <InfoRow label="Nationality"          value={c.nationality}              icon={<GlobalOutlined />} />
+            <InfoRow label="Residency"            value={c.residencyStatus}          icon={<SafetyOutlined />} />
+            <InfoRow label="Employment"           value={c.employmentStatus}         icon={<AuditOutlined />} />
+            <InfoRow label="Monthly Salary"       value={c.monthlySalary || c.fixedMonthlySalary ? `AED ${Number(c.monthlySalary || c.fixedMonthlySalary).toLocaleString()}` : null} />
+            <InfoRow label="Salary Bank"          value={c.salaryBankName} />
+            <InfoRow label="Existing Liabilities" value={c.existingLiabilities ? `AED ${Number(c.existingLiabilities).toLocaleString()}` : null} />
+            <InfoRow label="Mortgage Term"        value={c.mortgageTerm ? `${c.mortgageTerm} years` : null} />
+            <InfoRow label="Fee Financing"        value={c.feeFinancingRequired != null ? (c.feeFinancingRequired ? 'Yes' : 'No') : null} />
           </SectionCard>
 
           <SectionCard title="Property Information" icon={<HomeOutlined />}>
@@ -470,11 +475,12 @@ const GlobalDocuments = ({ documents, onUpload, uploading, onView }) => {
 };
 
 /* ─── Step 3: Bank Forms ─── */
-const BankForms = ({ documents, bankInfo, onUpload, uploading, onView, onToggle, isPartner }) => {
+const BankForms = ({ documents, bankInfo, onUpload, uploading, onView, onToggle, onSkipAll, skipLoading, advisorSkipBankForm, isSubmitted, isPartner }) => {
   const bankDocs = documents.filter(d => d.source === 'Bank');
   const uploaded = bankDocs.filter(d => d.isUploaded).length;
   const total = bankDocs.length;
   const pct = total > 0 ? Math.round((uploaded / total) * 100) : 100;
+  const allUploaded = bankDocs.every(d => d.isUploaded);
 
   return (
     <div>
@@ -514,6 +520,43 @@ const BankForms = ({ documents, bankInfo, onUpload, uploading, onView, onToggle,
           {uploaded} of {total} bank-specific documents uploaded
         </Text>
       </Card>
+
+      {/* Skip Bank Forms bulk toggle — advisor only, Draft only */}
+      {!isPartner && !isSubmitted && total > 0 && (
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
+          background: advisorSkipBankForm ? '#fff7ed' : '#f5f3ff',
+          border: `1px solid ${advisorSkipBankForm ? '#fed7aa' : '#ddd6fe'}`,
+          borderRadius: 12, padding: '12px 16px', marginBottom: 16,
+        }}>
+          <div>
+            <div style={{ fontWeight: 700, fontSize: 13, color: advisorSkipBankForm ? '#c2410c' : '#5b21b6' }}>
+              {advisorSkipBankForm
+                ? `${total} bank form(s) sent to Ops`
+                : `You are handling ${bankDocs.filter(d => d.handledBy === 'Advisor').length} bank form(s)`}
+            </div>
+            <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 2 }}>
+              {advisorSkipBankForm ? 'Ops will upload all bank-specific forms.' : 'Click to let Ops handle all bank forms instead.'}
+            </div>
+          </div>
+          <button
+            disabled={skipLoading || allUploaded}
+            onClick={onSkipAll}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 6,
+              padding: '8px 16px', borderRadius: 9, border: 'none',
+              cursor: skipLoading || allUploaded ? 'not-allowed' : 'pointer',
+              fontWeight: 700, fontSize: 12, whiteSpace: 'nowrap',
+              background: advisorSkipBankForm ? '#ea580c' : '#5b21b6',
+              color: '#fff', opacity: skipLoading || allUploaded ? 0.6 : 1,
+            }}
+          >
+            {skipLoading ? 'Updating...' : advisorSkipBankForm ? 'Handle myself' : 'Send all to Ops'}
+          </button>
+        </div>
+      )}
+
+      
 
       {bankDocs.length === 0 ? (
         <Card bordered={false} style={{ borderRadius: 14, textAlign: 'center', padding: '40px 0', border: '1px dashed #e2e8f0' }}>
@@ -584,6 +627,7 @@ const AdvisorCaseDetail = () => {
   const [resubmitOpen, setResubmitOpen] = useState(false);
   const [resubmitNotes, setResubmitNotes] = useState('');
   const [resubmitting, setResubmitting] = useState(false);
+  const [skipLoading,  setSkipLoading]  = useState(false);
   const [viewerUrl,  setViewerUrl]  = useState(null);
   const [viewerName, setViewerName] = useState('');
 
@@ -697,6 +741,25 @@ const fileUrl =
     }
   };
 
+  // Bulk toggle — skip all bank forms to Ops or pull back
+  const handleToggleSkipBankForms = async () => {
+    setSkipLoading(true);
+    try {
+      const res = await apiService.post(`/vault/cases/documents/${caseId}/toggle-skip-bank-forms`);
+      if (res?.success) {
+        message.success(res.message);
+        await fetchCase();
+        await fetchDocuments();
+      } else {
+        message.error(res?.message || "Toggle failed");
+      }
+    } catch (err) {
+      message.error(err?.response?.data?.message || "Toggle failed");
+    } finally {
+      setSkipLoading(false);
+    }
+  };
+
   // Submit Case
   const handleSubmit = async () => {
     setSubmitting(true);
@@ -804,7 +867,12 @@ const fileUrl =
               <div style={{ fontWeight: 800, fontSize: 15, color: '#92400e' }}>Case Returned for Correction</div>
               <div style={{ fontSize: 12, color: '#78350f', marginTop: 2 }}>
                 Please review the feedback, upload any corrected documents, and resubmit.
-                {caseData.internalNotes?.length > 0 && (
+                {caseData.returnedToSubmitterNotes && (
+                  <div style={{ marginTop: 6, background: '#fef3c7', border: '1px solid #fbbf24', borderRadius: 8, padding: '8px 12px', fontStyle: 'italic', color: '#92400e' }}>
+                    <strong>Ops correction notes:</strong> {caseData.returnedToSubmitterNotes}
+                  </div>
+                )}
+                {!caseData.returnedToSubmitterNotes && caseData.internalNotes?.length > 0 && (
                   <span style={{ marginLeft: 6, fontStyle: 'italic' }}>&ldquo;{caseData.internalNotes[caseData.internalNotes.length - 1]}&rdquo;</span>
                 )}
               </div>
@@ -850,6 +918,10 @@ const fileUrl =
             uploading={uploading}
             onView={(url, name) => { setViewerUrl(url); setViewerName(name); }}
             onToggle={handleToggleHandler}
+            onSkipAll={handleToggleSkipBankForms}
+            skipLoading={skipLoading}
+            advisorSkipBankForm={caseData.advisorSkipBankForm}
+            isSubmitted={caseData.currentStatus !== 'Draft'}
           isPartner={roleCode === 21}
           />
         )}
