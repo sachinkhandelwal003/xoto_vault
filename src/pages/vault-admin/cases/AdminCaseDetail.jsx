@@ -3,7 +3,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { apiService } from '@/api/apiService';
-import { Grid, Spin, Select, message, Modal } from 'antd';
+import { Grid, Spin, Select, message, Modal, Divider } from 'antd';
 import {
   ArrowLeftOutlined, UserOutlined, BankOutlined, HomeOutlined,
   CheckCircleOutlined, FileTextOutlined, CalendarOutlined,
@@ -137,6 +137,7 @@ const OverviewTab = ({ data, onStatusUpdate }) => {
   const b    = data.bankSelection       || {};
   const e    = data.eligibilitySnapshot || {};
   const ops  = data.opsQueue            || {};
+  const pa   = data.preApprovalInfo     || {};
   const addr = p.propertyAddress        || {};
 
   const [statusVal,  setStatusVal]  = useState(data.currentStatus || '');
@@ -259,6 +260,30 @@ const OverviewTab = ({ data, onStatusUpdate }) => {
               </div>
             )}
           </SectionCard>
+
+          {/* Pre-Approval Details */}
+          {pa?.preApprovedAmount ? (
+            <SectionCard title="Pre-Approval Details" icon={<CheckCircleOutlined />}
+              style={{ border: '1px solid #bbf7d0', background: '#f0fdf4' }}>
+              <InfoRow label="Pre-Approved Amount"  value={`AED ${Number(pa.preApprovedAmount).toLocaleString()}`} />
+              <InfoRow label="Max LTV"              value={pa.maxLTV ? `${Math.round(pa.maxLTV * 100)}%` : '—'} />
+              <InfoRow label="Max Affordable Prop." value={pa.maxAffordablePropertyValue ? `AED ${Number(pa.maxAffordablePropertyValue).toLocaleString()}` : '—'} />
+              {pa.confirmedLoanAmount ? (
+                <>
+                  <Divider style={{ margin: '8px 0' }} />
+                  <InfoRow label="Confirmed Loan"     value={`AED ${Number(pa.confirmedLoanAmount).toLocaleString()}`} />
+                  <InfoRow label="Confirmed Property" value={`AED ${Number(pa.confirmedPropertyValue || 0).toLocaleString()}`} />
+                  <InfoRow label="Down Payment"       value={pa.confirmedDownPayment ? `AED ${Number(pa.confirmedDownPayment).toLocaleString()}` : '—'} />
+                  <InfoRow label="Confirmed LTV"      value={pa.confirmedLTV ? `${pa.confirmedLTV}%` : '—'} />
+                  <InfoRow label="Property Added On"  value={pa.propertyAddedAt ? dayjs(pa.propertyAddedAt).format('DD MMM YYYY') : '—'} />
+                </>
+              ) : (
+                <div style={{ marginTop: 8, padding: '8px 12px', background: '#fef9c3', borderRadius: 8, fontSize: 12, color: '#713f12', textAlign: 'center' }}>
+                  Awaiting confirmed property & final loan amounts.
+                </div>
+              )}
+            </SectionCard>
+          ) : null}
 
           {/* Notes */}
           {((data.internalNotes?.length > 0) || (data.customerNotes?.length > 0)) && (

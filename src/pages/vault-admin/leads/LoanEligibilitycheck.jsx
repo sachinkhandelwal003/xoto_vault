@@ -87,9 +87,10 @@ export default function VaultAgentLeadEditEligibility() {
 
   // Form States
   const [basicInfo, setBasicInfo] = useState({
-    firstName: "", lastName: "", fullName: "", email: "", mobileNumber: "", 
-    nationality: "", dateOfBirth: null, maritalStatus: "", numberOfDependents: 0, 
-    occupation: "", employer: "", gender: "", residencyStatus: "", 
+    firstName: "", lastName: "", fullName: "", email: "", mobileNumber: "",
+    nationality: "", dateOfBirth: null, maritalStatus: "", numberOfDependents: 0,
+    occupation: "", employer: "", gender: "", residencyStatus: "",
+    employmentStatus: "",
     monthlySalary: 0, existingMonthlyLiabilities: 0
   });
   
@@ -117,7 +118,7 @@ export default function VaultAgentLeadEditEligibility() {
     isEligible: false
   });
 
-  const roleCode = user?.role?.code;
+  const roleCode = typeof user?.role === 'object' ? String(user.role.code) : String(user?.role ?? '');
   const roleSlug = roleSlugMap[roleCode] ?? "dashboard";
   const residencyStatus = lead?.customerInfo?.residencyStatus || basicInfo.residencyStatus || "UAE Resident";
 
@@ -144,13 +145,26 @@ export default function VaultAgentLeadEditEligibility() {
     return age;
   };
 
+  // Age → tenure cap (CBUAE: salaried retire at 65, self-employed at 70)
+  const customerAge = useMemo(() => calculateAge(basicInfo.dateOfBirth), [basicInfo.dateOfBirth]);
+  const maxTenure   = useMemo(() => {
+    if (!customerAge) return 25;
+    const retirementAge = basicInfo.employmentStatus === 'Self-Employed' ? 70 : 65;
+    return Math.max(5, Math.min(25, retirementAge - customerAge));
+  }, [customerAge, basicInfo.employmentStatus]);
+
   // Live Eligibility Calculation
   const updateLiveCalculation = useCallback(() => {
     const monthlyIncome = basicInfo.monthlySalary || 0;
     const monthlyLiabilities = basicInfo.existingMonthlyLiabilities || 0;
     const propertyValue = propertyInfo.propertyValue || 0;
     const loanAmount = propertyInfo.loanAmountRequired || 0;
-    const tenure = loanRequirementsInfo.preferredTenureYears || 25;
+    // Effective tenure is capped by retirement-age rule
+    const rawTenure = loanRequirementsInfo.preferredTenureYears || 25;
+    const age = basicInfo.dateOfBirth ? calculateAge(basicInfo.dateOfBirth) : null;
+    const retAge = basicInfo.employmentStatus === 'Self-Employed' ? 70 : 65;
+    const cap = age ? Math.max(5, Math.min(25, retAge - age)) : 25;
+    const tenure = Math.min(rawTenure, cap);
     const interestRate = 4.19;
 
     const maxDBR = residencyStatus === 'UAE National' ? 55 : 50;
@@ -179,8 +193,8 @@ export default function VaultAgentLeadEditEligibility() {
       ltv: { value: Math.round(ltv), isEligible: ltvEligible },
       isEligible
     });
-  }, [basicInfo.monthlySalary, basicInfo.existingMonthlyLiabilities, propertyInfo.propertyValue, 
-      propertyInfo.loanAmountRequired, loanRequirementsInfo.preferredTenureYears, residencyStatus]);
+  }, [basicInfo.monthlySalary, basicInfo.existingMonthlyLiabilities, basicInfo.dateOfBirth, basicInfo.employmentStatus,
+      propertyInfo.propertyValue, propertyInfo.loanAmountRequired, loanRequirementsInfo.preferredTenureYears, residencyStatus]);
 
   useEffect(() => {
     updateLiveCalculation();
@@ -216,6 +230,7 @@ export default function VaultAgentLeadEditEligibility() {
         employer: ci.employer || "",
         gender: ci.gender || "",
         residencyStatus: ci.residencyStatus || "UAE Resident",
+        employmentStatus: ci.employmentStatus || "",
         monthlySalary: ci.monthlySalary || 0,
         existingMonthlyLiabilities: ci.existingMonthlyLiabilities || 0
       });
@@ -259,13 +274,22 @@ export default function VaultAgentLeadEditEligibility() {
   const checkEligibility = async () => {
     setEligibilityLoading(true);
     try {
+      // Age-constrained tenure — salaried retire at 65, self-employed at 70
+      const age = basicInfo.dateOfBirth ? calculateAge(basicInfo.dateOfBirth) : null;
+      const retirementAge = basicInfo.employmentStatus === 'Self-Employed' ? 70 : 65;
+      const effectiveTenure = age
+        ? Math.min(loanRequirementsInfo.preferredTenureYears, Math.max(5, retirementAge - age))
+        : loanRequirementsInfo.preferredTenureYears;
+
       const payload = {
         monthlySalary: basicInfo.monthlySalary,
         existingMonthlyLiabilities: basicInfo.existingMonthlyLiabilities,
         propertyValue: propertyInfo.propertyValue,
         downpayment: propertyInfo.downPaymentAmount,
         loanAmount: propertyInfo.loanAmountRequired,
-        tenureYears: loanRequirementsInfo.preferredTenureYears
+        tenureYears: effectiveTenure,
+        dateOfBirth: basicInfo.dateOfBirth ? dayjs(basicInfo.dateOfBirth).toISOString() : null,
+        employmentStatus: basicInfo.employmentStatus || null,
       };
       
       const response = await apiService.post(`/vault/lead/${id}/calculate-eligibility`, payload);
@@ -312,6 +336,7 @@ export default function VaultAgentLeadEditEligibility() {
         dateOfBirth: basicInfo.dateOfBirth,
         gender: basicInfo.gender,
         maritalStatus: basicInfo.maritalStatus,
+        employmentStatus: basicInfo.employmentStatus,
         occupation: basicInfo.occupation,
         employer: basicInfo.employer,
         monthlySalary: basicInfo.monthlySalary,
@@ -363,12 +388,12 @@ export default function VaultAgentLeadEditEligibility() {
           maritalStatus: values.maritalStatus || null,
           occupation: values.occupation || null,
           employer: values.employer || null,
+          employmentStatus: values.employmentStatus || null,
           monthlySalary: values.monthlySalary || 0,
           existingMonthlyLiabilities: values.existingMonthlyLiabilities || 0,
           residencyStatus: basicInfo.residencyStatus || "UAE Resident"
         };
-        
-        // Update local state
+
         setBasicInfo(prev => ({
           ...prev,
           firstName,
@@ -382,6 +407,7 @@ export default function VaultAgentLeadEditEligibility() {
           maritalStatus: values.maritalStatus,
           occupation: values.occupation,
           employer: values.employer,
+          employmentStatus: values.employmentStatus,
           monthlySalary: values.monthlySalary,
           existingMonthlyLiabilities: values.existingMonthlyLiabilities
         }));
@@ -443,6 +469,7 @@ export default function VaultAgentLeadEditEligibility() {
     { name: "dateOfBirth", label: "Date of Birth", type: "date" },
     { name: "gender", label: "Gender", type: "select", options: ["Male", "Female", "Other"] },
     { name: "maritalStatus", label: "Marital Status", type: "select", options: ["Single", "Married", "Divorced", "Widowed"] },
+    { name: "employmentStatus", label: "Employment Status", type: "select", options: ["Salaried", "Self-Employed"] },
     { name: "occupation", label: "Occupation", type: "text" },
     { name: "employer", label: "Employer", type: "text" },
     { name: "monthlySalary", label: "Monthly Salary (AED)", type: "number" },
@@ -629,15 +656,31 @@ export default function VaultAgentLeadEditEligibility() {
                         />
                       </Col>
                       <Col xs={24} sm={12}>
-                        <label className="input-label">Tenure: <strong style={{ color: C.primary }}>{loanRequirementsInfo.preferredTenureYears} Years</strong></label>
-                        <Slider 
-                          min={5} 
-                          max={30} 
-                          value={loanRequirementsInfo.preferredTenureYears} 
-                          onChange={(v) => setLoanRequirementsInfo(prev => ({ ...prev, preferredTenureYears: v }))} 
-                          trackStyle={{ background: C.primary }} 
-                          handleStyle={{ borderColor: C.primary }} 
+                        <label className="input-label">
+                          Tenure:{' '}
+                          <strong style={{ color: C.primary }}>
+                            {Math.min(loanRequirementsInfo.preferredTenureYears, maxTenure)} Years
+                          </strong>
+                          {customerAge && loanRequirementsInfo.preferredTenureYears > maxTenure && (
+                            <span style={{ color: C.red, fontSize: 11, marginLeft: 4 }}>
+                              (capped — preferred {loanRequirementsInfo.preferredTenureYears} yrs)
+                            </span>
+                          )}
+                        </label>
+                        <Slider
+                          min={5}
+                          max={maxTenure}
+                          value={Math.min(loanRequirementsInfo.preferredTenureYears, maxTenure)}
+                          onChange={(v) => setLoanRequirementsInfo(prev => ({ ...prev, preferredTenureYears: v }))}
+                          trackStyle={{ background: C.primary }}
+                          handleStyle={{ borderColor: C.primary }}
                         />
+                        {customerAge && (
+                          <div style={{ fontSize: 11, color: C.amber, marginTop: 3 }}>
+                            Age {customerAge} → Max {maxTenure} yrs
+                            (retires at {basicInfo.employmentStatus === 'Self-Employed' ? 70 : 65})
+                          </div>
+                        )}
                       </Col>
                       <Col xs={24} sm={12}>
                         <label className="input-label">Residency Status</label>
@@ -691,7 +734,8 @@ export default function VaultAgentLeadEditEligibility() {
                         </span>
                       </div>
                       <div style={{ fontSize: 12, color: "rgba(255,255,255,0.5)" }}>
-                        Based on 4.19% interest rate
+                        Based on 4.19% · {Math.min(loanRequirementsInfo.preferredTenureYears, maxTenure)} yr tenure
+                        {customerAge ? ` · Age ${customerAge} (max ${maxTenure} yrs)` : ''}
                       </div>
                     </div>
 

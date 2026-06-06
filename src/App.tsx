@@ -69,6 +69,12 @@ const DetailedViewCases       = lazy(() => import('./pages/vault-admin/cases/Det
 const DisbursedCases          = lazy(() => import('./pages/vault-admin/cases/DisbursedCases'));
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
+const BankSubmissionQueue     = lazy(() => import('./pages/vault-admin/cases/BankSubmissionQueue'));
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
+const ReturnedCases           = lazy(() => import('./pages/vault-admin/cases/ReturnedCases'));
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
 const OpsQueueView            = lazy(() => import('./pages/vault-admin/cases/OpsQueueView'));
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
@@ -236,6 +242,8 @@ const App: React.FC = () => (
         <Route path="case/manage" element={<AdminManagecases />} />
         <Route path="case/view/:caseId" element={<AdminCaseDetail />} />
         <Route path="case/disbursed" element={<DisbursedCases />} />
+        <Route path="case/bank-submission" element={<BankSubmissionQueue />} />
+        <Route path="case/returned" element={<ReturnedCases />} />
         <Route path="case/queue/view" element={<OpsQueueView />} />
         <Route path="case/assigned/all" element={<OpsAssignedcases />} />
         <Route path="case/assigned/view/:caseId" element={<OpsAssignedReview />} />
@@ -288,6 +296,8 @@ const App: React.FC = () => (
         <Route path="case/assigned/view/:caseId" element={<OpsAssignedReview />} />
         <Route path="case/view/all" element={<ProcessCasesUpdates />} />
         <Route path="case/disbursed" element={<DisbursedCases />} />
+        <Route path="case/bank-submission" element={<BankSubmissionQueue />} />
+        <Route path="case/returned" element={<ReturnedCases />} />
         <Route path="case/view/:caseId" element={<OpsAssignedReview />} />
         <Route path="case/review/:caseId" element={<OpsAssignedReview />} />
         <Route path="case/details/:caseId" element={<OpsCaseDetails />} />
@@ -316,6 +326,8 @@ const App: React.FC = () => (
         <Route path="case/view" element={<AdvisorViewCases />} />
         <Route path="case/view/all" element={<ProcessCasesUpdates />} />
         <Route path="case/view/:caseId" element={<AdvisorCaseDetail />} />
+        <Route path="bank/products" element={<PartnerBankProducts />} />
+        <Route path="bank/products/:productId" element={<PartnerBankProductView />} />
         <Route path="notifications" element={<NotificationsPage />} />
         <Route path="*" element={<Navigate to="/dashboard/vault-advisor" replace />} />
       </Route>

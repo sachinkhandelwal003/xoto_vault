@@ -530,6 +530,8 @@ export default function OpsAssignedReview() {
   const [amtField,    setAmtField]    = useState('');
   const [bankRef,     setBankRef]     = useState('');
   const [disbursedTo, setDisbursedTo] = useState('');
+  const [maxLTV,          setMaxLTV]          = useState('80');
+  const [confirmedPropVal,setConfirmedPropVal] = useState('');
 
   // Return to queue state
   const [returnModal,  setReturnModal]  = useState(false);
@@ -570,6 +572,8 @@ export default function OpsAssignedReview() {
     setAmtField('');
     setBankRef('');
     setDisbursedTo('');
+    setMaxLTV('80');
+    setConfirmedPropVal('');
     setStatusModal(true);
   };
 
@@ -580,6 +584,8 @@ export default function OpsAssignedReview() {
     setAmtField('');
     setBankRef('');
     setDisbursedTo('');
+    setMaxLTV('80');
+    setConfirmedPropVal('');
   };
 
   /* ── Status Update ──────────────────────────────────────── */
@@ -596,9 +602,36 @@ export default function OpsAssignedReview() {
       if (bankRef)     payload.bankReference  = bankRef;
       if (disbursedTo) payload.disbursedTo    = disbursedTo;
 
-      if (selStatus === 'Pre-Approved')  payload.approvedAmount = parseFloat(amtField);
-      if (selStatus === 'FOL Issued')    payload.approvedAmount = parseFloat(amtField);
-      if (selStatus === 'Disbursed')     payload.approvedAmount = parseFloat(amtField);
+      if (selStatus === 'FOL Issued')  payload.approvedAmount = parseFloat(amtField);
+      if (selStatus === 'Disbursed')   payload.approvedAmount = parseFloat(amtField);
+
+      if (selStatus === 'Pre-Approved') {
+        const preApprAmt  = parseFloat(amtField) || 0;
+        const ltvPct      = parseFloat(maxLTV) || 80;
+        const ltvDecimal  = ltvPct / 100;
+
+        payload.approvedAmount = preApprAmt;
+
+        const pa = {
+          preApprovedAmount:          preApprAmt,
+          maxLTV:                     ltvDecimal,
+          maxAffordablePropertyValue: preApprAmt > 0 ? Math.round(preApprAmt / ltvDecimal) : null,
+        };
+
+        // Use form input if provided, else existing propertyInfo value
+        const existingPropVal = parseFloat(confirmedPropVal) || caseData?.propertyInfo?.propertyValue || 0;
+        if (existingPropVal > 0 && preApprAmt > 0) {
+          const confirmedLoan = Math.min(preApprAmt, Math.round(existingPropVal * ltvDecimal));
+          pa.confirmedPropertyValue = existingPropVal;
+          pa.confirmedLoanAmount    = confirmedLoan;
+          pa.confirmedDownPayment   = existingPropVal - confirmedLoan;
+          pa.confirmedLTV           = Math.round((confirmedLoan / existingPropVal) * 1000) / 10;
+          pa.propertyAddedAt        = new Date().toISOString();
+          // Signal to backend that property has been confirmed
+          payload.propertyFound = true;
+        }
+        payload.preApprovalInfo = pa;
+      }
 
       const r = await apiService.put(`vault/cases/${caseId}/status`, payload);
       if (r?.success) {
@@ -919,6 +952,28 @@ export default function OpsAssignedReview() {
                     {bd.decisionNotes    && <InfoRow label="Notes"           value={bd.decisionNotes} />}
                   </SCard>
                 )}
+                {/* Pre-Approval Info */}
+                {caseData.preApprovalInfo?.preApprovedAmount && (
+                  <SCard title="Pre-Approval Details" icon={<CheckCircleOutlined />} accent={GN}>
+                    <InfoRow label="Pre-Approved Amount"   value={`AED ${Number(caseData.preApprovalInfo.preApprovedAmount).toLocaleString()}`}  bold highlight={GN} />
+                    <InfoRow label="Max LTV"               value={caseData.preApprovalInfo.maxLTV ? `${Math.round(caseData.preApprovalInfo.maxLTV * 100)}%` : '—'} />
+                    <InfoRow label="Max Affordable Prop."  value={caseData.preApprovalInfo.maxAffordablePropertyValue ? `AED ${Number(caseData.preApprovalInfo.maxAffordablePropertyValue).toLocaleString()}` : '—'} />
+                    {caseData.preApprovalInfo.confirmedPropertyValue ? (
+                      <>
+                        <div style={{ height: 1, background: '#f3f4f6', margin: '8px 0' }} />
+                        <InfoRow label="Confirmed Property" value={`AED ${Number(caseData.preApprovalInfo.confirmedPropertyValue).toLocaleString()}`} bold />
+                        <InfoRow label="Confirmed Loan"     value={`AED ${Number(caseData.preApprovalInfo.confirmedLoanAmount).toLocaleString()}`}    bold highlight={GN} />
+                        <InfoRow label="Down Payment"       value={`AED ${Number(caseData.preApprovalInfo.confirmedDownPayment).toLocaleString()}`} />
+                        <InfoRow label="Confirmed LTV"      value={`${caseData.preApprovalInfo.confirmedLTV}%`} />
+                      </>
+                    ) : (
+                      <div style={{ background: '#fffbeb', borderRadius: 8, padding: '8px 12px', marginTop: 8, fontSize: 11, color: '#92400e' }}>
+                        ⏳ Property not confirmed yet — customer still searching
+                      </div>
+                    )}
+                  </SCard>
+                )}
+
                 {/* Ops internal notes (not visible to Advisor/Partner) */}
                 {caseData.opsNotes && (
                   <SCard title="Ops Internal Notes" icon={<InfoCircleOutlined />} accent="#7c3aed">
@@ -1156,6 +1211,76 @@ export default function OpsAssignedReview() {
             />
           </Form.Item>
         )}
+
+        {/* Pre-Approved extra fields */}
+        {selStatus === 'Pre-Approved' && (() => {
+          const preApprAmt   = parseFloat(amtField) || 0;
+          const ltvPct       = parseFloat(maxLTV) || 80;
+          const ltvDecimal   = ltvPct / 100;
+          const existingProp = parseFloat(confirmedPropVal) || caseData?.propertyInfo?.propertyValue || 0;
+          const hasProp      = existingProp > 0;
+          const confirmedLoan= hasProp && preApprAmt ? Math.min(preApprAmt, Math.round(existingProp * ltvDecimal)) : 0;
+          const confirmedDP  = hasProp ? existingProp - confirmedLoan : 0;
+          const maxProp      = preApprAmt && ltvDecimal ? Math.round(preApprAmt / ltvDecimal) : 0;
+          return (
+            <>
+              <Form.Item label="Max LTV % (Bank Rule)" style={{ marginBottom: 14 }}>
+                <Input
+                  value={maxLTV}
+                  onChange={e => setMaxLTV(e.target.value)}
+                  suffix="%"
+                  type="number"
+                  placeholder="80"
+                  style={{ borderRadius: 8 }}
+                />
+                <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 3 }}>
+                  CBUAE: 80% for ≤ AED 5M property · 70% for &gt; AED 5M
+                </div>
+              </Form.Item>
+
+              {!caseData?.propertyInfo?.propertyValue && (
+                <Form.Item label="Property Value AED (if known)" style={{ marginBottom: 14 }}>
+                  <Input
+                    value={confirmedPropVal}
+                    onChange={e => setConfirmedPropVal(e.target.value)}
+                    prefix="AED"
+                    type="number"
+                    placeholder="Leave blank if customer has no property yet"
+                    style={{ borderRadius: 8 }}
+                  />
+                </Form.Item>
+              )}
+
+              {preApprAmt > 0 && (
+                <div style={{
+                  borderRadius: 12, padding: '12px 16px', marginBottom: 14,
+                  background: hasProp ? '#f0fdf4' : '#fffbeb',
+                  border: `1px solid ${hasProp ? '#a7f3d0' : '#fde68a'}`,
+                }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: hasProp ? '#065f46' : '#92400e', marginBottom: 8 }}>
+                    {hasProp ? '✓ Auto-calculated from property value:' : '⚡ Pre-approval only (no property):'}
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                    {hasProp ? [
+                      { label: 'Property Value',  value: `AED ${existingProp.toLocaleString()}` },
+                      { label: 'Confirmed Loan',  value: `AED ${confirmedLoan.toLocaleString()}` },
+                      { label: 'Down Payment',    value: `AED ${confirmedDP.toLocaleString()}`   },
+                      { label: 'LTV',             value: `${Math.round((confirmedLoan / existingProp) * 1000) / 10}%` },
+                    ] : [
+                      { label: 'Pre-Approved',      value: `AED ${preApprAmt.toLocaleString()}` },
+                      { label: 'Max Property',      value: maxProp ? `AED ${maxProp.toLocaleString()}` : '—' },
+                    ]}
+                  </div>
+                  {!hasProp && (
+                    <div style={{ fontSize: 11, color: '#78350f', marginTop: 8 }}>
+                      Ops will add property details separately after customer finds property.
+                    </div>
+                  )}
+                </div>
+              )}
+            </>
+          );
+        })()}
 
         {/* Disbursed To */}
         {selStatus === 'Disbursed' && (

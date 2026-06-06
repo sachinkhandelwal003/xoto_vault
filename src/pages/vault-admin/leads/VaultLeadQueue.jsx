@@ -117,6 +117,15 @@ const VaultLeadQueue = () => {
 
   const [advisors, setAdvisors] = useState([]);
 
+  const [createOpen, setCreateOpen] = useState(false);
+  const [createForm] = Form.useForm();
+  const [createLoading, setCreateLoading] = useState(false);
+  const [createResidency, setCreateResidency] = useState(null);
+
+  const nationalityOptions = useMemo(() =>
+    Country.getAllCountries().map(c => ({ label: c.name, value: c.name })).sort((a, b) => a.label.localeCompare(b.label)),
+  []);
+
   useEffect(() => {
     const isBulkPath = location.pathname.endsWith('/leads/bulk-upload');
     setBulkModalOpen(isBulkPath);
@@ -208,6 +217,50 @@ const VaultLeadQueue = () => {
     setAssignTarget({ leadIds: selectedLeadIds, clientName: `${selectedLeadIds.length} selected lead${selectedLeadIds.length > 1 ? "s" : ""}` });
     setSelectedAdvisor(null);
     setAssignModal(true);
+  };
+
+  const handleCreateLead = async () => {
+    try {
+      await createForm.validateFields();
+    } catch { message.error("Please fill all required fields"); return; }
+    setCreateLoading(true);
+    try {
+      const v = createForm.getFieldsValue(true);
+      const cleaned = (v.mobileNumber || "").replace(/\D/g, "");
+      const payload = {
+        customerInfo: {
+          firstName: v.firstName,
+          lastName: v.lastName,
+          countryCode: "+971",
+          mobileNumber: cleaned.slice(-9),
+          email: v.email || null,
+          residencyStatus: v.residencyStatus || null,
+          nationality: v.nationality || null,
+          employmentStatus: v.employmentStatus || null,
+        },
+        propertyDetails: {
+          transactionType: v.transactionType || null,
+          propertyFound: v.propertyFound === true,
+          approxPropertyValue: v.propertyFound === true ? (v.approxPropertyValue || null) : null,
+        },
+        loanRequirements: { timeline: v.timeline || null },
+        notesToXoto: v.notesToXoto || null,
+      };
+      const res = await apiService.post("vault/lead/admin/create", payload);
+      if (res?.success || res?.data) {
+        message.success("Lead created and added to queue!");
+        createForm.resetFields();
+        setCreateResidency(null);
+        setCreateOpen(false);
+        fetchLeads(1, itemsPerPage, filters);
+      } else {
+        message.error(res?.message || "Failed to create lead");
+      }
+    } catch (err) {
+      message.error(err?.response?.data?.message || "Failed to create lead");
+    } finally {
+      setCreateLoading(false);
+    }
   };
 
   const handleBulkFileSelect = (file) => {
@@ -502,7 +555,7 @@ const VaultLeadQueue = () => {
           <Button
             type="primary"
             icon={<PlusOutlined />}
-            onClick={() => navigate('/dashboard/vault-admin/leads/create')}
+            onClick={() => setCreateOpen(true)}
             style={{ borderRadius: 10, background: P, borderColor: P, fontWeight: 600 }}
           >
             Create Lead
@@ -780,6 +833,113 @@ const VaultLeadQueue = () => {
           <div>No details available.</div>
         )}
       </Modal>
+
+      {/* Create Lead Drawer */}
+      <Drawer
+        title={<span style={{ fontWeight: 800, fontSize: 16, color: P }}>Create New Lead</span>}
+        placement="right"
+        width={620}
+        open={createOpen}
+        onClose={() => { setCreateOpen(false); createForm.resetFields(); setCreateResidency(null); }}
+        footer={
+          <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
+            <Button onClick={() => { setCreateOpen(false); createForm.resetFields(); setCreateResidency(null); }}>Cancel</Button>
+            <Button type="primary" loading={createLoading} onClick={handleCreateLead} icon={<SendOutlined />} style={{ background: P, borderColor: P, fontWeight: 700, minWidth: 160 }}>
+              Submit Lead
+            </Button>
+          </div>
+        }
+      >
+        <Form form={createForm} layout="vertical" scrollToFirstError>
+          {/* Customer Info */}
+          <div style={{ fontWeight: 700, color: P, fontSize: 13, marginBottom: 12, display: "flex", alignItems: "center", gap: 8 }}>
+            <UserOutlined /> Customer Information
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0 16px" }}>
+            <Form.Item name="firstName" label="First Name" rules={[{ required: true, message: "Required" }]}>
+              <Input size="large" placeholder="Ahmed" style={{ borderRadius: 8 }} />
+            </Form.Item>
+            <Form.Item name="lastName" label="Last Name" rules={[{ required: true, message: "Required" }]}>
+              <Input size="large" placeholder="Khan" style={{ borderRadius: 8 }} />
+            </Form.Item>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0 16px" }}>
+            <Form.Item name="mobileNumber" label="Mobile Number *"
+              rules={[{ required: true }, { validator: (_, v) => { const c = String(v || "").replace(/\D/g, ""); return c.length >= 9 ? Promise.resolve() : Promise.reject("Enter valid mobile"); } }]}
+            >
+              <PhoneInput country="ae" preferredCountries={["ae", "sa", "in", "pk"]} enableSearch inputStyle={{ width: "100%", height: 40, borderRadius: 8 }} />
+            </Form.Item>
+            <Form.Item name="email" label="Email">
+              <Input size="large" placeholder="customer@email.com" prefix={<MailOutlined style={{ color: "#cbd5e1" }} />} style={{ borderRadius: 8 }} />
+            </Form.Item>
+          </div>
+
+          <Divider style={{ margin: "8px 0 16px" }} />
+          <div style={{ fontWeight: 700, color: P, fontSize: 13, marginBottom: 12, display: "flex", alignItems: "center", gap: 8 }}>
+            <SafetyOutlined /> Residency & Employment
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "0 16px" }}>
+            <Form.Item name="residencyStatus" label="Residency Status">
+              <Select size="large" placeholder="Select" allowClear onChange={(v) => {
+                setCreateResidency(v);
+                if (v === "UAE National") createForm.setFieldValue("nationality", "United Arab Emirates");
+                else createForm.setFieldValue("nationality", undefined);
+              }}>
+                {["UAE National", "UAE Resident", "Non-Resident"].map(s => <Select.Option key={s} value={s}>{s}</Select.Option>)}
+              </Select>
+            </Form.Item>
+            <Form.Item name="nationality" label="Nationality"
+              rules={[{ required: createResidency === "UAE Resident" || createResidency === "Non-Resident", message: "Required" }]}
+            >
+              <Select size="large" showSearch placeholder="Select" optionFilterProp="label" options={nationalityOptions} disabled={createResidency === "UAE National"} allowClear />
+            </Form.Item>
+            <Form.Item name="employmentStatus" label="Employment Status">
+              <Select size="large" placeholder="Select" allowClear>
+                {["Salaried", "Self-Employed"].map(s => <Select.Option key={s} value={s}>{s}</Select.Option>)}
+              </Select>
+            </Form.Item>
+          </div>
+
+          <Divider style={{ margin: "8px 0 16px" }} />
+          <div style={{ fontWeight: 700, color: P, fontSize: 13, marginBottom: 12, display: "flex", alignItems: "center", gap: 8 }}>
+            <HomeOutlined /> Property Details
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "0 16px" }}>
+            <Form.Item name="transactionType" label="Transaction Type">
+              <Select size="large" placeholder="Select" allowClear>
+                {["Primary - Residential", "Primary - Commercial", "Buyout", "Equity", "Buyout + Equity", "Off-plan"].map(t => <Select.Option key={t} value={t}>{t}</Select.Option>)}
+              </Select>
+            </Form.Item>
+            <Form.Item name="propertyFound" label="Property Found?">
+              <Select size="large" placeholder="Yes / No" allowClear>
+                <Select.Option value={true}>Yes</Select.Option>
+                <Select.Option value={false}>No</Select.Option>
+              </Select>
+            </Form.Item>
+            <Form.Item name="approxPropertyValue" label="Approx Property Value"
+              dependencies={["propertyFound"]}
+              rules={[({ getFieldValue }) => ({ required: getFieldValue("propertyFound") === true, message: "Required when property found" })]}
+            >
+              <Select size="large" placeholder="Select range" allowClear>
+                {["<1M", "1-2M", "2-5M", "5-10M", "10M+"].map(v => <Select.Option key={v} value={v}>{v}</Select.Option>)}
+              </Select>
+            </Form.Item>
+          </div>
+
+          <Divider style={{ margin: "8px 0 16px" }} />
+          <div style={{ fontWeight: 700, color: P, fontSize: 13, marginBottom: 12, display: "flex", alignItems: "center", gap: 8 }}>
+            <CalendarOutlined /> Loan & Notes
+          </div>
+          <Form.Item name="timeline" label="Purchase Timeline">
+            <Select size="large" placeholder="When do they plan to buy?" allowClear>
+              {["Immediately", "1-3 months", "3-6 months", "More than 6 months"].map(t => <Select.Option key={t} value={t}>{t}</Select.Option>)}
+            </Select>
+          </Form.Item>
+          <Form.Item name="notesToXoto" label="Notes to Xoto">
+            <Input.TextArea rows={3} placeholder="Any additional details..." style={{ borderRadius: 8 }} />
+          </Form.Item>
+        </Form>
+      </Drawer>
 
       {/* Filter Drawer */}
       <Drawer

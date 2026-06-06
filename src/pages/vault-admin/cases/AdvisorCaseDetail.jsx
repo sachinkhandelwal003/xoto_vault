@@ -281,149 +281,427 @@ const DocCard = ({ doc, onUpload, uploading, onView }) => {
 
 /* ─── Step 1: Case Overview ─── */
 const CaseOverview = ({ data }) => {
-  const c = data.clientInfo || {};
-  const p = data.propertyInfo || {};
-  const b = data.bankSelection || {};
-  const e = data.eligibilitySnapshot || {};
-  const tl = data.timeline || {};
-  const addr = p.propertyAddress || {};
+  const c  = data.clientInfo || {};
+  const p  = data.propertyInfo || {};
+  const b  = data.bankSelection || {};
+  const e  = data.eligibilitySnapshot || {};
+  const tl = data.timeline || {};
+  const pa = data.preApprovalInfo || {};
+  const addr = p.propertyAddress || {};
 
-  const riskColor = { Excellent: '#10b981', Good: '#3b82f6', Fair: '#f59e0b', Poor: '#ef4444' };
+  const isPreApprovalOnly = data.applicationSubType === 'pre_approval_only';
+  // propertyAdded is true as soon as ops fills confirmedPropertyValue — don't require data.propertyFound
+  const propertyAdded    = isPreApprovalOnly && !!pa.confirmedPropertyValue;
+  const awaitingProperty = isPreApprovalOnly && !propertyAdded;
 
-  return (
-    <div>
-      <Row gutter={[10, 10]} style={{ marginBottom: 16 }}>
-        {[
-          { label: 'Property Value', value: `AED ${(p.propertyValue || 0).toLocaleString()}`, color: '#3b82f6' },
-          { label: 'Loan Amount', value: `AED ${(p.loanAmount || 0).toLocaleString()}`, color: THEME },
-          { label: 'Monthly EMI', value: b.monthlyEMI ? `AED ${b.monthlyEMI.toLocaleString()}` : '—', color: '#f59e0b' },
-          { label: 'Eligibility', value: e.eligibilityScore ? `${e.eligibilityScore}/100` : '—', color: GREEN },
-        ].map(s => (
-          <Col xs={12} sm={6} key={s.label}>
-            <div style={{ background: '#fff', borderRadius: 12, padding: '14px 16px', border: `1px solid ${s.color}20`, textAlign: 'center', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
-              <div style={{ fontSize: 16, fontWeight: 800, color: s.color }}>{s.value}</div>
-              <div style={{ fontSize: 10, color: '#94a3b8', fontWeight: 600, marginTop: 3 }}>{s.label}</div>
-            </div>
-          </Col>
-        ))}
-      </Row>
+  const riskColor = { Excellent: '#10b981', Good: '#3b82f6', Fair: '#f59e0b', Poor: '#ef4444' };
 
-      <Row gutter={[14, 0]}>
-        <Col xs={24} md={12}>
-          <SectionCard title="Client Information" icon={<UserOutlined />}>
+  const stats = isPreApprovalOnly
+    ? propertyAdded
+      ? [
+          { label: 'Confirmed Loan',     value: `AED ${Number(pa.confirmedLoanAmount || 0).toLocaleString()}`,     color: THEME },
+          { label: 'Property Value',     value: `AED ${Number(pa.confirmedPropertyValue || 0).toLocaleString()}`, color: '#3b82f6' },
+          { label: 'Confirmed LTV',      value: pa.confirmedLTV ? `${pa.confirmedLTV}%` : '—',                    color: GREEN },
+          { label: 'Down Payment',       value: `AED ${Number(pa.confirmedDownPayment || 0).toLocaleString()}`,    color: '#f59e0b' },
+        ]
+      : [
+          {
+            label: pa.preApprovedAmount ? 'Pre-Approved Amount' : 'Requested Amount',
+            value: pa.preApprovedAmount
+              ? `AED ${pa.preApprovedAmount.toLocaleString()}`
+              : p.loanAmount ? `AED ${p.loanAmount.toLocaleString()}` : '—',
+            color: THEME,
+          },
+          {
+            label: 'Max Affordable Property',
+            value: pa.maxAffordablePropertyValue ? `AED ${pa.maxAffordablePropertyValue.toLocaleString()}` : '—',
+            color: '#3b82f6',
+          },
+          {
+            label: 'Max LTV',
+            value: pa.maxLTV ? `${Math.round(pa.maxLTV * 100)}%` : '—',
+            color: '#f59e0b',
+          },
+          {
+            label: 'DBR',
+            value: e.dbrPercentage ? `${e.dbrPercentage}%` : '—',
+            color: (e.dbrPercentage || 0) > 50 ? '#ef4444' : GREEN,
+          },
+        ]
+    : [
+        { label: 'Property Value', value: `AED ${(p.propertyValue || 0).toLocaleString()}`, color: '#3b82f6' },
+        { label: 'Loan Amount',    value: `AED ${(p.loanAmount    || 0).toLocaleString()}`, color: THEME },
+        { label: 'Monthly EMI',    value: b.monthlyEMI ? `AED ${b.monthlyEMI.toLocaleString()}` : '—', color: '#f59e0b' },
+        { label: 'Eligibility',    value: e.eligibilityScore ? `${e.eligibilityScore}/100` : '—', color: GREEN },
+      ];
+
+  return (
+    <div>
+      {/* Pre-Approval Only Banner */}
+      {isPreApprovalOnly && (
+        <div style={{
+          borderRadius: 14, marginBottom: 16,
+          background: awaitingProperty ? 'linear-gradient(135deg,#fff7ed,#fef3c7)' : 'linear-gradient(135deg,#f0fdf4,#d1fae5)',
+          border: `1.5px solid ${awaitingProperty ? '#f59e0b' : '#10b981'}`,
+          padding: '16px 20px',
+          display: 'flex', alignItems: 'flex-start', gap: 14,
+        }}>
+          <div style={{
+            width: 44, height: 44, borderRadius: 12, flexShrink: 0,
+            background: awaitingProperty ? '#f59e0b' : '#10b981',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22,
+          }}>
+            {awaitingProperty ? '🏠' : '✅'}
+          </div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontWeight: 800, fontSize: 15, color: awaitingProperty ? '#92400e' : '#065f46', marginBottom: 4 }}>
+              {awaitingProperty ? 'Pre-Approval Only — Property Not Yet Found' : 'Pre-Approval Only — Property Added'}
+            </div>
+            {awaitingProperty ? (
+              <div style={{ fontSize: 13, color: '#78350f' }}>
+                This case was created without a specific property. The bank will pre-approve a loan amount first.
+                Once pre-approved, Ops adds the property and LTV is auto-calculated.
+                {pa.maxAffordablePropertyValue && (
+                  <span style={{ fontWeight: 700, color: '#92400e' }}>
+                    {' '}Max affordable property: AED {pa.maxAffordablePropertyValue.toLocaleString()}.
+                  </span>
+                )}
+              </div>
+            ) : (
+              <div style={{ fontSize: 13, color: '#065f46' }}>
+                Property confirmed by Ops.{' '}
+                Loan: <strong>AED {Number(pa.confirmedLoanAmount || 0).toLocaleString()}</strong> &nbsp;·&nbsp;
+                Property: <strong>AED {Number(pa.confirmedPropertyValue || 0).toLocaleString()}</strong> &nbsp;·&nbsp;
+                Down Payment: <strong>AED {Number(pa.confirmedDownPayment || 0).toLocaleString()}</strong> &nbsp;·&nbsp;
+                LTV: <strong style={{ color: GREEN }}>{pa.confirmedLTV}%</strong>.
+              </div>
+            )}
+          </div>
+          <Tag style={{
+            borderRadius: 8, fontWeight: 700, flexShrink: 0, fontSize: 12,
+            background: awaitingProperty ? '#fef3c7' : '#d1fae5',
+            color: awaitingProperty ? '#92400e' : '#065f46',
+            border: `1px solid ${awaitingProperty ? '#fbbf24' : '#6ee7b7'}`,
+            padding: '4px 12px',
+          }}>
+            {awaitingProperty ? 'Awaiting Property' : 'Property Confirmed'}
+          </Tag>
+        </div>
+      )}
+
+      {/* Top Stats */}
+      <Row gutter={[10, 10]} style={{ marginBottom: 16 }}>
+        {stats.map(s => (
+          <Col xs={12} sm={6} key={s.label}>
+            <div style={{ background: '#fff', borderRadius: 12, padding: '14px 16px', border: `1px solid ${s.color}20`, textAlign: 'center', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+              <div style={{ fontSize: 16, fontWeight: 800, color: s.color }}>{s.value}</div>
+              <div style={{ fontSize: 10, color: '#94a3b8', fontWeight: 600, marginTop: 3 }}>{s.label}</div>
+            </div>
+          </Col>
+        ))}
+      </Row>
+
+      <Row gutter={[14, 0]}>
+        <Col xs={24} md={12}>
+          <SectionCard title="Client Information" icon={<UserOutlined />}>
             <InfoRow label="Full Name"            value={c.fullName || [c.firstName, c.lastName].filter(Boolean).join(' ')} icon={<UserOutlined />} />
-            <InfoRow label="Email"                value={c.email}                    icon={<MailOutlined />} />
-            <InfoRow label="Mobile"               value={c.phone || c.mobile}        icon={<PhoneOutlined />} />
-            <InfoRow label="Nationality"          value={c.nationality}              icon={<GlobalOutlined />} />
-            <InfoRow label="Residency"            value={c.residencyStatus}          icon={<SafetyOutlined />} />
-            <InfoRow label="Employment"           value={c.employmentStatus}         icon={<AuditOutlined />} />
-            <InfoRow label="Monthly Salary"       value={c.monthlySalary || c.fixedMonthlySalary ? `AED ${Number(c.monthlySalary || c.fixedMonthlySalary).toLocaleString()}` : null} />
+            <InfoRow label="Email"                value={c.email}             icon={<MailOutlined />} />
+            <InfoRow label="Mobile"               value={c.phone || c.mobile} icon={<PhoneOutlined />} />
+            <InfoRow label="Nationality"          value={c.nationality}       icon={<GlobalOutlined />} />
+            <InfoRow label="Residency"            value={c.residencyStatus}   icon={<SafetyOutlined />} />
+            <InfoRow label="Employment"           value={c.employmentStatus}  icon={<AuditOutlined />} />
+            <InfoRow label="Monthly Salary"       value={(c.monthlySalary || c.fixedMonthlySalary) ? `AED ${Number(c.monthlySalary || c.fixedMonthlySalary).toLocaleString()}` : null} />
             <InfoRow label="Salary Bank"          value={c.salaryBankName} />
             <InfoRow label="Existing Liabilities" value={c.existingLiabilities ? `AED ${Number(c.existingLiabilities).toLocaleString()}` : null} />
             <InfoRow label="Mortgage Term"        value={c.mortgageTerm ? `${c.mortgageTerm} years` : null} />
             <InfoRow label="Fee Financing"        value={c.feeFinancingRequired != null ? (c.feeFinancingRequired ? 'Yes' : 'No') : null} />
-          </SectionCard>
+          </SectionCard>
 
-          <SectionCard title="Property Information" icon={<HomeOutlined />}>
-            <InfoRow label="Area" value={addr.area} icon={<EnvironmentOutlined />} />
-            <InfoRow label="City" value={addr.city} icon={<EnvironmentOutlined />} />
-            <InfoRow label="Property Value" value={`AED ${(p.propertyValue || 0).toLocaleString()}`} />
-            <InfoRow label="Loan Amount" value={`AED ${(p.loanAmount || 0).toLocaleString()}`} />
-          </SectionCard>
-        </Col>
+          {/* Property — conditional on flow */}
+          {isPreApprovalOnly ? (
+            awaitingProperty ? (
+              <SectionCard title="Property — Awaiting Selection" icon={<HomeOutlined />}
+                style={{ border: '1.5px dashed #f59e0b', background: '#fffbeb' }}>
+                <div style={{ textAlign: 'center', padding: '20px 0 10px' }}>
+                  <HomeOutlined style={{ fontSize: 36, color: '#f59e0b', marginBottom: 8 }} />
+                  <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 6, color: '#92400e' }}>No Property Selected Yet</div>
+                  <div style={{ fontSize: 12, color: '#78350f', marginBottom: 14 }}>Ops will add property details after bank pre-approval.</div>
+                </div>
+                {pa.preApprovedAmount ? (
+                  <>
+                    <InfoRow label="Pre-Approved Amount"  value={`AED ${pa.preApprovedAmount.toLocaleString()}`} />
+                    <InfoRow label="Max Affordable Prop." value={pa.maxAffordablePropertyValue ? `AED ${pa.maxAffordablePropertyValue.toLocaleString()}` : '—'} />
+                    <InfoRow label="Applicable Max LTV"   value={pa.maxLTV ? `${Math.round(pa.maxLTV * 100)}%` : '—'} />
+                    <InfoRow label="Pre-Approved On"      value={pa.preApprovedAt ? dayjs(pa.preApprovedAt).format('DD MMM YYYY') : '—'} />
+                  </>
+                ) : (
+                  <div style={{ padding: '8px 12px', background: '#fef9c3', borderRadius: 8, fontSize: 12, color: '#713f12', textAlign: 'center' }}>
+                    Pre-approval amount will appear once the bank responds.
+                  </div>
+                )}
+              </SectionCard>
+            ) : (
+              <SectionCard title="Property — Confirmed by Ops" icon={<HomeOutlined />}
+                style={{ border: '1.5px solid #10b981', background: '#f0fdf4' }}>
+                {/* ── LTV Calculation Summary Box ── */}
+                <div style={{
+                  borderRadius: 12, background: '#fff', border: '1.5px solid #6ee7b7',
+                  padding: '14px 16px', marginBottom: 12,
+                }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: '#065f46', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 10 }}>
+                    Auto-Calculated LTV Breakdown
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 8 }}>
+                    <div style={{ textAlign: 'center', flex: 1, minWidth: 80 }}>
+                      <div style={{ fontSize: 15, fontWeight: 800, color: THEME }}>
+                        AED {Number(pa.confirmedLoanAmount || 0).toLocaleString()}
+                      </div>
+                      <div style={{ fontSize: 10, color: '#64748b', marginTop: 2 }}>Confirmed Loan</div>
+                    </div>
+                    <div style={{ fontSize: 16, color: '#94a3b8', fontWeight: 700 }}>÷</div>
+                    <div style={{ textAlign: 'center', flex: 1, minWidth: 80 }}>
+                      <div style={{ fontSize: 15, fontWeight: 800, color: '#1e293b' }}>
+                        AED {Number(pa.confirmedPropertyValue || 0).toLocaleString()}
+                      </div>
+                      <div style={{ fontSize: 10, color: '#64748b', marginTop: 2 }}>Property Value</div>
+                    </div>
+                    <div style={{ fontSize: 16, color: '#94a3b8', fontWeight: 700 }}>=</div>
+                    <div style={{ textAlign: 'center', flex: '0 0 auto' }}>
+                      <div style={{
+                        fontSize: 20, fontWeight: 900, color: GREEN,
+                        background: '#d1fae5', borderRadius: 8, padding: '4px 12px',
+                        border: '1.5px solid #6ee7b7',
+                      }}>
+                        {pa.confirmedLTV}% LTV
+                      </div>
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 6 }}>
+                    <div style={{ flex: 1, background: '#f0fdf4', borderRadius: 8, padding: '6px 10px', border: '1px solid #bbf7d0' }}>
+                      <div style={{ fontSize: 10, color: '#64748b' }}>Down Payment</div>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: '#065f46' }}>
+                        AED {Number(pa.confirmedDownPayment || 0).toLocaleString()}
+                      </div>
+                    </div>
+                    <div style={{ flex: 1, background: '#f5f3ff', borderRadius: 8, padding: '6px 10px', border: '1px solid #ddd6fe' }}>
+                      <div style={{ fontSize: 10, color: '#64748b' }}>Bank Pre-Approved</div>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: THEME }}>
+                        AED {Number(pa.preApprovedAmount || 0).toLocaleString()}
+                      </div>
+                    </div>
+                    <div style={{ flex: 1, background: '#eff6ff', borderRadius: 8, padding: '6px 10px', border: '1px solid #bfdbfe' }}>
+                      <div style={{ fontSize: 10, color: '#64748b' }}>Max LTV Rule</div>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: '#1d4ed8' }}>
+                        {pa.maxLTV ? `${Math.round(pa.maxLTV * 100)}%` : '—'}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                {/* ── Detail rows ── */}
+                <InfoRow label="Property Added On" value={pa.propertyAddedAt ? dayjs(pa.propertyAddedAt).format('DD MMM YYYY, HH:mm') : '—'} />
+                <InfoRow label="Added By"          value={pa.propertyAddedBy?.userName ? `${pa.propertyAddedBy.userName} (${pa.propertyAddedBy.userRole})` : '—'} />
+                {addr.area && <InfoRow label="Area" value={addr.area} icon={<EnvironmentOutlined />} />}
+                {addr.city && <InfoRow label="City" value={addr.city} icon={<EnvironmentOutlined />} />}
+                <InfoRow label="Transaction Type"  value={p.transactionType} />
+                <InfoRow label="Property Type"     value={p.propertyType} />
+              </SectionCard>
+            )
+          ) : (
+            <SectionCard title="Property Information" icon={<HomeOutlined />}>
+              <InfoRow label="Area"           value={addr.area}                                        icon={<EnvironmentOutlined />} />
+              <InfoRow label="City"           value={addr.city}                                        icon={<EnvironmentOutlined />} />
+              <InfoRow label="Property Value" value={`AED ${(p.propertyValue || 0).toLocaleString()}`} />
+              <InfoRow label="Loan Amount"    value={`AED ${(p.loanAmount    || 0).toLocaleString()}`} />
+              <InfoRow label="Down Payment"   value={p.downPayment ? `AED ${p.downPayment.toLocaleString()}` : null} />
+              <InfoRow label="Property Type"  value={p.propertyType} />
+              <InfoRow label="Transaction"    value={p.transactionType} />
+              <InfoRow label="Tenure"         value={p.tenureYears ? `${p.tenureYears} years` : null} />
+            </SectionCard>
+          )}
+        </Col>
 
-        <Col xs={24} md={12}>
-          <SectionCard title="Bank & Product" icon={<BankOutlined />}>
-            <InfoRow label="Bank" value={b.bankName} />
-            <InfoRow label="Product" value={b.productName} />
-            <InfoRow label="Interest Rate" value={b.interestRate ? `${b.interestRate}% p.a.` : '—'} />
-            <InfoRow label="Tenure" value={b.tenureYears ? `${b.tenureYears} years` : '—'} />
-            <InfoRow label="Monthly EMI" value={b.monthlyEMI ? `AED ${b.monthlyEMI.toLocaleString()}` : '—'} />
-          </SectionCard>
+        <Col xs={24} md={12}>
+          <SectionCard title="Bank & Product" icon={<BankOutlined />}>
+            <InfoRow label="Bank"          value={b.bankName} />
+            <InfoRow label="Product"       value={b.productName} />
+            <InfoRow label="Interest Rate" value={b.interestRate ? `${b.interestRate}% p.a.` : '—'} />
+            <InfoRow label="Tenure"        value={b.tenureYears ? `${b.tenureYears} years` : '—'} />
+            <InfoRow label="Monthly EMI"   value={b.monthlyEMI ? `AED ${b.monthlyEMI.toLocaleString()}` : '—'} />
+          </SectionCard>
 
-          <SectionCard title="Eligibility Snapshot" icon={<SafetyOutlined />}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14, padding: '10px 14px', borderRadius: 10, background: e.isEligible ? '#f0fdf4' : '#fff1f2', border: `1px solid ${e.isEligible ? '#bbf7d0' : '#fecaca'}` }}>
-              {e.isEligible
-                ? <CheckCircleOutlined style={{ color: GREEN, fontSize: 20 }} />
-                : <ClockCircleOutlined style={{ color: '#ef4444', fontSize: 20 }} />
-              }
-              <div>
-                <Text style={{ fontWeight: 700, color: e.isEligible ? GREEN : '#ef4444' }}>
-                  {e.isEligible ? 'Eligible' : 'Not Eligible'}
-                </Text>
-                <div style={{ fontSize: 11, color: '#64748b' }}>{e.dbrStatus}</div>
-              </div>
-              {e.riskGrade && (
-                <Tag style={{ marginLeft: 'auto', borderRadius: 6, fontWeight: 700, color: riskColor[e.riskGrade] || '#64748b', borderColor: (riskColor[e.riskGrade] || '#64748b') + '40', background: (riskColor[e.riskGrade] || '#64748b') + '12' }}>
-                  {e.riskGrade}
-                </Tag>
-              )}
-            </div>
-            <InfoRow label="Eligibility Score" value={e.eligibilityScore ? `${e.eligibilityScore}/100` : '—'} />
-            <InfoRow label="DBR Percentage" value={e.dbrPercentage ? `${e.dbrPercentage}%` : '—'} />
-            <InfoRow label="Estimated LTV" value={e.estimatedLTV ? `${e.estimatedLTV}%` : '—'} />
-            <InfoRow label="Recommended Loan" value={e.recommendedLoanAmount ? `AED ${e.recommendedLoanAmount.toLocaleString()}` : '—'} />
-            {e.eligibilityNotes && (
-              <div style={{ marginTop: 10, padding: '8px 12px', background: '#f8fafc', borderRadius: 8, fontSize: 12, color: '#64748b' }}>
-                {e.eligibilityNotes}
-              </div>
-            )}
-          </SectionCard>
-        </Col>
-      </Row>
+          <SectionCard title="Eligibility & DBR" icon={<SafetyOutlined />}>
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14,
+              padding: '10px 14px', borderRadius: 10,
+              background: e.isEligible ? '#f0fdf4' : '#fff1f2',
+              border: `1px solid ${e.isEligible ? '#bbf7d0' : '#fecaca'}`,
+            }}>
+              {e.isEligible
+                ? <CheckCircleOutlined style={{ color: GREEN, fontSize: 20 }} />
+                : <ClockCircleOutlined style={{ color: '#ef4444', fontSize: 20 }} />
+              }
+              <div>
+                <Text style={{ fontWeight: 700, color: e.isEligible ? GREEN : '#ef4444' }}>
+                  {e.isEligible ? 'Eligible' : 'Not Eligible'}
+                </Text>
+                <div style={{ fontSize: 11, color: '#64748b' }}>{e.dbrStatus}</div>
+              </div>
+              {e.riskGrade && (
+                <Tag style={{ marginLeft: 'auto', borderRadius: 6, fontWeight: 700, color: riskColor[e.riskGrade] || '#64748b', borderColor: (riskColor[e.riskGrade] || '#64748b') + '40', background: (riskColor[e.riskGrade] || '#64748b') + '12' }}>
+                  {e.riskGrade}
+                </Tag>
+              )}
+            </div>
 
-      {((data.internalNotes?.length > 0) || (data.customerNotes?.length > 0)) && (
-        <Row gutter={[14, 0]}>
-          {data.internalNotes?.length > 0 && (
-            <Col xs={24} md={12}>
-              <SectionCard title="Internal Notes" icon={<FileTextOutlined />}>
-                {data.internalNotes.map((n, i) => (
-                  <div key={i} style={{ padding: '8px 12px', background: '#faf5ff', borderRadius: 8, marginBottom: 6, fontSize: 13, color: '#374151', border: '1px solid #e9d5ff' }}>
-                    {n}
-                  </div>
-                ))}
-              </SectionCard>
-            </Col>
-          )}
-          {data.customerNotes?.length > 0 && (
-            <Col xs={24} md={12}>
-              <SectionCard title="Customer Notes" icon={<FileTextOutlined />}>
-                {data.customerNotes.map((n, i) => (
-                  <div key={i} style={{ padding: '8px 12px', background: '#f0f9ff', borderRadius: 8, marginBottom: 6, fontSize: 13, color: '#374151', border: '1px solid #bae6fd' }}>
-                    {n}
-                  </div>
-                ))}
-              </SectionCard>
-            </Col>
-          )}
-        </Row>
-      )}
+            {e.dbrPercentage > 0 && (
+              <div style={{ marginBottom: 14 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                  <Text style={{ fontSize: 12, color: '#64748b' }}>Debt Burden Ratio (DBR)</Text>
+                  <Text style={{ fontSize: 13, fontWeight: 800, color: e.dbrPercentage > 50 ? '#ef4444' : e.dbrPercentage > 40 ? '#f59e0b' : GREEN }}>
+                    {e.dbrPercentage}%
+                  </Text>
+                </div>
+                <div style={{ height: 8, background: '#e2e8f0', borderRadius: 4, overflow: 'hidden' }}>
+                  <div style={{
+                    height: '100%', borderRadius: 4, transition: 'width 0.4s',
+                    width: `${Math.min(e.dbrPercentage, 100)}%`,
+                    background: e.dbrPercentage > 50 ? '#ef4444' : e.dbrPercentage > 40 ? '#f59e0b' : GREEN,
+                  }} />
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 3 }}>
+                  <Text style={{ fontSize: 10, color: '#94a3b8' }}>0%</Text>
+                  <Text style={{ fontSize: 10, color: '#f59e0b', fontWeight: 700 }}>50% limit</Text>
+                  <Text style={{ fontSize: 10, color: '#94a3b8' }}>100%</Text>
+                </div>
+              </div>
+            )}
 
-      <SectionCard title="Case Timeline" icon={<ClockCircleOutlined />}>
-        <Row gutter={[10, 10]}>
-          {[
-            { label: 'Created', value: tl.createdAt },
-            { label: 'Submitted to Xoto', value: tl.submittedToXotoAt },
-            { label: 'Assigned to Ops', value: tl.assignedToOpsAt },
-            { label: 'Submitted to Bank', value: tl.submittedToBankAt },
-            { label: 'Pre-Approved', value: tl.preApprovedAt },
-            { label: 'Disbursed', value: tl.disbursedAt },
-          ].map(item => (
-            <Col xs={12} sm={8} md={4} key={item.label}>
-              <div style={{ textAlign: 'center', padding: '10px 6px', borderRadius: 10, background: item.value ? '#f0fdf4' : '#f8fafc', border: `1px solid ${item.value ? '#bbf7d0' : '#e2e8f0'}` }}>
-                {item.value
-                  ? <CheckCircleOutlined style={{ color: GREEN, fontSize: 16, marginBottom: 4, display: 'block' }} />
-                  : <ClockCircleOutlined style={{ color: '#cbd5e1', fontSize: 16, marginBottom: 4, display: 'block' }} />
-                }
-                <div style={{ fontSize: 9, fontWeight: 700, color: item.value ? '#065f46' : '#94a3b8', textTransform: 'uppercase', letterSpacing: 0.5 }}>{item.label}</div>
-                {item.value && <div style={{ fontSize: 10, color: '#059669', marginTop: 2 }}>{dayjs(item.value).format('DD MMM YY')}</div>}
-              </div>
-            </Col>
-          ))}
-        </Row>
-      </SectionCard>
-    </div>
-  );
+            <InfoRow label="Eligibility Score"   value={e.eligibilityScore ? `${e.eligibilityScore}/100` : '—'} />
+            <InfoRow label="DBR %"               value={e.dbrPercentage ? `${e.dbrPercentage}%` : '—'} />
+            <InfoRow label="Estimated LTV"       value={e.estimatedLTV ? `${e.estimatedLTV}%` : '—'} />
+            <InfoRow label="Recommended Loan"    value={e.recommendedLoanAmount ? `AED ${e.recommendedLoanAmount.toLocaleString()}` : '—'} />
+            <InfoRow label="Monthly Salary"      value={e.monthlySalary ? `AED ${e.monthlySalary.toLocaleString()}` : '—'} />
+            <InfoRow label="Monthly Liabilities" value={e.existingMonthlyDebt ? `AED ${e.existingMonthlyDebt.toLocaleString()}` : '—'} />
+            {e.eligibilityNotes && (
+              <div style={{ marginTop: 10, padding: '8px 12px', background: '#f8fafc', borderRadius: 8, fontSize: 12, color: '#64748b' }}>
+                {e.eligibilityNotes}
+              </div>
+            )}
+          </SectionCard>
+
+          {isPreApprovalOnly && (
+            <SectionCard title="Pre-Approval Summary" icon={<DollarOutlined />}
+              style={{ border: `1px solid ${awaitingProperty ? '#fde68a' : '#bbf7d0'}`, background: awaitingProperty ? '#fffbeb' : '#f0fdf4' }}>
+              <InfoRow label="Application Type" value="Pre-Approval Only" />
+              <InfoRow label="Property Status"  value={propertyAdded ? 'Property Confirmed by Ops' : 'Awaiting Property'} />
+              {p.loanAmount ? <InfoRow label="Customer Requested Loan" value={`AED ${Number(p.loanAmount).toLocaleString()}`} /> : null}
+              {pa.preApprovedAmount ? (
+                <>
+                  <InfoRow label="Pre-Approved Amount"  value={`AED ${Number(pa.preApprovedAmount).toLocaleString()}`} />
+                  <InfoRow label="Pre-Approved On"      value={pa.preApprovedAt ? dayjs(pa.preApprovedAt).format('DD MMM YYYY') : '—'} />
+                  <InfoRow label="Max LTV (Bank Rule)"  value={pa.maxLTV ? `${Math.round(pa.maxLTV * 100)}%` : '—'} />
+                  <InfoRow label="Max Affordable Prop." value={pa.maxAffordablePropertyValue ? `AED ${Number(pa.maxAffordablePropertyValue).toLocaleString()}` : '—'} />
+                </>
+              ) : null}
+              {pa.confirmedLoanAmount ? (
+                <>
+                  <Divider style={{ margin: '10px 0' }} />
+                  <div style={{ fontSize: 11, fontWeight: 700, color: '#065f46', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 6 }}>
+                    Confirmed by Ops
+                  </div>
+                  <InfoRow label="Property Value"     value={`AED ${Number(pa.confirmedPropertyValue || 0).toLocaleString()}`} />
+                  <InfoRow label="Confirmed Loan"     value={`AED ${Number(pa.confirmedLoanAmount).toLocaleString()}`} />
+                  <InfoRow label="Down Payment"       value={`AED ${Number(pa.confirmedDownPayment || 0).toLocaleString()}`} />
+                  <InfoRow label="Confirmed LTV"      value={pa.confirmedLTV ? `${pa.confirmedLTV}%` : '—'} />
+                  <InfoRow label="Property Added On"  value={pa.propertyAddedAt ? dayjs(pa.propertyAddedAt).format('DD MMM YYYY') : '—'} />
+                </>
+              ) : null}
+              {!pa.preApprovedAmount ? (
+                <div style={{ textAlign: 'center', padding: '12px 0', fontSize: 12, color: '#78350f' }}>
+                  Pre-approval details will appear once the bank responds.
+                </div>
+              ) : null}
+            </SectionCard>
+          )}
+
+          {/* Pre-Approval Details for standard (non-pre-approval-only) cases */}
+          {!isPreApprovalOnly && pa?.preApprovedAmount && (
+            <SectionCard title="Pre-Approval Details" icon={<CheckCircleOutlined />}
+              style={{ border: '1px solid #bbf7d0', background: '#f0fdf4' }}>
+              <InfoRow label="Pre-Approved Amount"  value={`AED ${Number(pa.preApprovedAmount).toLocaleString()}`} />
+              <InfoRow label="Max LTV"              value={pa.maxLTV ? `${Math.round(pa.maxLTV * 100)}%` : '—'} />
+              <InfoRow label="Max Affordable Prop." value={pa.maxAffordablePropertyValue ? `AED ${Number(pa.maxAffordablePropertyValue).toLocaleString()}` : '—'} />
+              {pa.confirmedLoanAmount ? (
+                <>
+                  <Divider style={{ margin: '10px 0' }} />
+                  <InfoRow label="Confirmed Loan"     value={`AED ${Number(pa.confirmedLoanAmount).toLocaleString()}`} />
+                  <InfoRow label="Confirmed Property" value={`AED ${Number(pa.confirmedPropertyValue || 0).toLocaleString()}`} />
+                  <InfoRow label="Down Payment"       value={pa.confirmedDownPayment ? `AED ${Number(pa.confirmedDownPayment).toLocaleString()}` : '—'} />
+                  <InfoRow label="Confirmed LTV"      value={pa.confirmedLTV ? `${pa.confirmedLTV}%` : '—'} />
+                  <InfoRow label="Property Added On"  value={pa.propertyAddedAt ? dayjs(pa.propertyAddedAt).format('DD MMM YYYY') : '—'} />
+                </>
+              ) : (
+                <div style={{ marginTop: 8, padding: '8px 12px', background: '#fef9c3', borderRadius: 8, fontSize: 12, color: '#713f12', textAlign: 'center' }}>
+                  Confirmed amounts will appear after bank finalises pre-approval.
+                </div>
+              )}
+            </SectionCard>
+          )}
+        </Col>
+      </Row>
+
+      {((data.internalNotes?.length > 0) || (data.customerNotes?.length > 0)) && (
+        <Row gutter={[14, 0]}>
+          {data.internalNotes?.length > 0 && (
+            <Col xs={24} md={12}>
+              <SectionCard title="Internal Notes" icon={<FileTextOutlined />}>
+                {data.internalNotes.map((n, i) => (
+                  <div key={i} style={{ padding: '8px 12px', background: '#faf5ff', borderRadius: 8, marginBottom: 6, fontSize: 13, color: '#374151', border: '1px solid #e9d5ff' }}>
+                    {n}
+                  </div>
+                ))}
+              </SectionCard>
+            </Col>
+          )}
+          {data.customerNotes?.length > 0 && (
+            <Col xs={24} md={12}>
+              <SectionCard title="Customer Notes" icon={<FileTextOutlined />}>
+                {data.customerNotes.map((n, i) => (
+                  <div key={i} style={{ padding: '8px 12px', background: '#f0f9ff', borderRadius: 8, marginBottom: 6, fontSize: 13, color: '#374151', border: '1px solid #bae6fd' }}>
+                    {n}
+                  </div>
+                ))}
+              </SectionCard>
+            </Col>
+          )}
+        </Row>
+      )}
+
+      <SectionCard title="Case Timeline" icon={<ClockCircleOutlined />}>
+        <Row gutter={[10, 10]}>
+          {[
+            { label: 'Created',            value: tl.createdAt },
+            { label: 'Submitted to Xoto', value: tl.submittedToXotoAt },
+            { label: 'Assigned to Ops',   value: tl.assignedToOpsAt },
+            { label: 'Submitted to Bank', value: tl.submittedToBankAt },
+            { label: 'Pre-Approved',      value: tl.preApprovedAt },
+            { label: 'Disbursed',         value: tl.disbursedAt },
+          ].map(item => (
+            <Col xs={12} sm={8} md={4} key={item.label}>
+              <div style={{ textAlign: 'center', padding: '10px 6px', borderRadius: 10, background: item.value ? '#f0fdf4' : '#f8fafc', border: `1px solid ${item.value ? '#bbf7d0' : '#e2e8f0'}` }}>
+                {item.value
+                  ? <CheckCircleOutlined style={{ color: GREEN, fontSize: 16, marginBottom: 4, display: 'block' }} />
+                  : <ClockCircleOutlined style={{ color: '#cbd5e1', fontSize: 16, marginBottom: 4, display: 'block' }} />
+                }
+                <div style={{ fontSize: 9, fontWeight: 700, color: item.value ? '#065f46' : '#94a3b8', textTransform: 'uppercase', letterSpacing: 0.5 }}>{item.label}</div>
+                {item.value && <div style={{ fontSize: 10, color: '#059669', marginTop: 2 }}>{dayjs(item.value).format('DD MMM YY')}</div>}
+              </div>
+            </Col>
+          ))}
+        </Row>
+      </SectionCard>
+    </div>
+  );
 };
 
 /* ─── Step 2: Global Documents ─── */

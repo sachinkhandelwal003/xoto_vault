@@ -252,7 +252,6 @@ const VAULT_NAV: Record<string, MenuItem[]> = {
       ],
     },
     { title: 'Bank Products', icon: 'fas fa-university', to: '/dashboard/vault-advisor/bank/products' },
-    { title: 'My Analytics',  icon: 'fas fa-chart-bar',  to: '/dashboard/vault-advisor/analytics' },
     { title: 'Notifications', icon: 'fas fa-bell',       to: '/dashboard/vault-advisor/notifications' },
   ],
 };

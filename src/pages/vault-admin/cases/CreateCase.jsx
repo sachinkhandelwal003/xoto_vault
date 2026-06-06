@@ -1,6 +1,6 @@
 // src/pages/Cases/CreateCase.jsx
 import React, { useState, useEffect, useCallback } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { apiService } from "@/api/apiService";
 import { useSelector } from 'react-redux';
 import CustomTable from '@/components/common/CustomTable';
@@ -156,15 +156,23 @@ const ProductCard = ({ product, isSelected, onSelect }) => (
 
 // ==================== MAIN COMPONENT ====================
 const CreateCase = () => {
+  const navigate = useNavigate();
   const { user } = useSelector(s => s.auth);
   const [searchParams] = useSearchParams();
   const urlLeadId = searchParams.get('leadId');
   const [searchQuery, setSearchQuery] = useState('');
 
+  const roleCode = typeof user?.role === 'object' ? String(user.role.code) : String(user?.role);
+  const basePath = roleCode === '21' ? '/dashboard/vaultpartner'
+    : roleCode === '18' ? '/dashboard/vault-admin'
+    : roleCode === '22' ? '/dashboard/vaultagent'
+    : '/dashboard/vault-advisor';
+
   // Step State
   const [step, setStep] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [calculating, setCalculating] = useState(false);
+  const [applicationSubType, setApplicationSubType] = useState('standard');
   
   // Step 1: Lead Selection
   const [qualifiedLeads, setQualifiedLeads] = useState([]);
@@ -221,7 +229,8 @@ const CreateCase = () => {
     timeline: '',
     // Notes
     internalNotes: '',
-    customerNotes: ''
+    customerNotes: '',
+    requestedLoanAmount: 0,
   });
 
   const steps = ['Select Lead', 'Select Bank', 'Select Product', 'Review & Create'];
@@ -231,11 +240,10 @@ const CreateCase = () => {
   const fetchQualifiedLeads = useCallback(async (search = '') => {
     setFetchingLeads(true);
     try {
-      const roleCode = user?.role?.code;
       let url = '/vault/lead/advisor/my-leads?page=1&limit=100&status=Qualified';
       if (roleCode === '21') url = '/vault/lead/partner/get?page=1&limit=100&status=Qualified';
       if (roleCode === '18') url = '/vault/lead/admin/all?page=1&limit=100&status=Qualified';
-            if (roleCode === '22') url = '/vault/lead/my-leads?page=1&limit=100&status=Qualified';
+      if (roleCode === '22') url = '/vault/lead/my-leads?page=1&limit=100&status=Qualified';
 
       const parsed = new URL(url, window.location.origin);
       if (search.trim()) {
@@ -333,9 +341,10 @@ const CreateCase = () => {
       timeline: lr.timeline || '',
       // Notes
       internalNotes: lead.notesToXoto || '',
-      customerNotes: ''
+      customerNotes: '',
+      requestedLoanAmount: lead.eligibility?.recommendedLoanAmount || loanAmount || 0,
     });
-    
+
     setLeadEligibility(lead.eligibility);
   };
 
@@ -347,8 +356,22 @@ const CreateCase = () => {
       const propertyValue = formData.propertyValue;
       const downPayment = formData.downPayment;
       const loanAmount = propertyValue - downPayment;
-      const tenure = formData.preferredTenureYears || 25;
-      
+      const rawTenure = formData.preferredTenureYears || 25;
+
+      // Age-based tenure cap: salaried retire at 65, self-employed at 70
+      const dob = formData.dateOfBirth;
+      let ageCap = 25;
+      if (dob) {
+        const today = new Date();
+        const birth = new Date(dob instanceof Object && dob.toDate ? dob.toDate() : dob);
+        let age = today.getFullYear() - birth.getFullYear();
+        const m = today.getMonth() - birth.getMonth();
+        if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
+        const retirementAge = formData.employmentStatus === 'Self-Employed' ? 70 : 65;
+        ageCap = Math.max(5, Math.min(25, retirementAge - age));
+      }
+      const tenure = Math.min(rawTenure, ageCap);
+
       const emi = calcEMI(loanAmount, selectedProduct.interestRate, tenure);
       const ltv = propertyValue > 0 ? (loanAmount / propertyValue) * 100 : 0;
       const dldFee = propertyValue * 0.04;
@@ -421,13 +444,15 @@ const CreateCase = () => {
           gender:              formData.gender              || ci.gender           || null,
         },
 
-        // Property info — optional; use form values or lead property details
+        applicationSubType: applicationSubType || 'standard',
+
+        // Property info — skip monetary values for pre_approval_only (no property yet)
         propertyInfo: {
-          propertyValue:   formData.propertyValue   || pd.propertyValue        || null,
-          loanAmount:      formData.loanAmount       || selectedLead.eligibility?.recommendedLoanAmount || null,
-          downPayment:     formData.downPayment      || pd.downPaymentAmount    || null,
-          propertyType:    formData.propertyType     || pd.propertyType         || null,
-          transactionType: formData.transactionType  || pd.transactionType      || null,
+          propertyValue:   applicationSubType === 'pre_approval_only' ? null : (formData.propertyValue   || pd.propertyValue     || null),
+          loanAmount:      applicationSubType === 'pre_approval_only' ? (formData.requestedLoanAmount || null) : (formData.loanAmount || selectedLead.eligibility?.recommendedLoanAmount || null),
+          downPayment:     applicationSubType === 'pre_approval_only' ? null : (formData.downPayment      || pd.downPaymentAmount || null),
+          propertyType:    formData.propertyType     || pd.propertyType     || null,
+          transactionType: formData.transactionType  || pd.transactionType  || null,
           propertyAddress: {
             area: formData.propertyArea || pd.propertyAddress?.area || '',
             city: formData.propertyCity || pd.propertyAddress?.city || 'Dubai',
@@ -494,6 +519,7 @@ const CreateCase = () => {
     setSelectedOffer(null);
     setCreatedCase(null);
     setLeadEligibility(null);
+    setApplicationSubType('standard');
     setFormData({
       caseReference: genRef(),
       firstName: '', lastName: '', fullName: '', email: '', mobile: '', nationality: '', 
@@ -503,7 +529,7 @@ const CreateCase = () => {
       propertyValue: 0, downPayment: 0, loanAmount: 0, propertyArea: '', propertyCity: 'Dubai',
       propertyType: '', transactionType: '', isOffPlan: false,
       preferredTenureYears: 25, preferredInterestRateType: 'Fixed', timeline: '',
-      internalNotes: '', customerNotes: ''
+      internalNotes: '', customerNotes: '', requestedLoanAmount: 0,
     });
     fetchQualifiedLeads();
   };
@@ -860,7 +886,33 @@ const CreateCase = () => {
                 </Col>
                 <Col span={12}>
                   <Text type="secondary" style={{ fontSize: 11 }}>Mortgage Term (Years)</Text>
-                  <InputNumber value={formData.mortgageTerm} min={5} max={25} onChange={v => setFormData(p => ({ ...p, mortgageTerm: v || 25, preferredTenureYears: v || 25 }))} style={{ width: '100%' }} />
+                  <InputNumber
+                    value={formData.mortgageTerm}
+                    min={5}
+                    max={(() => {
+                      const dob = formData.dateOfBirth;
+                      if (!dob) return 25;
+                      const today = new Date();
+                      const birth = new Date(dob instanceof Object && dob.toDate ? dob.toDate() : dob);
+                      let age = today.getFullYear() - birth.getFullYear();
+                      const m = today.getMonth() - birth.getMonth();
+                      if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
+                      const ret = formData.employmentStatus === 'Self-Employed' ? 70 : 65;
+                      return Math.max(5, Math.min(25, ret - age));
+                    })()}
+                    onChange={v => setFormData(p => ({ ...p, mortgageTerm: v || 25, preferredTenureYears: v || 25 }))}
+                    style={{ width: '100%' }}
+                  />
+                  {formData.dateOfBirth && (() => {
+                    const today = new Date();
+                    const birth = new Date(formData.dateOfBirth instanceof Object && formData.dateOfBirth.toDate ? formData.dateOfBirth.toDate() : formData.dateOfBirth);
+                    let age = today.getFullYear() - birth.getFullYear();
+                    const m = today.getMonth() - birth.getMonth();
+                    if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
+                    const ret = formData.employmentStatus === 'Self-Employed' ? 70 : 65;
+                    const cap = Math.max(5, Math.min(25, ret - age));
+                    return <div style={{ fontSize: 11, color: '#d97706', marginTop: 3 }}>Age {age} → max {cap} yrs (retires at {ret})</div>;
+                  })()}
                 </Col>
                 <Col span={12}>
                   <Text type="secondary" style={{ fontSize: 11 }}>Fee Financing Required?</Text>
@@ -873,19 +925,59 @@ const CreateCase = () => {
             </Card>
             
             <Card title={<span><HomeOutlined style={{ color: P }} /> Property Details</span>} size="small">
+              {/* Application sub-type toggle */}
+              <Row gutter={[12, 12]} style={{ marginBottom: 8 }}>
+                <Col span={24}>
+                  <Text type="secondary" style={{ fontSize: 11 }}>Application Type</Text>
+                  <div style={{ marginTop: 4 }}>
+                    <Radio.Group
+                      value={applicationSubType}
+                      onChange={e => setApplicationSubType(e.target.value)}
+                      buttonStyle="solid"
+                      size="small"
+                    >
+                      <Radio.Button value="standard">Standard (Property Known)</Radio.Button>
+                      <Radio.Button value="pre_approval_only">Pre-Approval Only (No Property Yet)</Radio.Button>
+                    </Radio.Group>
+                  </div>
+                  {applicationSubType === 'pre_approval_only' && (
+                    <div style={{ marginTop: 8, padding: '8px 12px', background: '#fffbeb', borderRadius: 8, fontSize: 12, color: '#92400e', border: '1px solid #fde68a' }}>
+                      Bank will pre-approve a loan ceiling first. Ops adds property details after bank confirmation.
+                    </div>
+                  )}
+                </Col>
+              </Row>
               <Row gutter={[12, 12]}>
-                <Col span={12}>
-                  <Text type="secondary" style={{ fontSize: 11 }}>Property Value (AED) *</Text>
-                  <InputNumber value={formData.propertyValue} onChange={v => setFormData(p => ({ ...p, propertyValue: v || 0 }))} style={{ width: '100%' }} formatter={v => `${v}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')} />
-                </Col>
-                <Col span={12}>
-                  <Text type="secondary" style={{ fontSize: 11 }}>Down Payment (AED)</Text>
-                  <InputNumber value={formData.downPayment} onChange={v => setFormData(p => ({ ...p, downPayment: v || 0 }))} style={{ width: '100%' }} />
-                </Col>
-                <Col span={12}>
-                  <Text type="secondary" style={{ fontSize: 11 }}>Loan Amount (AED)</Text>
-                  <InputNumber value={formData.loanAmount} disabled style={{ width: '100%', background: '#f5f5f5' }} />
-                </Col>
+                {applicationSubType === 'standard' ? (
+                  <>
+                    <Col span={12}>
+                      <Text type="secondary" style={{ fontSize: 11 }}>Property Value (AED) *</Text>
+                      <InputNumber value={formData.propertyValue} onChange={v => setFormData(p => ({ ...p, propertyValue: v || 0 }))} style={{ width: '100%' }} formatter={v => `${v}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')} />
+                    </Col>
+                    <Col span={12}>
+                      <Text type="secondary" style={{ fontSize: 11 }}>Down Payment (AED)</Text>
+                      <InputNumber value={formData.downPayment} onChange={v => setFormData(p => ({ ...p, downPayment: v || 0 }))} style={{ width: '100%' }} />
+                    </Col>
+                    <Col span={12}>
+                      <Text type="secondary" style={{ fontSize: 11 }}>Loan Amount (AED)</Text>
+                      <InputNumber value={formData.loanAmount} disabled style={{ width: '100%', background: '#f5f5f5' }} />
+                    </Col>
+                  </>
+                ) : (
+                  <Col span={24}>
+                    <Text type="secondary" style={{ fontSize: 11 }}>Requested Loan Amount (AED) *</Text>
+                    <InputNumber
+                      value={formData.requestedLoanAmount}
+                      onChange={v => setFormData(p => ({ ...p, requestedLoanAmount: v || 0 }))}
+                      style={{ width: '100%' }}
+                      formatter={v => `${v}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                      placeholder="How much loan does the customer want?"
+                    />
+                    <div style={{ fontSize: 11, color: '#6b7280', marginTop: 4 }}>
+                      Bank will pre-approve up to this amount based on financials. Property added later by Ops.
+                    </div>
+                  </Col>
+                )}
                 <Col span={12}>
                   <Text type="secondary" style={{ fontSize: 11 }}>Property Type</Text>
                   <Select value={formData.propertyType} onChange={v => setFormData(p => ({ ...p, propertyType: v }))} style={{ width: '100%' }}>
@@ -953,9 +1045,12 @@ const CreateCase = () => {
               </div>
               <Row gutter={[12, 12]}>
                 <Col span={12}><Text type="secondary" style={{ fontSize: 11 }}>Interest Rate</Text><div><Text strong style={{ fontSize: 18, color: P }}>{selectedOffer.interestRate}%</Text></div></Col>
-                <Col span={12}><Text type="secondary" style={{ fontSize: 11 }}>Monthly EMI</Text><div><Text strong style={{ fontSize: 18, color: G }}>AED {selectedOffer.emi?.toLocaleString()}</Text></div></Col>
+                <Col span={12}>
+                  <Text type="secondary" style={{ fontSize: 11 }}>Monthly EMI (Est.)</Text>
+                  <div><Text strong style={{ fontSize: 18, color: G }}>AED {(applicationSubType === 'pre_approval_only' ? calcEMI(formData.requestedLoanAmount, selectedOffer.interestRate, selectedOffer.tenureYears) : selectedOffer.emi)?.toLocaleString()}</Text></div>
+                </Col>
                 <Col span={8}><Text type="secondary" style={{ fontSize: 11 }}>Tenure</Text><div><Text strong>{selectedOffer.tenureYears} Yrs</Text></div></Col>
-                <Col span={8}><Text type="secondary" style={{ fontSize: 11 }}>LTV</Text><div><Text strong>{selectedOffer.ltv?.value}% / {selectedOffer.ltv?.maxAllowed}%</Text></div></Col>
+                <Col span={8}><Text type="secondary" style={{ fontSize: 11 }}>LTV</Text><div><Text strong>{applicationSubType === 'pre_approval_only' ? 'TBD (no property yet)' : `${selectedOffer.ltv?.value}% / ${selectedOffer.ltv?.maxAllowed}%`}</Text></div></Col>
                 <Col span={8}><Text type="secondary" style={{ fontSize: 11 }}>Processing Fee</Text><div><Text strong>{selectedOffer.upfrontCosts?.processingFee === 0 ? 'FREE' : `AED ${(selectedOffer.upfrontCosts?.processingFee || 0).toLocaleString()}`}</Text></div></Col>
               </Row>
             </Card>
@@ -994,7 +1089,7 @@ const CreateCase = () => {
           {[
             ['Client', formData.fullName || `${formData.firstName} ${formData.lastName}`.trim()],
             ['Bank', selectedOffer?.bankName],
-            ['Loan', `AED ${formData.loanAmount.toLocaleString()}`],
+            [applicationSubType === 'pre_approval_only' ? 'Loan Request' : 'Loan', `AED ${(applicationSubType === 'pre_approval_only' ? formData.requestedLoanAmount : formData.loanAmount).toLocaleString()}`],
             ['Rate', `${selectedOffer?.interestRate}%`],
           ].map(([lbl, val]) => (
             <Col span={6} key={lbl}>
@@ -1009,7 +1104,7 @@ const CreateCase = () => {
       
       <Space>
         <Button size="large" onClick={reset}>Create Another Case</Button>
-        <Button type="primary" size="large" onClick={() => window.location.href = '/dashboard/vault-advisor/cases'} style={{ background: P }}>Go to My Cases</Button>
+        <Button type="primary" size="large" onClick={() => navigate(`${basePath}/case/view`)} style={{ background: P }}>Go to My Cases</Button>
       </Space>
     </div>
   );

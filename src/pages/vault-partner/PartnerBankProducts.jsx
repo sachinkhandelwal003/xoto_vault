@@ -23,6 +23,7 @@ export default function PartnerBankProducts() {
 
   const queryParams = new URLSearchParams(location.search);
   const bankId = queryParams.get('bank');
+  const basePath = location.pathname.match(/^\/dashboard\/[^\/]+/)?.[0] || '/dashboard/vaultpartner';
 
   const [products, setProducts] = useState([]);
   const [bankInfo, setBankInfo] = useState(null);
@@ -52,7 +53,7 @@ export default function PartnerBankProducts() {
 
   useEffect(() => { fetchProducts(currentPage); }, [currentPage, fetchProducts]);
 
-  const goToView = (id) => navigate(`/dashboard/vaultpartner/bank/products/${id}`);
+  const goToView = (id) => navigate(`${basePath}/bank/products/${id}`);
 
   return (
     <div style={{ background: '#f5f3ff', minHeight: '100vh', paddingBottom: 48 }}>

@@ -43,17 +43,18 @@ export default function PartnerBankProductView() {
   const location = useLocation();
   const screens = useBreakpoint();
   const bankId = new URLSearchParams(location.search).get('bank');
+  const basePath = location.pathname.match(/^\/dashboard\/[^\/]+/)?.[0] || '/dashboard/vaultpartner';
 
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
 
   const backUrl = bankId
-    ? `/dashboard/vaultpartner/bank/products?bank=${bankId}`
-    : '/dashboard/vaultpartner/bank/products';
+    ? `${basePath}/bank/products?bank=${bankId}`
+    : `${basePath}/bank/products`;
 
   useEffect(() => {
     if (!productId) return;
-    apiService.get(`bank/products/${productId}`)
+    apiService.get(`bank/products/get-bank-product/${productId}`)
       .then((res) => { if (res?.success) setProduct(res.data); })
       .catch(() => { message.error('Failed to load product details'); })
       .finally(() => setLoading(false));
