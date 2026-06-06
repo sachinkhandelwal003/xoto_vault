@@ -28,10 +28,10 @@ const VAULT_NAV: Record<string, MenuItem[]> = {
       ],
     },
     {
-      title: 'Cases', icon: 'fas fa-layer-group',
+      title: 'Applications', icon: 'fas fa-layer-group',
       submenus: [
-        { title: 'Cases Queue',   to: '/dashboard/vault-admin/case/queue/view' },
-        { title: 'Manage Cases',  to: '/dashboard/vault-admin/case/manage' },
+        { title: 'Applications Queue',   to: '/dashboard/vault-admin/case/queue/view' },
+        { title: 'Manage Applications',  to: '/dashboard/vault-admin/case/manage' },
       ],
     },
     { title: 'Customer Management', icon: 'fas fa-user-friends', to: '/dashboard/vault-admin/customers' },
@@ -83,10 +83,10 @@ const VAULT_NAV: Record<string, MenuItem[]> = {
       ],
     },
     {
-      title: 'Cases', icon: 'fas fa-briefcase',
+      title: 'Applications', icon: 'fas fa-briefcase',
       submenus: [
-        { title: 'Create Case', to: '/dashboard/vaultagent/case/create' },
-        { title: 'My Cases',    to: '/dashboard/vaultagent/case/view' },
+        { title: 'Create Application', to: '/dashboard/vaultagent/case/create' },
+        { title: 'My Applications',    to: '/dashboard/vaultagent/case/view' },
       ],
     },
     { title: 'Commission',    icon: 'fas fa-percentage', to: '/dashboard/vaultagent/commission' },
@@ -137,10 +137,10 @@ const VAULT_NAV: Record<string, MenuItem[]> = {
       ],
     },
     {
-      title: 'Cases', icon: 'fas fa-briefcase',
+      title: 'Applications', icon: 'fas fa-briefcase',
       submenus: [
-        { title: 'Create Case', to: '/dashboard/vaultpartner/case/create' },
-        { title: 'My Cases',    to: '/dashboard/vaultpartner/case/view' },
+        { title: 'Create Application', to: '/dashboard/vaultpartner/case/create' },
+        { title: 'My Applications',    to: '/dashboard/vaultpartner/case/view' },
       ],
     },
     { title: 'Bank Products', icon: 'fas fa-university', to: '/dashboard/vaultpartner/bank/products' },
@@ -173,10 +173,10 @@ const VAULT_NAV: Record<string, MenuItem[]> = {
       ],
     },
     {
-      title: 'Cases', icon: 'fas fa-briefcase',
+      title: 'Applications', icon: 'fas fa-briefcase',
       submenus: [
-        { title: 'Create Case', to: '/dashboard/vaultpartner/case/create' },
-        { title: 'My Cases',    to: '/dashboard/vaultpartner/case/view' },
+        { title: 'Create Application', to: '/dashboard/vaultpartner/case/create' },
+        { title: 'My Applications',    to: '/dashboard/vaultpartner/case/view' },
       ],
     },
     { title: 'Bank Products', icon: 'fas fa-university', to: '/dashboard/vaultpartner/bank/products' },
@@ -204,10 +204,10 @@ const VAULT_NAV: Record<string, MenuItem[]> = {
       ],
     },
     {
-      title: 'Cases', icon: 'fas fa-briefcase',
+      title: 'Applications', icon: 'fas fa-briefcase',
       submenus: [
-        { title: 'Create Case', to: '/dashboard/vaultpartner/case/create' },
-        { title: 'My Cases',    to: '/dashboard/vaultpartner/case/view' },
+        { title: 'Create Application', to: '/dashboard/vaultpartner/case/create' },
+        { title: 'My Applications',    to: '/dashboard/vaultpartner/case/view' },
       ],
     },
     { title: 'Notifications', icon: 'fas fa-bell', to: '/dashboard/vaultpartner/notifications' },
@@ -216,13 +216,13 @@ const VAULT_NAV: Record<string, MenuItem[]> = {
   // ── Mortgage Ops (23) ─────────────────────────────────────────────────────
   '23': [
     {
-      title: 'Cases', icon: 'fas fa-briefcase',
+      title: 'Applications', icon: 'fas fa-briefcase',
       submenus: [
-        { title: 'Queue Cases',           to: '/dashboard/vault-ops/case/queue/view' },
-        { title: 'My Assigned Cases',     to: '/dashboard/vault-ops/case/assigned/all' },
+        { title: 'Queue Applications',    to: '/dashboard/vault-ops/case/queue/view' },
+        { title: 'My Assigned Applications', to: '/dashboard/vault-ops/case/assigned/all' },
         { title: 'Bank Submission Queue', to: '/dashboard/vault-ops/case/bank-submission' },
-        { title: 'Returned Cases',        to: '/dashboard/vault-ops/case/returned' },
-        { title: 'Disbursed Cases',       to: '/dashboard/vault-ops/case/disbursed' },
+        { title: 'Returned Applications', to: '/dashboard/vault-ops/case/returned' },
+        { title: 'Disbursed Applications', to: '/dashboard/vault-ops/case/disbursed' },
       ],
     },
     { title: 'Notifications', icon: 'fas fa-bell',       to: '/dashboard/vault-ops/notifications' },
@@ -245,10 +245,10 @@ const VAULT_NAV: Record<string, MenuItem[]> = {
       ],
     },
     {
-      title: 'Cases', icon: 'fas fa-briefcase',
+      title: 'Applications', icon: 'fas fa-briefcase',
       submenus: [
-        { title: 'Create Case', to: '/dashboard/vault-advisor/case/create' },
-        { title: 'My Cases',    to: '/dashboard/vault-advisor/case/view' },
+        { title: 'Create Application', to: '/dashboard/vault-advisor/case/create' },
+        { title: 'My Applications',    to: '/dashboard/vault-advisor/case/view' },
       ],
     },
     { title: 'Bank Products', icon: 'fas fa-university', to: '/dashboard/vault-advisor/bank/products' },

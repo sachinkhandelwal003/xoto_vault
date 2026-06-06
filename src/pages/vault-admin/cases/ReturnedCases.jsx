@@ -74,10 +74,10 @@ export default function ReturnedCases() {
         setTotal(res.total || res.pagination?.total || filtered.length);
         setTotalPages(res.pagination?.totalPages || 1);
       } else {
-        message.error(res?.message || 'Failed to load cases');
+        message.error(res?.message || 'Failed to load applications');
       }
     } catch (err) {
-      message.error(err?.response?.data?.message || 'Failed to load cases');
+      message.error(err?.response?.data?.message || 'Failed to load applications');
     } finally {
       setLoading(false);
     }
@@ -103,10 +103,10 @@ export default function ReturnedCases() {
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <WarningOutlined style={{ color: '#fff', fontSize: 22 }} />
-                <div style={{ fontSize: 22, fontWeight: 800, color: '#fff', letterSpacing: '-0.3px' }}>Returned Cases</div>
+                <div style={{ fontSize: 22, fontWeight: 800, color: '#fff', letterSpacing: '-0.3px' }}>Returned Applications</div>
               </div>
               <div style={{ fontSize: 13, color: 'rgba(255,255,255,.75)', marginTop: 4 }}>
-                Cases returned to advisor for correction — action required before re-submission
+                Applications returned to advisor for correction — action required before re-submission
               </div>
             </div>
             <button
@@ -144,7 +144,7 @@ export default function ReturnedCases() {
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
               onKeyDown={handleSearch}
-              placeholder="Search case ID or client name… (Enter)"
+              placeholder="Search application ID or client name… (Enter)"
               style={{ border: 'none', background: 'none', outline: 'none', fontSize: 13, flex: 1 }}
             />
           </div>
@@ -183,7 +183,7 @@ export default function ReturnedCases() {
 
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14, flexWrap: 'wrap', gap: 8 }}>
           <span style={{ fontSize: 13, color: SLATE }}>
-            Showing <strong>{cases.length}</strong> of <strong>{total}</strong> cases
+            Showing <strong>{cases.length}</strong> of <strong>{total}</strong> applications
           </span>
           <span style={{ fontSize: 12, color: '#9ca3af' }}>Page {page} of {totalPages}</span>
         </div>
@@ -194,8 +194,8 @@ export default function ReturnedCases() {
         ) : cases.length === 0 ? (
           <div style={{ background: '#fff', borderRadius: 16, padding: '60px 24px', textAlign: 'center', boxShadow: '0 1px 4px rgba(0,0,0,.06)' }}>
             <div style={{ fontSize: 48, marginBottom: 12 }}>✅</div>
-            <div style={{ fontSize: 16, fontWeight: 700, color: '#374151', marginBottom: 6 }}>No returned cases</div>
-            <div style={{ fontSize: 13, color: '#9ca3af' }}>All cases are progressing normally</div>
+            <div style={{ fontSize: 16, fontWeight: 700, color: '#374151', marginBottom: 6 }}>No returned applications</div>
+            <div style={{ fontSize: 13, color: '#9ca3af' }}>All applications are progressing normally</div>
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
@@ -259,7 +259,7 @@ export default function ReturnedCases() {
                         <button
                           onClick={() => navigate(`/dashboard/${roleSlug}/case/view/${c._id}`)}
                           style={{ padding: '9px 18px', borderRadius: 10, border: `1.5px solid ${PRIMARY}`, background: '#faf5ff', color: PRIMARY, fontSize: 12, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5 }}>
-                          <EyeOutlined /> View Case
+                          <EyeOutlined /> View Application
                         </button>
                         {isResubmitted && (
                           <button
@@ -305,7 +305,7 @@ export default function ReturnedCases() {
                         </div>
                       )}
                       <div>
-                        <div style={{ fontSize: 10, color: '#9ca3af', fontWeight: 600 }}>CASE CREATED</div>
+                        <div style={{ fontSize: 10, color: '#9ca3af', fontWeight: 600 }}>APPLICATION CREATED</div>
                         <div style={{ fontSize: 12, color: SLATE, fontWeight: 600 }}>{fmtDateShort(c.createdAt)}</div>
                       </div>
                       {c.eligibilitySnapshot?.dbrPercentage !== undefined && (

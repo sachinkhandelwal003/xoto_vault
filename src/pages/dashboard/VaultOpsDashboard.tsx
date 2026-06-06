@@ -1,22 +1,21 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { useSelector } from "react-redux";
+
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
-  Row, Col, Button, Tag, Space, Spin, message, Tooltip,
+  Row, Col, Button, Tag, Space, Spin, message,
   Alert, Table, Avatar, Badge, Progress,
 } from "antd";
 import {
   UserOutlined, FileOutlined, CheckCircleOutlined,
-  ClockCircleOutlined, EyeOutlined, ReloadOutlined,
-  BarChartOutlined, LineChartOutlined, BankOutlined,
-  WarningOutlined, RocketOutlined,
+  ClockCircleOutlined, ReloadOutlined,
+  BarChartOutlined, RocketOutlined,
   ArrowRightOutlined,
 } from "@ant-design/icons";
 import {
-  AreaChart, Area, BarChart, Bar,
+  AreaChart, Area,
   XAxis, YAxis, Tooltip as ReTooltip, ResponsiveContainer,
-  CartesianGrid, Legend,
+  CartesianGrid,
 } from "recharts";
 import { apiService } from "@/api/apiService";
 import dayjs from "dayjs";
@@ -30,7 +29,7 @@ const BLL = "#dbeafe";
 const AMB = "#F59E0B";
 const AML = "#fef3c7";
 const RD  = "#EF4444";
-const RDL = "#fee2e2";
+
 const CY  = "#06B6D4";
 
 const GRAD = "linear-gradient(135deg, #5C039B 0%, #03A4F4 100%)";
@@ -73,37 +72,48 @@ const KpiCard = ({ icon, label, value, color, bg, delay = 0 }: any) => (
 );
 
 const getStatusColor = (s: string) => {
-  const m: any = { 
-    pendingReview: "orange", 
-    underReview: "blue", 
-    returned: "red", 
-    bankApplication: "purple", 
-    preApproved: "cyan", 
-    valuation: "geekblue", 
-    folIssued: "volcano", 
-    folSigned: "green", 
-    disbursed: "success", 
-    rejected: "red", 
-    lost: "default" 
-  };
-  return m[s] || "default";
+  const sl = (s || "").toLowerCase();
+  if (sl.includes("pending")) return "orange";
+  if (sl.includes("under review")) return "blue";
+  if (sl.includes("returned")) return "red";
+  if (sl.includes("bank application")) return "purple";
+  if (sl.includes("pre-approved") || sl.includes("pre approved")) return "cyan";
+  if (sl.includes("valuation")) return "geekblue";
+  if (sl.includes("fol issued")) return "volcano";
+  if (sl.includes("fol signed")) return "green";
+  if (sl.includes("disbursed")) return "success";
+  if (sl.includes("rejected") || sl.includes("lost")) return "red";
+  return "default";
 };
 
 const VaultOpsDashboard: React.FC = () => {
   const navigate = useNavigate();
-  const [stats, setStats] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
+  const [queueCases, setQueueCases]   = useState<any[]>([]);
+  const [myCases,    setMyCases]      = useState<any[]>([]);
+  const [myTotal,    setMyTotal]      = useState(0);
+  const [statsData,  setStatsData]    = useState<any>(null);
+  const [loading,    setLoading]      = useState(true);
+  const [refreshing, setRefreshing]   = useState(false);
 
   const fetchStats = useCallback(async (isRefresh = false) => {
     isRefresh ? setRefreshing(true) : setLoading(true);
     try {
-      const data = await apiService.get<any>(`/vault/statistics/ops/stats`);
-      if (data) setStats(data);
-      else message.error("Failed to load dashboard data");
-    } catch (err: any) {
-      message.error(err?.response?.data?.message || "Failed to load");
-    } finally {
+      const [queueRes, myRes, statsRes] = await Promise.all([
+        apiService.get<any>(`vault/cases/ops/queue`).catch(() => null),
+        apiService.get<any>(`vault/cases/ops/my-cases?limit=50`).catch(() => null),
+        apiService.get<any>(`vault/statistics/ops/stats`).catch(() => null),
+      ]);
+
+      const qCases = queueRes?.data ?? (Array.isArray(queueRes) ? queueRes : []);
+      const mCases = myRes?.data    ?? (Array.isArray(myRes)    ? myRes    : []);
+      setQueueCases(qCases);
+      setMyCases(mCases);
+      setMyTotal(myRes?.total ?? myRes?.pagination?.total ?? mCases.length);
+
+      const inner = statsRes?.data ?? statsRes ?? null;
+      if (inner) setStatsData(inner);
+    } catch { /* silently handled per-call above */ }
+    finally {
       setLoading(false);
       setRefreshing(false);
     }
@@ -111,56 +121,96 @@ const VaultOpsDashboard: React.FC = () => {
 
   useEffect(() => { fetchStats(); }, [fetchStats]);
 
-  const inner          = stats?.data           ?? stats ?? {};
-  const opsInfo        = inner?.opsInfo        ?? {};
-  const workload       = inner?.workload       ?? {};
-  const kpis           = inner?.kpis           ?? {};
-  const caseStatus     = inner?.caseStatus     ?? {};
-  const queue          = inner?.queue          ?? {};
-  const actions        = inner?.quickActions   ?? {};
-  const graphs         = inner?.graphs         ?? {};
-  const processedCases = inner?.processedCases ?? [];
-  const disbursedCases = inner?.disbursedCases ?? [];
+  /* ── derive stats from live case data when stats API unavailable ── */
+  const s = statsData;
+
+  const opsInfo = s?.opsInfo ?? {};
+  const workload = s?.workload ?? {
+    capacityUtilization: Math.min(Math.round((myTotal / 30) * 100), 100),
+    currentCapacity: myTotal,
+    maxCapacity: 30,
+    isOverloaded: myTotal >= 30,
+  };
+  const performance = s?.performance ?? {};
+
+  /* status breakdown built from myCases if stats API didn't respond */
+  const caseStatus: Record<string, number> = s?.caseStatusBreakdown ?? s?.caseStatus ?? (() => {
+    const map: Record<string, number> = {};
+    myCases.forEach((c: any) => { const k = c.status || "unknown"; map[k] = (map[k] || 0) + 1; });
+    return map;
+  })();
+
+  const activePipelineStatuses = [
+    "Assigned - Pending Review", "Under Review", "Bank Application",
+    "Pre-Approved", "Collecting Documentation", "Valuation",
+    "FOL Processed", "FOL Issued", "FOL Signed",
+  ];
+  const activeCount  = s?.kpis?.activeCases  ?? myCases.filter((c: any) => activePipelineStatuses.includes(c.status)).length;
+  const disbursedCount = s?.kpis?.completed  ?? performance.totalDisbursed ?? myCases.filter((c: any) => c.status === "Disbursed").length;
+  const successRate  = s?.performance?.successRate ?? s?.kpis?.successRate ?? (myTotal > 0 ? Math.round((disbursedCount / myTotal) * 100) : 0);
+
+  const actions = s?.quickActions ?? {
+    availableInQueue: queueCases.length,
+    needsReview: myCases.filter((c: any) => c.status === "Assigned - Pending Review").length,
+    needsBankUpdate: myCases.filter((c: any) => ["Bank Application", "Pre-Approved"].includes(c.status)).length,
+  };
+
+  const graphs    = s?.graphs ?? {};
+  const recentCases = s?.recentCases ?? s?.processedCases ?? myCases.slice(0, 8);
 
   const casesChart = (graphs.casesOverTime ?? []).map((d: any) => ({ date: fmtDate(d.date), count: d.count }));
-  const queueTrend = (graphs.queueTrend ?? []).map((d: any) => ({ date: fmtDate(d.date), count: d.count }));
-  
+  /* caseStatus keys may be camelCase (from stats API) or full strings (from myCases map) */
+  const getCount = (camel: string, full: string) =>
+    caseStatus[camel] ?? caseStatus[full] ?? 0;
+
   const funnelData = [
-    { label: "Pending Review", count: caseStatus.pendingReview, color: AMB },
-    { label: "Under Review", count: caseStatus.underReview, color: BL },
-    { label: "Bank Application", count: caseStatus.bankApplication, color: P },
-    { label: "Pre Approved", count: caseStatus.preApproved, color: CY },
-    { label: "Valuation", count: caseStatus.valuation, color: "#8B5CF6" },
-    { label: "FOL Signed", count: caseStatus.folSigned, color: GN },
-  ].filter(i => i.count > 0 || ["Pending Review", "Under Review"].includes(i.label));
+    { label: "Pending Review",   count: getCount("pendingReview",    "Assigned - Pending Review"), color: AMB },
+    { label: "Under Review",     count: getCount("underReview",      "Under Review"),               color: BL  },
+    { label: "Bank Application", count: getCount("bankApplication",  "Bank Application"),           color: P   },
+    { label: "Pre Approved",     count: getCount("preApproved",      "Pre-Approved"),               color: CY  },
+    { label: "Valuation",        count: getCount("valuation",        "Valuation"),                  color: "#8B5CF6" },
+    { label: "FOL Signed",       count: getCount("folSigned",        "FOL Signed"),                 color: GN  },
+  ].filter(i => i.count > 0);
 
   const queueColumns = [
     {
       title: "Reference",
       dataIndex: "caseReference",
-      render: (r: string) => <code style={{ color: P, fontWeight: 700 }}>{r}</code>,
+      render: (r: string) => <code style={{ color: P, fontWeight: 700 }}>{r || "—"}</code>,
     },
     {
       title: "Customer",
-      dataIndex: "customerName",
-      render: (n: string) => <span style={{ fontWeight: 600 }}>{n || "—"}</span>,
+      render: (_: any, row: any) => (
+        <span style={{ fontWeight: 600 }}>{row.clientInfo?.fullName || row.customerName || "—"}</span>
+      ),
+    },
+    {
+      title: "Bank",
+      render: (_: any, row: any) => (
+        <span style={{ fontSize: 12, color: "#64748b" }}>{row.selectedBank?.name || row.bankInfo?.name || "—"}</span>
+      ),
     },
     {
       title: "Status",
       dataIndex: "status",
-      render: (s: string) => <Tag color={getStatusColor(s || 'pendingReview')}>{(s || 'Pending Review').toUpperCase()}</Tag>,
+      render: (s: string) => <Tag color={getStatusColor(s || "")}>{(s || "Pending Review")}</Tag>,
     },
     {
       title: "In Queue",
-      dataIndex: "hoursInQueue",
-      render: (h: number) => <span style={{ fontSize: 12, color: h >= 48 ? "#EF4444" : h >= 24 ? "#F59E0B" : "#94a3b8" }}>{h}h</span>,
+      render: (_: any, row: any) => {
+        const entered = row.opsQueue?.enteredQueueAt || row.createdAt;
+        const hrs = entered ? Math.round((Date.now() - new Date(entered).getTime()) / 36e5) : null;
+        return hrs !== null
+          ? <span style={{ fontSize: 12, fontWeight: 700, color: hrs >= 48 ? "#EF4444" : hrs >= 24 ? "#F59E0B" : "#94a3b8" }}>{hrs}h</span>
+          : <span style={{ color: "#cbd5e1" }}>—</span>;
+      },
     },
     {
       title: "",
       width: 80,
-      render: (_: any, r: any) => (
-        <Button type="link" onClick={() => navigate(`/dashboard/vault-ops/case/review/${r._id}`)}>
-          REVIEW
+      render: () => (
+        <Button type="link" size="small" onClick={() => navigate(`/dashboard/vault-ops/case/queue/view`)} style={{ color: P, fontWeight: 800, padding: 0 }}>
+          VIEW
         </Button>
       ),
     },
@@ -170,27 +220,30 @@ const VaultOpsDashboard: React.FC = () => {
     {
       title: "Reference",
       dataIndex: "caseReference",
-      render: (r: string) => <code style={{ color: P, fontWeight: 700 }}>{r}</code>,
+      render: (r: string) => <code style={{ color: P, fontWeight: 700 }}>{r || "—"}</code>,
     },
     {
       title: "Customer",
-      dataIndex: "customerName",
-      render: (n: string) => <span style={{ fontWeight: 600 }}>{n || "—"}</span>,
+      render: (_: any, row: any) => (
+        <span style={{ fontWeight: 600 }}>{row.clientInfo?.fullName || row.customerName || "—"}</span>
+      ),
     },
     {
       title: "Status",
       dataIndex: "status",
-      render: (s: string) => <Tag color={getStatusColor(s)}>{(s || "—").toUpperCase()}</Tag>,
+      render: (s: string) => <Tag color={getStatusColor(s)}>{s || "—"}</Tag>,
     },
     {
-      title: "Processed By",
-      dataIndex: "processedBy",
-      render: (name: string) => (
-        <Space size={4}>
-          <Avatar size={20} icon={<UserOutlined />} style={{ background: P }} />
-          <span style={{ fontSize: 12, fontWeight: 600, color: "#475569" }}>{name || "—"}</span>
-        </Space>
-      ),
+      title: "Assigned To",
+      render: (_: any, row: any) => {
+        const name = row.assignedOps?.name || row.processedBy || "—";
+        return (
+          <Space size={4}>
+            <Avatar size={20} icon={<UserOutlined />} style={{ background: P }} />
+            <span style={{ fontSize: 12, fontWeight: 600, color: "#475569" }}>{name}</span>
+          </Space>
+        );
+      },
     },
     {
       title: "Last Updated",
@@ -208,40 +261,8 @@ const VaultOpsDashboard: React.FC = () => {
     },
   ];
 
-  const disbursedColumns = [
-    {
-      title: "Reference",
-      dataIndex: "caseReference",
-      render: (r: string) => <code style={{ color: GN, fontWeight: 700 }}>{r}</code>,
-    },
-    {
-      title: "Customer",
-      dataIndex: "customerName",
-      render: (n: string) => <span style={{ fontWeight: 600 }}>{n || "—"}</span>,
-    },
-    {
-      title: "Loan Amount",
-      dataIndex: "loanAmount",
-      render: (v: number) => <span style={{ fontWeight: 700, color: GN }}>AED {(v || 0).toLocaleString()}</span>,
-    },
-    {
-      title: "Disbursed By",
-      dataIndex: "processedBy",
-      render: (name: string) => (
-        <Space size={4}>
-          <Avatar size={20} icon={<CheckCircleOutlined />} style={{ background: GN }} />
-          <span style={{ fontSize: 12, fontWeight: 600, color: "#475569" }}>{name || "—"}</span>
-        </Space>
-      ),
-    },
-    {
-      title: "Disbursed On",
-      dataIndex: "updatedAt",
-      render: (d: string) => <span style={{ fontSize: 12, color: "#94a3b8" }}>{dayjs(d).format("DD MMM YYYY")}</span>,
-    },
-  ];
 
-  if (loading && !stats) return (
+  if (loading && !statsData && !queueCases.length && !myCases.length) return (
     <div style={{ background: "#f9f8ff", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
       <Spin size="large" />
     </div>
@@ -286,16 +307,16 @@ const VaultOpsDashboard: React.FC = () => {
               onClick={() => navigate("/dashboard/vault-ops/case/queue/view")}
               style={{ height: 44, borderRadius: 14, background: "#fff", border: "none", color: P, fontWeight: 800, paddingInline: 24 }}
             >
-              Pickup Queue ({queue.total})
+              Pickup Queue ({queueCases.length})
             </Button>
           </div>
         </div>
       </motion.div>
 
       {/* Urgent Alert */}
-      {queue.urgent > 0 && (
+      {queueCases.length > 0 && (
         <Alert
-          message={<span style={{ fontWeight: 800 }}>Urgent Action Required: {queue.urgent} High-Priority Cases in Queue</span>}
+          message={<span style={{ fontWeight: 800 }}>{queueCases.length} Applications Waiting in Queue — Pick one up now</span>}
           description="High-priority cases need immediate review and assignment."
           type="error" showIcon
           style={{ borderRadius: 16, marginBottom: 24, border: "none", boxShadow: "0 4px 12px rgba(239,68,68,0.1)" }}
@@ -306,10 +327,10 @@ const VaultOpsDashboard: React.FC = () => {
       {/* KPI Row */}
       <Row gutter={[20, 20]} style={{ marginBottom: 24 }}>
         {[
-          { label: "Assigned Cases", value: kpis.totalAssigned, icon: <BarChartOutlined />,  color: P,   bg: PL  },
-          { label: "Active Review",   value: kpis.activeCases,   icon: <ClockCircleOutlined />, color: BL,  bg: BLL },
-          { label: "Disbursed",       value: kpis.disbursed,     icon: <CheckCircleOutlined />, color: GN,  bg: GNL },
-          { label: "Success Rate",    value: `${kpis.successRate}%`, icon: <RocketOutlined />, color: AMB, bg: AML },
+          { label: "Assigned Applications", value: myTotal,        icon: <BarChartOutlined />,    color: P,   bg: PL  },
+          { label: "Active Review",  value: activeCount,    icon: <ClockCircleOutlined />, color: BL,  bg: BLL },
+          { label: "Disbursed",      value: disbursedCount, icon: <CheckCircleOutlined />, color: GN,  bg: GNL },
+          { label: "Success Rate",   value: `${successRate}%`, icon: <RocketOutlined />,  color: AMB, bg: AML },
         ].map((k, i) => (
           <Col xs={12} sm={12} lg={6} key={i}><KpiCard {...k} delay={i * 0.05} /></Col>
         ))}
@@ -341,8 +362,8 @@ const VaultOpsDashboard: React.FC = () => {
               </Col>
             </Row>
             <div style={{ marginTop: 24 }}>
-              <div style={{ fontSize: 11, fontWeight: 800, color: "#94a3b8", textTransform: "uppercase", marginBottom: 12 }}>Case Processing Velocity</div>
-              <Progress percent={kpis.successRate} strokeColor={GRAD} showInfo={false} size={{ height: 10 }} />
+              <div style={{ fontSize: 11, fontWeight: 800, color: "#94a3b8", textTransform: "uppercase", marginBottom: 12 }}>Application Processing Velocity</div>
+              <Progress percent={successRate} strokeColor={GRAD} showInfo={false} size={{ height: 10 }} />
             </div>
           </div>
         </Col>
@@ -351,7 +372,7 @@ const VaultOpsDashboard: React.FC = () => {
             <div style={{ fontSize: 11, fontWeight: 800, color: "#94a3b8", textTransform: "uppercase", marginBottom: 12 }}>Workflow Actions</div>
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               {[
-                { label: "My Assigned Cases", path: "/dashboard/vault-ops/case/assigned/all", icon: "📋" },
+                { label: "My Assigned Applications", path: "/dashboard/vault-ops/case/assigned/all", icon: "📋" },
                 { label: "Process Queue", path: "/dashboard/vault-ops/case/queue/view", icon: "⚡" },
                 { label: "Disbursal Records", path: "/dashboard/vault-ops/case/disbursed", icon: "💰" },
               ].map((link, i) => (
@@ -376,7 +397,7 @@ const VaultOpsDashboard: React.FC = () => {
             {/* Cases Trend */}
             <div style={{ background: "#fff", borderRadius: 24, padding: 28, border: "1px solid #ede9ff", boxShadow: "0 2px 12px rgba(92,3,155,0.04)" }}>
               <h3 style={{ fontWeight: 900, color: "#1f2937", marginBottom: 24, fontSize: 16, display: "flex", alignItems: "center", gap: 10 }}>
-                <BarChartOutlined style={{ color: P }} /> Case Velocity Trend
+                <BarChartOutlined style={{ color: P }} /> Application Velocity Trend
               </h3>
               <ResponsiveContainer width="100%" height={280}>
                 <AreaChart data={casesChart}>
@@ -405,10 +426,11 @@ const VaultOpsDashboard: React.FC = () => {
               </div>
               <Table
                 columns={queueColumns}
-                dataSource={queue.cases?.map((c: any) => ({ ...c, key: c._id }))}
+                dataSource={queueCases.slice(0, 8).map((c: any) => ({ ...c, key: c._id }))}
                 pagination={false}
                 size="middle"
                 className="ops-table"
+                locale={{ emptyText: <span style={{ color: "#94a3b8", fontSize: 13 }}>No applications in queue</span> }}
               />
             </div>
           </div>
@@ -428,10 +450,10 @@ const VaultOpsDashboard: React.FC = () => {
                   strokeColor={workload.isOverloaded ? RD : P} 
                   strokeWidth={10}
                   gapDegree={80}
-                  width={140}
-                  format={(p) => (
+                  size={140}
+                  format={() => (
                     <div>
-                      <div style={{ fontSize: 24, fontWeight: 900, color: "#1f2937" }}>{workload.currentApplications}</div>
+                      <div style={{ fontSize: 24, fontWeight: 900, color: "#1f2937" }}>{workload.currentCapacity ?? workload.currentApplications ?? 0}</div>
                       <div style={{ fontSize: 10, color: "#94a3b8", fontWeight: 700 }}>APPLICATIONS</div>
                     </div>
                   )}
@@ -444,7 +466,7 @@ const VaultOpsDashboard: React.FC = () => {
                 </div>
                 <Progress percent={workload.capacityUtilization} showInfo={false} strokeColor={P} size={{ height: 6 }} />
                 <div style={{ fontSize: 10, color: "#94a3b8", marginTop: 10, textAlign: "center", fontWeight: 600 }}>
-                  Max Capacity: {workload.maxCapacity} active cases
+                  Max Capacity: {workload.maxCapacity} active applications
                 </div>
               </div>
             </div>
@@ -454,7 +476,7 @@ const VaultOpsDashboard: React.FC = () => {
               <h3 style={{ fontSize: 11, fontWeight: 800, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 24 }}>Processing Funnel</h3>
               <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
                 {funnelData.map(item => {
-                  const pct = Math.round(((item.count || 0) / (kpis.totalAssigned || 1)) * 100);
+                  const pct = Math.round(((item.count || 0) / (myTotal || 1)) * 100);
                   return (
                     <div key={item.label}>
                       <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6, alignItems: "flex-end" }}>
@@ -472,13 +494,13 @@ const VaultOpsDashboard: React.FC = () => {
         </Col>
       </Row>
 
-      {/* Recently Processed Cases */}
-      {processedCases.length > 0 && (
+      {/* Recent Cases */}
+      {recentCases.length > 0 && (
         <div style={{ marginTop: 24, background: "#fff", borderRadius: 24, border: "1px solid #ede9ff", overflow: "hidden", boxShadow: "0 2px 12px rgba(92,3,155,0.04)" }}>
           <div style={{ padding: "24px 28px", borderBottom: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <h3 style={{ fontWeight: 900, color: "#1f2937", margin: 0, fontSize: 16 }}>
               <FileOutlined style={{ color: P, marginRight: 8 }} />
-              Cases In Progress
+              Recent Applications
             </h3>
             <Button type="link" onClick={() => navigate("/dashboard/vault-ops/case/assigned/all")} style={{ color: P, fontWeight: 800 }}>
               All Assigned →
@@ -486,7 +508,7 @@ const VaultOpsDashboard: React.FC = () => {
           </div>
           <Table
             columns={processedColumns}
-            dataSource={processedCases.map((c: any) => ({ ...c, key: c._id }))}
+            dataSource={recentCases.map((c: any) => ({ ...c, key: c._id }))}
             pagination={false}
             size="middle"
             className="ops-table"
@@ -494,27 +516,6 @@ const VaultOpsDashboard: React.FC = () => {
         </div>
       )}
 
-      {/* Recently Disbursed Cases */}
-      {disbursedCases.length > 0 && (
-        <div style={{ marginTop: 24, background: "#fff", borderRadius: 24, border: "1px solid #d1fae5", overflow: "hidden", boxShadow: "0 2px 12px rgba(16,185,129,0.06)" }}>
-          <div style={{ padding: "24px 28px", borderBottom: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <h3 style={{ fontWeight: 900, color: "#1f2937", margin: 0, fontSize: 16 }}>
-              <CheckCircleOutlined style={{ color: GN, marginRight: 8 }} />
-              Disbursed Cases
-            </h3>
-            <Button type="link" onClick={() => navigate("/dashboard/vault-ops/case/disbursed")} style={{ color: GN, fontWeight: 800 }}>
-              All Disbursed →
-            </Button>
-          </div>
-          <Table
-            columns={disbursedColumns}
-            dataSource={disbursedCases.map((c: any) => ({ ...c, key: c._id }))}
-            pagination={false}
-            size="middle"
-            className="ops-table"
-          />
-        </div>
-      )}
 
       <style>{`
         .ops-table .ant-table-thead > tr > th { background: transparent !important; color: #94a3b8 !important; font-size: 10px !important; text-transform: uppercase !important; letter-spacing: 0.1em !important; font-weight: 800 !important; border-bottom: 1px solid #f1f5f9 !important; }

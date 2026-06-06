@@ -279,7 +279,7 @@ const DocCard = ({ doc, onUpload, uploading, onView }) => {
   );
 };
 
-/* ─── Step 1: Case Overview ─── */
+/* ─── Step 1: Application Overview ─── */
 const CaseOverview = ({ data }) => {
   const c  = data.clientInfo || {};
   const p  = data.propertyInfo || {};
@@ -359,7 +359,7 @@ const CaseOverview = ({ data }) => {
             </div>
             {awaitingProperty ? (
               <div style={{ fontSize: 13, color: '#78350f' }}>
-                This case was created without a specific property. The bank will pre-approve a loan amount first.
+                This application was created without a specific property. The bank will pre-approve a loan amount first.
                 Once pre-approved, Ops adds the property and LTV is auto-calculated.
                 {pa.maxAffordablePropertyValue && (
                   <span style={{ fontWeight: 700, color: '#92400e' }}>
@@ -677,7 +677,7 @@ const CaseOverview = ({ data }) => {
         </Row>
       )}
 
-      <SectionCard title="Case Timeline" icon={<ClockCircleOutlined />}>
+      <SectionCard title="Application Timeline" icon={<ClockCircleOutlined />}>
         <Row gutter={[10, 10]}>
           {[
             { label: 'Created',            value: tl.createdAt },
@@ -840,7 +840,7 @@ const BankForms = ({ documents, bankInfo, onUpload, uploading, onView, onToggle,
         <Card bordered={false} style={{ borderRadius: 14, textAlign: 'center', padding: '40px 0', border: '1px dashed #e2e8f0' }}>
           <CheckCircleOutlined style={{ fontSize: 40, color: GREEN, marginBottom: 12 }} />
           <div style={{ fontSize: 15, fontWeight: 700, color: '#10b981', marginBottom: 6 }}>No Bank-Specific Forms Required</div>
-          <Text type="secondary" style={{ fontSize: 13 }}>Proceed to submit the case.</Text>
+          <Text type="secondary" style={{ fontSize: 13 }}>Proceed to submit the application.</Text>
         </Card>
       ) : (
         bankDocs.map(doc => (
@@ -914,9 +914,9 @@ const AdvisorCaseDetail = () => {
     try {
       const res = await apiService.get(`/vault/cases/${caseId}`);
       if (res?.success) setCaseData(res.data);
-      else message.error('Failed to load case');
+      else message.error('Failed to load application');
     } catch {
-      message.error('Failed to load case details');
+      message.error('Failed to load application details');
     }
   }, [caseId]);
 
@@ -1063,7 +1063,7 @@ const fileUrl =
     try {
       const res = await apiService.put(`/vault/cases/${caseId}/resubmit`, { correctionNotes: resubmitNotes });
       if (res?.success) {
-        message.success('Case resubmitted successfully!');
+        message.success('Application resubmitted successfully!');
         setResubmitOpen(false);
         setResubmitNotes('');
         await fetchCase();
@@ -1081,13 +1081,13 @@ const fileUrl =
     return (
       <div style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 12 }}>
         <Spin size="large" />
-        <Text style={{ color: THEME, fontWeight: 600 }}>Loading case details…</Text>
+        <Text style={{ color: THEME, fontWeight: 600 }}>Loading application details…</Text>
       </div>
     );
   }
 
   if (!caseData) {
-    return <div style={{ padding: 40, textAlign: 'center' }}><Text type="secondary">Case not found.</Text></div>;
+    return <div style={{ padding: 40, textAlign: 'center' }}><Text type="secondary">Application not found.</Text></div>;
   }
 
   // Check if all Advisor-handled documents are uploaded
@@ -1104,7 +1104,7 @@ const fileUrl =
   const sc = STATUS_COLOR[caseData.currentStatus] || { color: '#64748b', bg: '#f1f5f9' };
 
   const STEPS = [
-    { title: 'Case Overview', description: 'Details & eligibility' },
+    { title: 'Application Overview', description: 'Details & eligibility' },
     { title: 'Global Documents', description: 'Standard doc uploads' },
     { title: 'Bank Forms', description: 'Bank-specific docs' },
   ];
@@ -1119,7 +1119,7 @@ const fileUrl =
           onClick={() => navigate(-1)}
           style={{ background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.3)', color: '#fff', borderRadius: 8, flexShrink: 0 }}
         >
-          {screens.sm ? 'My Cases' : ''}
+          {screens.sm ? 'My Applications' : ''}
         </Button>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontWeight: 800, fontSize: screens.md ? 20 : 16, color: '#fff', marginBottom: 2 }}>
@@ -1142,7 +1142,7 @@ const fileUrl =
               <span style={{ fontSize: 20 }}>⚠️</span>
             </div>
             <div>
-              <div style={{ fontWeight: 800, fontSize: 15, color: '#92400e' }}>Case Returned for Correction</div>
+              <div style={{ fontWeight: 800, fontSize: 15, color: '#92400e' }}>Application Returned for Correction</div>
               <div style={{ fontSize: 12, color: '#78350f', marginTop: 2 }}>
                 Please review the feedback, upload any corrected documents, and resubmit.
                 {caseData.returnedToSubmitterNotes && (
@@ -1159,7 +1159,7 @@ const fileUrl =
           <button
             onClick={() => setResubmitOpen(true)}
             style={{ padding: '10px 22px', borderRadius: 10, border: 'none', background: '#f59e0b', color: '#fff', fontSize: 13, fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, boxShadow: '0 2px 8px rgba(245,158,11,.4)' }}>
-            ↩ Resubmit Case
+            ↩ Resubmit Application
           </button>
         </div>
       )}
@@ -1260,13 +1260,13 @@ const fileUrl =
         title={
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <RocketOutlined style={{ color: THEME, fontSize: 20 }} />
-            <span style={{ fontWeight: 700 }}>Submit Case to Xoto</span>
+            <span style={{ fontWeight: 700 }}>Submit Application to Xoto</span>
           </div>
         }
       >
         <Alert
           message="Please confirm submission"
-          description={`You are about to submit case "${caseData.caseReference}" for ${caseData.clientInfo?.fullName}. Once submitted, the Xoto team will process your application.`}
+          description={`You are about to submit application "${caseData.caseReference}" for ${caseData.clientInfo?.fullName}. Once submitted, the Xoto team will process your application.`}
           type="warning"
           showIcon
           style={{ borderRadius: 10, marginBottom: 20 }}
@@ -1309,11 +1309,11 @@ const fileUrl =
         footer={null}
         centered
         width={500}
-        title={<div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><span style={{ fontSize: 18 }}>↩</span> <span style={{ fontWeight: 700, color: '#92400e' }}>Resubmit Case After Correction</span></div>}
+        title={<div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><span style={{ fontSize: 18 }}>↩</span> <span style={{ fontWeight: 700, color: '#92400e' }}>Resubmit Application After Correction</span></div>}
       >
         <div style={{ padding: '4px 0' }}>
           <div style={{ background: '#fef3c7', border: '1px solid #fde68a', borderRadius: 10, padding: '12px 14px', marginBottom: 16, fontSize: 13, color: '#78350f' }}>
-            Case <strong>{caseData?.caseReference}</strong> was returned for correction. Describe the changes you have made before resubmitting.
+            Application <strong>{caseData?.caseReference}</strong> was returned for correction. Describe the changes you have made before resubmitting.
           </div>
           {caseData?.internalNotes?.length > 0 && (
             <div style={{ background: '#fef2f2', border: '1px solid #fca5a5', borderRadius: 10, padding: '10px 14px', marginBottom: 16 }}>
@@ -1336,7 +1336,7 @@ const fileUrl =
             </button>
             <button onClick={handleResubmit} disabled={resubmitting}
               style={{ padding: '9px 24px', borderRadius: 8, border: 'none', background: '#f59e0b', color: '#fff', fontSize: 13, fontWeight: 700, cursor: resubmitting ? 'not-allowed' : 'pointer', opacity: resubmitting ? 0.7 : 1, display: 'flex', alignItems: 'center', gap: 6 }}>
-              {resubmitting ? '⏳ Submitting...' : '↩ Resubmit Case'}
+              {resubmitting ? '⏳ Submitting...' : '↩ Resubmit Application'}
             </button>
           </div>
         </div>
@@ -1354,9 +1354,9 @@ const fileUrl =
           <div style={{ width: 80, height: 80, borderRadius: 40, background: '#d1fae5', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
             <TrophyOutlined style={{ fontSize: 42, color: GREEN }} />
           </div>
-          <Title level={3} style={{ color: '#1e293b', marginBottom: 8 }}>Case Submitted! 🎉</Title>
+          <Title level={3} style={{ color: '#1e293b', marginBottom: 8 }}>Application Submitted! 🎉</Title>
           <Text style={{ fontSize: 14, color: '#64748b', display: 'block', marginBottom: 20 }}>
-            Your case has been submitted to the Xoto team. We'll review it and get back to you within 24–48 hours.
+            Your application has been submitted to the Xoto team. We'll review it and get back to you within 24–48 hours.
           </Text>
           <div style={{ background: '#faf5ff', borderRadius: 10, padding: '12px 16px', marginBottom: 20 }}>
             <TeamOutlined style={{ fontSize: 20, color: THEME, marginRight: 8 }} />
@@ -1368,7 +1368,7 @@ const fileUrl =
             style={{ background: GRAD, border: 'none', borderRadius: 10, fontWeight: 700, width: '100%' }}
             onClick={() => { setSuccessOpen(false); navigate(`/dashboard/${roleSlug}/case/view`); }}
           >
-            Back to My Cases
+            Back to My Applications
           </Button>
         </div>
       </Modal>

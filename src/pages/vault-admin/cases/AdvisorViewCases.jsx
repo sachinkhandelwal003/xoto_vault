@@ -160,7 +160,7 @@ const AdvisorViewCases = () => {
         if (showToast) message.success({ content: 'Page refreshed successfully', key: 'refresh', duration: 2 });
       }
     } catch {
-      message.error('Failed to load cases');
+      message.error('Failed to load applications');
     } finally {
       setLoading(false);
     }
@@ -205,7 +205,7 @@ const AdvisorViewCases = () => {
     try {
       const res = await apiService.post(`/vault/cases/${caseId}/submit`);
       if (res?.success) {
-        message.success('Case submitted to Xoto!');
+        message.success('Application submitted to Xoto!');
         fetchCases();
       } else {
         message.error(res?.message || 'Submission failed');
@@ -348,7 +348,7 @@ const AdvisorViewCases = () => {
                   display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
                 }}
               >
-                <EyeOutlined /> View Case
+                <EyeOutlined /> View Application
               </button>
             )}
           </div>
@@ -551,8 +551,8 @@ const AdvisorViewCases = () => {
     }}>
       <span style={{ fontSize: 12, color: '#94a3b8' }}>
         {total > 0
-          ? `Showing ${((page - 1) * pageSize) + 1}–${Math.min(page * pageSize, total)} of ${total} cases`
-          : '0 cases'}
+          ? `Showing ${((page - 1) * pageSize) + 1}–${Math.min(page * pageSize, total)} of ${total} applications`
+          : '0 applications'}
       </span>
       <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
         <button disabled={page <= 1} onClick={() => setPage(p => p - 1)}
@@ -588,10 +588,10 @@ const AdvisorViewCases = () => {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12 }}>
           <div>
             <h1 style={{ margin: 0, fontSize: screens.md ? 28 : 22, fontWeight: 800, color: '#fff', lineHeight: 1.2 }}>
-              My Draft Cases
+              My Draft Applications
             </h1>
             <p style={{ margin: '4px 0 0', fontSize: 13, color: 'rgba(255,255,255,0.75)' }}>
-              Upload documents and submit your draft cases to Xoto
+              Upload documents and submit your draft applications to Xoto
             </p>
           </div>
           <button
@@ -603,7 +603,7 @@ const AdvisorViewCases = () => {
               display: 'flex', alignItems: 'center', gap: 6, backdropFilter: 'blur(4px)',
             }}
           >
-            <PlusOutlined /> {screens.sm ? 'Create Case' : '+'}
+            <PlusOutlined /> {screens.sm ? 'Create Application' : '+'}
           </button>
         </div>
 
@@ -633,7 +633,7 @@ const AdvisorViewCases = () => {
         }}>
           <Input
             prefix={<SearchOutlined style={{ color: '#94a3b8' }} />}
-            placeholder="Search client name or case reference…"
+            placeholder="Search client name or application reference…"
             value={search}
             onChange={e => { setSearch(e.target.value); setPage(1); }}
             allowClear
@@ -668,7 +668,7 @@ const AdvisorViewCases = () => {
         {loading ? (
           <div style={{ textAlign: 'center', padding: '80px 0' }}>
             <Spin size="large" />
-            <p style={{ color: '#94a3b8', marginTop: 14, fontSize: 14 }}>Loading your draft cases…</p>
+            <p style={{ color: '#94a3b8', marginTop: 14, fontSize: 14 }}>Loading your draft applications…</p>
           </div>
         ) : cases.length === 0 ? (
           <div style={{ background: '#fff', borderRadius: 16, padding: '72px 24px', textAlign: 'center', boxShadow: '0 2px 12px rgba(0,0,0,0.05)' }}>
@@ -676,17 +676,17 @@ const AdvisorViewCases = () => {
               <FileTextOutlined style={{ fontSize: 40, color: '#d8b4fe' }} />
             </div>
             <h3 style={{ color: '#374151', margin: '0 0 8px', fontSize: 18, fontWeight: 700 }}>
-              {search ? 'No matching cases' : 'No draft cases yet'}
+              {search ? 'No matching applications' : 'No draft applications yet'}
             </h3>
             <p style={{ color: '#94a3b8', margin: '0 0 24px', fontSize: 14 }}>
-              {search ? 'Try a different search term' : 'Create a case to begin the mortgage application process.'}
+              {search ? 'Try a different search term' : 'Create an application to begin the mortgage application process.'}
             </p>
             {!search && (
               <button
                 onClick={() => navigate(`/dashboard/${roleSlug}/case/create`)}
                 style={{ background: GRADIENT, color: '#fff', border: 'none', borderRadius: 10, padding: '11px 28px', cursor: 'pointer', fontSize: 14, fontWeight: 700, boxShadow: '0 4px 14px rgba(92,3,155,0.3)' }}
               >
-                <PlusOutlined style={{ marginRight: 6 }} /> Create First Case
+                <PlusOutlined style={{ marginRight: 6 }} /> Create First Application
               </button>
             )}
           </div>

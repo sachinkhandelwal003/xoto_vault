@@ -492,7 +492,7 @@ const TimelineTab = ({ timeline = {}, statusHistory = [], returnedToSubmitterNot
         </div>
       )}
 
-      <div style={{ fontSize: 14, fontWeight: 700, color: '#1e293b', marginBottom: 20 }}>Case Timeline</div>
+      <div style={{ fontSize: 14, fontWeight: 700, color: '#1e293b', marginBottom: 20 }}>Application Timeline</div>
       <div style={{ position: 'relative' }}>
         {/* Vertical line */}
         <div style={{ position: 'absolute', left: 15, top: 0, bottom: 0, width: 2, background: '#e2e8f0', zIndex: 0 }} />
@@ -575,9 +575,9 @@ const AdminCaseDetail = () => {
     try {
       const res = await apiService.get(`/vault/cases/${caseId}`);
       if (res?.success) setCaseData(res.data);
-      else message.error('Failed to load case');
+      else message.error('Failed to load application');
     } catch {
-      message.error('Failed to load case details');
+      message.error('Failed to load application details');
     }
   }, [caseId]);
 
@@ -616,7 +616,7 @@ const AdminCaseDetail = () => {
     return (
       <div style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 12 }}>
         <Spin size="large" />
-        <span style={{ color: PRIMARY, fontWeight: 600 }}>Loading case details…</span>
+        <span style={{ color: PRIMARY, fontWeight: 600 }}>Loading application details…</span>
       </div>
     );
   }
@@ -626,13 +626,13 @@ const AdminCaseDetail = () => {
     return (
       <div style={{ padding: 40, textAlign: 'center' }}>
         <div style={{ fontSize: 40, marginBottom: 12 }}>📂</div>
-        <div style={{ fontSize: 16, fontWeight: 700, color: '#374151', marginBottom: 8 }}>Case Not Found</div>
-        <div style={{ color: '#94a3b8', marginBottom: 20 }}>The case you are looking for could not be found.</div>
+        <div style={{ fontSize: 16, fontWeight: 700, color: '#374151', marginBottom: 8 }}>Application Not Found</div>
+        <div style={{ color: '#94a3b8', marginBottom: 20 }}>The application you are looking for could not be found.</div>
         <button
           onClick={() => navigate('/dashboard/vault-admin/case/manage')}
           style={{ background: GRAD, color: '#fff', border: 'none', borderRadius: 10, padding: '10px 24px', cursor: 'pointer', fontSize: 13, fontWeight: 700 }}
         >
-          <ArrowLeftOutlined style={{ marginRight: 6 }} />Back to Cases
+          <ArrowLeftOutlined style={{ marginRight: 6 }} />Back to Applications
         </button>
       </div>
     );
@@ -670,7 +670,7 @@ const AdminCaseDetail = () => {
               flexShrink: 0, backdropFilter: 'blur(4px)',
             }}
           >
-            <ArrowLeftOutlined />{screens.sm ? 'All Cases' : ''}
+            <ArrowLeftOutlined />{screens.sm ? 'All Applications' : ''}
           </button>
 
           {/* Title */}

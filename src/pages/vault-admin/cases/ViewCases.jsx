@@ -1,4 +1,4 @@
-﻿// src/pages/Cases/ViewCases.jsx
+﻿﻿// src/pages/Cases/ViewCases.jsx
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
@@ -115,7 +115,7 @@ const ViewCases = () => {
         setTotalItems(res.total || 0);
       }
     } catch (err) {
-      message.error("Failed to load cases");
+      message.error("Failed to load applications");
     } finally {
       setLoading(false);
     }
@@ -167,10 +167,10 @@ const ViewCases = () => {
         setSubmitSuccessModal(true);
         fetchCases(currentPage);
       } else {
-        message.error(response?.message || "Failed to submit case");
+        message.error(response?.message || "Failed to submit application");
       }
     } catch (err) {
-      message.error(err.response?.data?.message || "Error submitting case");
+      message.error(err.response?.data?.message || "Error submitting application");
     } finally {
       setSubmitting(false);
       setSelectedCaseForSubmit(null);
@@ -467,7 +467,7 @@ const ViewCases = () => {
       title={
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <SendOutlined style={{ color: THEME_COLOR, fontSize: 24 }} />
-          <span style={{ fontSize: 18, fontWeight: 600 }}>Submit Case to Xoto</span>
+          <span style={{ fontSize: 18, fontWeight: 600 }}>Submit Application to Xoto</span>
         </div>
       }
       open={submitModalVisible}
@@ -484,7 +484,7 @@ const ViewCases = () => {
           style={{ background: SUCCESS_COLOR, borderColor: SUCCESS_COLOR }}
           icon={<RocketOutlined />}
         >
-          Yes, Submit Case
+          Yes, Submit Application
         </Button>
       ]}
       width={550}
@@ -502,7 +502,7 @@ const ViewCases = () => {
           
           <div style={{ background: '#f8f5ff', padding: 16, borderRadius: 12, marginBottom: 16 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
-              <Text strong>Case Reference:</Text>
+              <Text strong>Application Reference:</Text>
               <Text>{selectedCaseForSubmit.caseReference}</Text>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
@@ -514,7 +514,7 @@ const ViewCases = () => {
           </div>
           
           <Text type="secondary" style={{ fontSize: 12 }}>
-            Once submitted, the Xoto team will review your case and contact you for further processing.
+            Once submitted, the Xoto team will review your application and contact you for further processing.
           </Text>
         </div>
       )}
@@ -555,11 +555,11 @@ const ViewCases = () => {
         </div>
         
         <Title level={4} style={{ color: '#1e1b4b', marginBottom: 12 }}>
-          Case Successfully Submitted! 🎉
+          Application Successfully Submitted! 🎉
         </Title>
         
         <Text style={{ fontSize: 16, display: 'block', marginBottom: 8 }}>
-          Your case has been submitted to the Xoto team.
+          Your application has been submitted to the Xoto team.
         </Text>
         
         <div style={{ background: '#f8f5ff', padding: 16, borderRadius: 12, margin: '20px 0' }}>
@@ -568,7 +568,7 @@ const ViewCases = () => {
             <div>
               <Text strong>What happens next?</Text>
               <div style={{ fontSize: 13, color: '#666', marginTop: 4 }}>
-                Our team will review your case and contact you within 24-48 hours.
+                Our team will review your application and contact you within 24-48 hours.
               </div>
             </div>
           </div>
@@ -590,8 +590,8 @@ const ViewCases = () => {
       
       {/* Header */}
       <div style={{ marginBottom: 32 }}>
-        <Title level={2} style={{ color: '#1e1b4b', margin: 0, fontWeight: 800 }}>Draft Cases</Title>
-        <Text type="secondary">Review documents and submit cases to the Xoto team</Text>
+        <Title level={2} style={{ color: '#1e1b4b', margin: 0, fontWeight: 800 }}>Draft Applications</Title>
+        <Text type="secondary">Review documents and submit applications to the Xoto team</Text>
       </div>
 
       {/* Cases Grid */}
@@ -611,10 +611,10 @@ const ViewCases = () => {
             <div style={{ textAlign: 'center', padding: '60px 0' }}>
               <FileTextOutlined style={{ fontSize: 48, color: '#ccc', marginBottom: 16 }} />
               <br/>
-              <Text type="secondary">No draft cases found</Text>
+              <Text type="secondary">No draft applications found</Text>
               <div style={{ marginTop: 16 }}>
                 <Button type="link" onClick={() => navigate(`/dashboard/${roleSlug}/vault/cases/create`)}>
-                  Create a new case
+                  Create a new application
                 </Button>
               </div>
             </div>

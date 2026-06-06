@@ -155,7 +155,7 @@ export default function OpsQueueView() {
     try {
       const res = await apiService.post('/vault/cases/ops/assign', { caseId: assignCase._id, opsId: pickedOps });
       if (res?.success) {
-        message.success(`Case assigned!`);
+        message.success(`Application assigned!`);
         setAssignCase(null); setPickedOps(null); fetchCases();
       } else message.error(res?.message || 'Assignment failed');
     } catch (e) { message.error(e?.response?.data?.message || 'Assignment failed'); }
@@ -168,7 +168,7 @@ export default function OpsQueueView() {
     try {
       const res = await apiService.post(`/vault/cases/ops/pickup/${pickCase._id}`);
       if (res?.success) {
-        message.success('Case picked up!');
+        message.success('Application picked up!');
         setPickCase(null); fetchCases();
         navigate(`/dashboard/vault-ops/case/assigned/view/${pickCase._id}`);
       } else message.error(res?.message || 'Failed');
@@ -284,12 +284,18 @@ export default function OpsQueueView() {
             <MiniDocBar s={ds} />
           </div>
 
-          {/* actions */}
+          {/* actions — ops: Preview (modal) + Pick Up; admin: View + Assign */}
           <div style={{ display: 'flex', gap: 8 }}>
             <PrimaryBtn r={r} mini={false} />
-            <button onClick={() => navigate(isAdmin ? `/dashboard/vault-admin/case/view/${r._id}` : `/dashboard/vault-ops/case/view/${r._id}`)} style={{ padding: '10px 14px', borderRadius: 8, border: '1.5px solid #e2e8f0', background: '#fff', cursor: 'pointer', color: PRIMARY, fontSize: 12, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4 }}>
-              <EyeOutlined />
-            </button>
+            {isAdmin ? (
+              <button onClick={() => navigate(`/dashboard/vault-admin/case/view/${r._id}`)} style={{ padding: '10px 14px', borderRadius: 8, border: '1.5px solid #e2e8f0', background: '#fff', cursor: 'pointer', color: PRIMARY, fontSize: 12, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4 }}>
+                <EyeOutlined />
+              </button>
+            ) : (
+              <button onClick={(e) => { e.stopPropagation(); setViewCase(r); }} style={{ padding: '10px 14px', borderRadius: 8, border: '1.5px solid #e2e8f0', background: '#fff', cursor: 'pointer', color: SLATE, fontSize: 11, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4 }}>
+                <FileTextOutlined /> Preview
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -390,12 +396,18 @@ export default function OpsQueueView() {
           </td>
         )}
 
-        {/* Actions */}
+        {/* Actions — ops: Preview (modal) + Pick Up; admin: View + Assign */}
         <td style={{ padding: '13px 16px', textAlign: 'right' }}>
           <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end', flexWrap: 'nowrap' }}>
-            <button onClick={() => navigate(isAdmin ? `/dashboard/vault-admin/case/view/${r._id}` : `/dashboard/vault-ops/case/view/${r._id}`)} style={{ background: isHov ? '#f5f3ff' : '#f8fafc', color: PRIMARY, border: `1.5px solid ${isHov ? '#e9d5ff' : '#e2e8f0'}`, borderRadius: 7, padding: '6px 11px', cursor: 'pointer', fontSize: 11, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4, transition: 'all .15s', whiteSpace: 'nowrap' }}>
-              <EyeOutlined />
-            </button>
+            {isAdmin ? (
+              <button onClick={() => navigate(`/dashboard/vault-admin/case/view/${r._id}`)} style={{ background: isHov ? '#f5f3ff' : '#f8fafc', color: PRIMARY, border: `1.5px solid ${isHov ? '#e9d5ff' : '#e2e8f0'}`, borderRadius: 7, padding: '6px 11px', cursor: 'pointer', fontSize: 11, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4, transition: 'all .15s', whiteSpace: 'nowrap' }}>
+                <EyeOutlined />
+              </button>
+            ) : (
+              <button onClick={() => setViewCase(r)} style={{ background: isHov ? '#f0fdf4' : '#f8fafc', color: SLATE, border: `1.5px solid ${isHov ? '#bbf7d0' : '#e2e8f0'}`, borderRadius: 7, padding: '6px 11px', cursor: 'pointer', fontSize: 11, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4, transition: 'all .15s', whiteSpace: 'nowrap' }}>
+                <FileTextOutlined /> Preview
+              </button>
+            )}
             <PrimaryBtn r={r} mini />
           </div>
         </td>
@@ -407,7 +419,7 @@ export default function OpsQueueView() {
   const Pager = () => (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 20px', borderTop: '1px solid #f1f5f9', flexWrap: 'wrap', gap: 8, background: '#fafafa', borderRadius: '0 0 14px 14px' }}>
       <span style={{ fontSize: 12, color: '#94a3b8' }}>
-        {total > 0 ? `${((page-1)*pageSize)+1}–${Math.min(page*pageSize,total)} of ${total}` : '0 results'}
+        {total > 0 ? `${((page-1)*pageSize)+1}–${Math.min(page*pageSize,total)} of ${total}` : '0 applications'}
       </span>
       <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
         <button disabled={page<=1} onClick={()=>setPage(p=>p-1)} style={{ padding: '5px 11px', borderRadius: 7, border: '1.5px solid #e2e8f0', background: page<=1?'#f8fafc':'#fff', cursor: page<=1?'not-allowed':'pointer', color: page<=1?'#cbd5e1':'#1e293b', fontSize: 12, fontWeight: 600 }}>← Prev</button>
@@ -437,11 +449,11 @@ export default function OpsQueueView() {
                 <InboxOutlined style={{ color: '#fff', fontSize: 18 }} />
               </div>
               <h1 style={{ margin: 0, fontSize: screens.md ? 26 : 20, fontWeight: 800, color: '#fff', lineHeight: 1.2 }}>
-                {isAdmin ? 'Cases Queue' : 'Ops Case Queue'}
+                {isAdmin ? 'Applications Queue' : 'Ops Application Queue'}
               </h1>
             </div>
             <p style={{ margin: 0, fontSize: 13, color: 'rgba(255,255,255,.7)', paddingLeft: 46 }}>
-              {isAdmin ? 'Manually assign pending cases to your ops team' : 'Pick up and process incoming mortgage applications'}
+              {isAdmin ? 'Manually assign pending applications to your ops team' : 'Pick up and process incoming mortgage applications'}
               <span style={{ marginLeft: 10, fontSize: 11, opacity: .6 }}>· Auto-refreshes every 30s</span>
             </p>
           </div>
@@ -511,7 +523,7 @@ export default function OpsQueueView() {
             </div>
             <h3 style={{ color: '#374151', margin: '0 0 6px', fontSize: 17, fontWeight: 700 }}>Queue is empty</h3>
             <p style={{ color: '#94a3b8', margin: 0, fontSize: 14 }}>
-              {search||bankQ ? 'No matching cases — clear filters to see all.' : 'No pending cases in the ops queue right now.'}
+              {search||bankQ ? 'No matching applications — clear filters to see all.' : 'No pending applications in the ops queue right now.'}
             </p>
           </div>
         ) : screens.sm ? (
@@ -520,7 +532,7 @@ export default function OpsQueueView() {
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
                   <tr style={{ background: 'linear-gradient(90deg,#5C039B08,#03A4F408)' }}>
-                    {['Case Ref','Client',screens.md?'Bank':'',screens.md?'Loan':'Amount',screens.lg?'Eligibility':'','Queue Time','Docs',''].filter(h=>h!==null&&!(h===''&&!screens.md)).map((h,i)=>(
+                    {['App Ref','Client',screens.md?'Bank':'',screens.md?'Loan':'Amount',screens.lg?'Eligibility':'','Queue Time','Docs',''].filter(h=>h!==null&&!(h===''&&!screens.md)).map((h,i)=>(
                       <th key={i} style={{ padding:'12px 16px', textAlign:'left', fontSize:10, fontWeight:700, color:'#94a3b8', textTransform:'uppercase', letterSpacing:.8, borderBottom:'2px solid #f1f5f9', whiteSpace:'nowrap' }}>{h}</th>
                     ))}
                   </tr>
@@ -542,11 +554,11 @@ export default function OpsQueueView() {
       <Modal
         open={!!assignCase} onCancel={()=>{setAssignCase(null);setPickedOps(null);}}
         footer={null} centered width={560}
-        title={<div style={{display:'flex',alignItems:'center',gap:10}}><UserSwitchOutlined style={{color:PRIMARY,fontSize:19}}/><span style={{fontWeight:800}}>Assign Case to Ops</span></div>}
+        title={<div style={{display:'flex',alignItems:'center',gap:10}}><UserSwitchOutlined style={{color:PRIMARY,fontSize:19}}/><span style={{fontWeight:800}}>Assign Application to Ops</span></div>}
       >
         {assignCase && (
           <div>
-            {/* case summary strip */}
+            {/* application summary strip */}
             <div style={{ background: 'linear-gradient(135deg,#5C039B08,#03A4F408)', borderRadius: 12, padding: '14px 16px', marginBottom: 20, border: '1px solid #e9d5ff', display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
               <div>
                 <div style={{ fontWeight: 800, fontSize: 14, color: '#0f172a' }}>{assignCase.caseReference}</div>
@@ -634,7 +646,7 @@ export default function OpsQueueView() {
               </div>
             )}
 
-            <Alert message="Case will be moved to the selected ops member's workload immediately." type="info" showIcon style={{ borderRadius: 10, marginBottom: 18 }} />
+            <Alert message="Application will be moved to the selected ops member's workload immediately." type="info" showIcon style={{ borderRadius: 10, marginBottom: 18 }} />
 
             <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
               <button onClick={()=>{setAssignCase(null);setPickedOps(null);}} style={{ padding:'9px 20px', borderRadius:9, border:'1.5px solid #e2e8f0', background:'#fff', cursor:'pointer', fontSize:13, fontWeight:600, color:SLATE }}>Cancel</button>
@@ -653,14 +665,14 @@ export default function OpsQueueView() {
       <Modal
         open={!!pickCase} onCancel={()=>setPickCase(null)}
         footer={null} centered width={460}
-        title={<div style={{display:'flex',alignItems:'center',gap:10}}><RocketOutlined style={{color:PRIMARY,fontSize:18}}/><span style={{fontWeight:800}}>Pick Up Case</span></div>}
+        title={<div style={{display:'flex',alignItems:'center',gap:10}}><RocketOutlined style={{color:PRIMARY,fontSize:18}}/><span style={{fontWeight:800}}>Pick Up Application</span></div>}
       >
         {pickCase && (
           <>
-            <Alert message="This case will be assigned to you and removed from the queue." type="info" showIcon style={{ borderRadius:10, marginBottom:18 }} />
+            <Alert message="This application will be assigned to you and removed from the queue." type="info" showIcon style={{ borderRadius:10, marginBottom:18 }} />
             <div style={{ background:'#faf5ff', borderRadius:12, padding:'15px 16px', marginBottom:18, border:'1px solid #e9d5ff' }}>
               {[
-                ['Case', pickCase.caseReference],
+                ['Application', pickCase.caseReference],
                 ['Client', pickCase.clientInfo?.fullName],
                 ['Bank', pickCase.bankSelection?.bankName],
                 ['Loan', `AED ${(pickCase.propertyInfo?.loanAmount||0).toLocaleString()}`],

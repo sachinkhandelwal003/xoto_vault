@@ -90,10 +90,10 @@ export default function BankSubmissionQueue() {
         setTotal(res.total || res.pagination?.total || filtered.length);
         setTotalPages(res.pagination?.totalPages || 1);
       } else {
-        message.error(res?.message || 'Failed to load cases');
+        message.error(res?.message || 'Failed to load applications');
       }
     } catch (err) {
-      message.error(err?.response?.data?.message || 'Failed to load cases');
+      message.error(err?.response?.data?.message || 'Failed to load applications');
     } finally {
       setLoading(false);
     }
@@ -124,7 +124,7 @@ export default function BankSubmissionQueue() {
                 <div style={{ fontSize: 22, fontWeight: 800, color: '#fff', letterSpacing: '-0.3px' }}>Bank Submission Queue</div>
               </div>
               <div style={{ fontSize: 13, color: 'rgba(255,255,255,.75)', marginTop: 4 }}>
-                Cases in the bank pipeline — application, pre-approval, documentation &amp; FOL stages
+                Applications in the bank pipeline — application, pre-approval, documentation &amp; FOL stages
               </div>
             </div>
             <button
@@ -163,7 +163,7 @@ export default function BankSubmissionQueue() {
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
               onKeyDown={handleSearch}
-              placeholder="Search case ID or client name… (Enter)"
+              placeholder="Search application ID or client name… (Enter)"
               style={{ border: 'none', background: 'none', outline: 'none', fontSize: 13, flex: 1 }}
             />
           </div>
@@ -202,7 +202,7 @@ export default function BankSubmissionQueue() {
 
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14, flexWrap: 'wrap', gap: 8 }}>
           <span style={{ fontSize: 13, color: SLATE }}>
-            Showing <strong>{cases.length}</strong> of <strong>{total}</strong> cases
+            Showing <strong>{cases.length}</strong> of <strong>{total}</strong> applications
           </span>
           <span style={{ fontSize: 12, color: '#9ca3af' }}>Page {page} of {totalPages}</span>
         </div>
@@ -213,8 +213,8 @@ export default function BankSubmissionQueue() {
         ) : cases.length === 0 ? (
           <div style={{ background: '#fff', borderRadius: 16, padding: '60px 24px', textAlign: 'center', boxShadow: '0 1px 4px rgba(0,0,0,.06)' }}>
             <BankOutlined style={{ fontSize: 48, color: '#bfdbfe', marginBottom: 12 }} />
-            <div style={{ fontSize: 16, fontWeight: 700, color: '#374151', marginBottom: 6 }}>No cases in bank pipeline</div>
-            <div style={{ fontSize: 13, color: '#9ca3af' }}>Cases will appear here once submitted to a bank</div>
+            <div style={{ fontSize: 16, fontWeight: 700, color: '#374151', marginBottom: 6 }}>No applications in bank pipeline</div>
+            <div style={{ fontSize: 13, color: '#9ca3af' }}>Applications will appear here once submitted to a bank</div>
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
@@ -265,7 +265,7 @@ export default function BankSubmissionQueue() {
                         <button
                           onClick={() => navigate(`/dashboard/${roleSlug}/case/view/${c._id}`)}
                           style={{ padding: '9px 18px', borderRadius: 10, border: `1.5px solid ${PRIMARY}`, background: '#faf5ff', color: PRIMARY, fontSize: 12, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5 }}>
-                          <EyeOutlined /> View Case
+                          <EyeOutlined /> View Application
                         </button>
                         <button
                           onClick={() => navigate(`/dashboard/${roleSlug}/case/assigned/view/${c._id}`)}

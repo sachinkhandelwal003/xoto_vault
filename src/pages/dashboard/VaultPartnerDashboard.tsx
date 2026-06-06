@@ -247,7 +247,7 @@ const VaultPartnerDashboard: React.FC = () => {
       <Row gutter={[20, 20]} style={{ marginBottom: 24 }}>
         {[
           { label: "Total Leads",      value: kpis.totalLeads,             icon: <TeamOutlined />,      color: P,   bg: PL  },
-          { label: "Active Cases",     value: kpis.activeCases,            icon: <FileTextOutlined />,  color: BL,  bg: BLL },
+          { label: "Active Applications", value: kpis.activeCases,            icon: <FileTextOutlined />,  color: BL,  bg: BLL },
           { label: "Total Earned",     value: fmtAED(kpis.totalCommissionEarned), icon: <WalletOutlined />,    color: GN,  bg: GNL },
           { label: "Pending Payout",   value: fmtAED(kpis.pendingCommission),     icon: <DollarOutlined />,    color: AMB, bg: AML },
         ].map((k, i) => (

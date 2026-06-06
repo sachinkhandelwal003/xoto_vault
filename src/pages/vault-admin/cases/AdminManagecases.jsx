@@ -126,7 +126,7 @@ const AdminManagecases = () => {
         setTotalCases(response.pagination?.total || 0);
       }
     } catch (err) {
-      message.error('Failed to load cases');
+      message.error('Failed to load applications');
     } finally {
       setLoading(false);
     }
@@ -227,7 +227,7 @@ const AdminManagecases = () => {
               boxShadow: '0 3px 10px rgba(92,3,155,0.25)',
             }}
           >
-            <EyeOutlined /> View Full Case
+            <EyeOutlined /> View Full Application
           </button>
         </div>
       </div>
@@ -244,8 +244,8 @@ const AdminManagecases = () => {
     }}>
       <span style={{ fontSize: 12, color: '#94a3b8' }}>
         {totalCases > 0
-          ? `Showing ${((currentPage - 1) * itemsPerPage) + 1}–${Math.min(currentPage * itemsPerPage, totalCases)} of ${totalCases} cases`
-          : '0 cases'}
+          ? `Showing ${((currentPage - 1) * itemsPerPage) + 1}–${Math.min(currentPage * itemsPerPage, totalCases)} of ${totalCases} applications`
+          : '0 applications'}
       </span>
       <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
         <button
@@ -292,10 +292,10 @@ const AdminManagecases = () => {
 
         <div style={{ position: 'relative', zIndex: 1 }}>
           <h1 style={{ margin: 0, fontSize: 26, fontWeight: 800, color: '#fff', lineHeight: 1.2 }}>
-            Case Management
+            Application Management
           </h1>
           <p style={{ margin: '4px 0 0', fontSize: 13, color: 'rgba(255,255,255,0.75)' }}>
-            Manage all mortgage cases and preview commissions
+            Manage all mortgage applications and preview commissions
           </p>
 
           {/* 4 stat chips */}
@@ -324,7 +324,7 @@ const AdminManagecases = () => {
         }}>
           <Input
             prefix={<SearchOutlined style={{ color: '#94a3b8' }} />}
-            placeholder="Search client name or case reference…"
+            placeholder="Search client name or application reference…"
             value={search}
             onChange={handleSearchChange}
             allowClear
@@ -351,7 +351,7 @@ const AdminManagecases = () => {
         <div style={{ display: 'flex', gap: 8, paddingBottom: 4, width: 'max-content' }}>
           {['all', ...CASE_STATUSES].map(status => {
             const isActive = activeStatus === status;
-            const displayName = status === 'all' ? 'All Cases' : status;
+            const displayName = status === 'all' ? 'All Applications' : status;
             return (
               <button
                 key={status}
@@ -379,7 +379,7 @@ const AdminManagecases = () => {
         {loading ? (
           <div style={{ textAlign: 'center', padding: '80px 0' }}>
             <Spin size="large" />
-            <p style={{ color: '#94a3b8', marginTop: 14, fontSize: 14 }}>Loading cases…</p>
+            <p style={{ color: '#94a3b8', marginTop: 14, fontSize: 14 }}>Loading applications…</p>
           </div>
         ) : cases.length === 0 ? (
           <div style={{ background: '#fff', borderRadius: 16, padding: '72px 24px', textAlign: 'center', boxShadow: '0 2px 12px rgba(0,0,0,0.05)' }}>
@@ -387,10 +387,10 @@ const AdminManagecases = () => {
               <FileTextOutlined style={{ fontSize: 40, color: '#d8b4fe' }} />
             </div>
             <h3 style={{ color: '#374151', margin: '0 0 8px', fontSize: 18, fontWeight: 700 }}>
-              No cases found
+              No applications found
             </h3>
             <p style={{ color: '#94a3b8', margin: 0, fontSize: 14 }}>
-              No cases match the filter <strong>{activeStatus === 'all' ? 'All Cases' : activeStatus}</strong>
+              No applications match the filter <strong>{activeStatus === 'all' ? 'All Applications' : activeStatus}</strong>
             </p>
           </div>
         ) : (

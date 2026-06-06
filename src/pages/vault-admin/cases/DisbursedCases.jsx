@@ -65,10 +65,10 @@ export default function DisbursedCases() {
           avgLoan: data.length > 0 ? totalAmount / data.length : 0,
         });
       } else {
-        message.error(res?.message || 'Failed to load disbursed cases');
+        message.error(res?.message || 'Failed to load disbursed applications');
       }
     } catch (err) {
-      message.error(err?.response?.data?.message || 'Failed to load disbursed cases');
+      message.error(err?.response?.data?.message || 'Failed to load disbursed applications');
     } finally {
       setLoading(false);
     }
@@ -92,10 +92,10 @@ export default function DisbursedCases() {
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <TrophyOutlined style={{ color: '#fff', fontSize: 22 }} />
-                <div style={{ fontSize: 22, fontWeight: 800, color: '#fff', letterSpacing: '-0.3px' }}>Disbursed Cases</div>
+                <div style={{ fontSize: 22, fontWeight: 800, color: '#fff', letterSpacing: '-0.3px' }}>Disbursed Applications</div>
               </div>
               <div style={{ fontSize: 13, color: 'rgba(255,255,255,.75)', marginTop: 4 }}>
-                Successfully completed mortgage cases — fully disbursed by the bank
+                Successfully completed mortgage applications — fully disbursed by the bank
               </div>
             </div>
             <button
@@ -110,12 +110,12 @@ export default function DisbursedCases() {
           {/* Stat chips */}
           <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
             {[
-              { label: 'Total Disbursed Cases', value: total,                  display: total, color: 'rgba(255,255,255,.2)' },
+              { label: 'Total Disbursed Applications', value: total,                  display: total, color: 'rgba(255,255,255,.2)' },
               { label: 'Total Amount (Page)',    value: stats.totalAmount,      display: fmtAED(stats.totalAmount), color: `rgba(255,255,255,.2)` },
               { label: 'Avg Loan (Page)',        value: stats.avgLoan,          display: fmtAED(Math.round(stats.avgLoan)), color: 'rgba(255,255,255,.15)' },
             ].map(chip => (
               <div key={chip.label} style={{ background: chip.color, borderRadius: 12, padding: '8px 18px', textAlign: 'center', backdropFilter: 'blur(4px)' }}>
-                <div style={{ fontSize: chip.label === 'Total Disbursed Cases' ? 22 : 16, fontWeight: 800, color: '#fff' }}>{chip.display}</div>
+                <div style={{ fontSize: chip.label === 'Total Disbursed Applications' ? 22 : 16, fontWeight: 800, color: '#fff' }}>{chip.display}</div>
                 <div style={{ fontSize: 11, color: 'rgba(255,255,255,.85)', fontWeight: 500 }}>{chip.label}</div>
               </div>
             ))}
@@ -133,7 +133,7 @@ export default function DisbursedCases() {
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
               onKeyDown={handleSearch}
-              placeholder="Search case ID or client name… (Enter)"
+              placeholder="Search application ID or client name… (Enter)"
               style={{ border: 'none', background: 'none', outline: 'none', fontSize: 13, flex: 1 }}
             />
           </div>
@@ -151,7 +151,7 @@ export default function DisbursedCases() {
 
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14, flexWrap: 'wrap', gap: 8 }}>
           <span style={{ fontSize: 13, color: SLATE }}>
-            Showing <strong>{cases.length}</strong> of <strong>{total}</strong> disbursed cases
+            Showing <strong>{cases.length}</strong> of <strong>{total}</strong> disbursed applications
           </span>
           <span style={{ fontSize: 12, color: '#9ca3af' }}>Page {page} of {totalPages}</span>
         </div>
@@ -162,8 +162,8 @@ export default function DisbursedCases() {
         ) : cases.length === 0 ? (
           <div style={{ background: '#fff', borderRadius: 16, padding: '60px 24px', textAlign: 'center', boxShadow: '0 1px 4px rgba(0,0,0,.06)' }}>
             <TrophyOutlined style={{ fontSize: 48, color: '#a7f3d0', marginBottom: 12 }} />
-            <div style={{ fontSize: 16, fontWeight: 700, color: '#374151', marginBottom: 6 }}>No disbursed cases yet</div>
-            <div style={{ fontSize: 13, color: '#9ca3af' }}>Cases will appear here once the bank has disbursed the loan</div>
+            <div style={{ fontSize: 16, fontWeight: 700, color: '#374151', marginBottom: 6 }}>No disbursed applications yet</div>
+            <div style={{ fontSize: 13, color: '#9ca3af' }}>Applications will appear here once the bank has disbursed the loan</div>
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
@@ -221,7 +221,7 @@ export default function DisbursedCases() {
                         <button
                           onClick={() => navigate(`/dashboard/${roleSlug}/case/view/${c._id}`)}
                           style={{ padding: '9px 18px', borderRadius: 10, border: `1.5px solid ${PRIMARY}`, background: '#faf5ff', color: PRIMARY, fontSize: 12, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5 }}>
-                          <EyeOutlined /> View Case
+                          <EyeOutlined /> View Application
                         </button>
                       </div>
                     </div>
@@ -261,7 +261,7 @@ export default function DisbursedCases() {
                         </div>
                       )}
                       <div>
-                        <div style={{ fontSize: 10, color: '#9ca3af', fontWeight: 600 }}>CASE CREATED</div>
+                        <div style={{ fontSize: 10, color: '#9ca3af', fontWeight: 600 }}>APPLICATION CREATED</div>
                         <div style={{ fontSize: 12, color: SLATE, fontWeight: 600 }}>{fmtDate(c.createdAt)}</div>
                       </div>
                       {c.eligibilitySnapshot?.dbrPercentage !== undefined && (

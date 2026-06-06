@@ -152,7 +152,7 @@ const STATUS_INFO = {
   },
   'Lost': {
     icon: '🚫',
-    desc: 'Case is lost — customer withdrew or deal fell through.',
+    desc: 'Application is lost — customer withdrew or deal fell through.',
     color: SL,
     requiresNote: true,
     noteLabel: 'Reason *',
@@ -552,7 +552,7 @@ export default function OpsAssignedReview() {
         const cd = cr.data?.case || cr.data;
         setCaseData(cd);
       } else {
-        message.error('Failed to load case');
+        message.error('Failed to load application');
       }
       if (dr?.success) setDocuments(dr.data || []);
     } catch (e) {
@@ -655,14 +655,14 @@ export default function OpsAssignedReview() {
     try {
       const r = await apiService.post(`vault/cases/ops/return/${caseId}`, { reason: returnReason });
       if (r?.success) {
-        message.warning('Case returned to queue');
+        message.warning('Application returned to queue');
         setReturnModal(false); setReturnReason('');
         fetchData();
       } else {
-        message.error(r?.message || 'Failed to return case');
+        message.error(r?.message || 'Failed to return application');
       }
     } catch (e) {
-      message.error(e?.response?.data?.message || 'Failed to return case');
+      message.error(e?.response?.data?.message || 'Failed to return application');
     } finally {
       setUpdating(false);
     }
@@ -705,7 +705,7 @@ export default function OpsAssignedReview() {
 
   if (!caseData) return (
     <div style={{ padding: 60, textAlign: 'center' }}>
-      <Empty description="Case not found" />
+      <Empty description="Application not found" />
       <button onClick={() => navigate(-1)} style={{ marginTop: 16, padding: '8px 20px', background: P, color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 700 }}>Go Back</button>
     </div>
   );
@@ -1012,8 +1012,8 @@ export default function OpsAssignedReview() {
             {/* ── TIMELINE TAB ── */}
             {tab === 'timeline' && (
               <div style={{ background: '#fff', borderRadius: 14, padding: '24px 28px', boxShadow: '0 1px 4px rgba(0,0,0,.06)' }}>
-                <div style={{ fontWeight: 700, fontSize: 15, color: P, marginBottom: 24 }}>Case Timeline</div>
-                <TlItem label="Case Created"      date={tl.createdAt}          done={!!tl.createdAt} />
+                <div style={{ fontWeight: 700, fontSize: 15, color: P, marginBottom: 24 }}>Application Timeline</div>
+                <TlItem label="Application Created"      date={tl.createdAt}          done={!!tl.createdAt} />
                 <TlItem label="Submitted to Xoto" date={tl.submittedToXotoAt}  done={!!tl.submittedToXotoAt} />
                 <TlItem label="Assigned to Ops"   date={tl.assignedToOpsAt}    done={!!tl.assignedToOpsAt} />
                 <TlItem label="Submitted to Bank" date={tl.submittedToBankAt}  done={!!tl.submittedToBankAt} />
@@ -1054,7 +1054,7 @@ export default function OpsAssignedReview() {
                 <div style={{ fontSize: 15, fontWeight: 800, color: '#fff' }}>{caseData.currentStatus}</div>
               </div>
               <div style={{ padding: '10px 16px' }}>
-                <InfoRow label="Case Ref"     value={caseData.caseReference} bold />
+                <InfoRow label="Application Ref"     value={caseData.caseReference} bold />
                 <InfoRow label="Created By"   value={caseData.createdBy?.role?.toUpperCase()} />
                 <InfoRow label="Picked Up By" value={oq.pickedUpBy?.opsName || 'You'} />
                 {oq.pickedUpBy?.pickedUpAt && <InfoRow label="Since" value={fmtDate(oq.pickedUpBy.pickedUpAt)} />}
@@ -1107,7 +1107,7 @@ export default function OpsAssignedReview() {
                           onClick={() => !isUnderReview && setReturnModal(true)}
                           disabled={updating || isUnderReview}
                           style={{ padding: '9px 12px', border: `1.5px solid ${isUnderReview ? '#d1d5db' : AM}`, borderRadius: 10, background: isUnderReview ? '#f9fafb' : '#fff', color: isUnderReview ? '#9ca3af' : AM, fontSize: 12, fontWeight: 700, cursor: isUnderReview ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: 7, opacity: isUnderReview ? .6 : 1, width: '100%' }}>
-                          <RollbackOutlined /> Return to Queue
+                          <RollbackOutlined /> Return Application to Queue
                           {isUnderReview && <span style={{ marginLeft: 'auto', fontSize: 10, background: '#e5e7eb', padding: '1px 6px', borderRadius: 10 }}>Locked</span>}
                         </button>
                       </Tooltip>
@@ -1320,7 +1320,7 @@ export default function OpsAssignedReview() {
 
       {/* ── Return to Queue Modal ── */}
       <Modal
-        title={<span><RollbackOutlined style={{ color: AM, marginRight: 8 }} />Return Case to Queue</span>}
+        title={<span><RollbackOutlined style={{ color: AM, marginRight: 8 }} />Return Application to Queue</span>}
         open={returnModal}
         onCancel={() => { setReturnModal(false); setReturnReason(''); }}
         footer={[
@@ -1328,12 +1328,12 @@ export default function OpsAssignedReview() {
             style={{ padding: '8px 18px', borderRadius: 8, border: '1px solid #e2e8f0', background: '#fff', cursor: 'pointer', marginRight: 8 }}>Cancel</button>,
           <button key="r" onClick={handleReturn} disabled={updating}
             style={{ padding: '8px 22px', borderRadius: 8, border: 'none', background: AM, color: '#fff', cursor: updating ? 'not-allowed' : 'pointer', fontWeight: 700, opacity: updating ? .7 : 1 }}>
-            {updating ? 'Returning…' : 'Return Case'}
+            {updating ? 'Returning…' : 'Return Application'}
           </button>
         ]}
         width={500}>
-        <Alert message="Case will be returned to ops queue for another ops to pick up." type="warning" showIcon style={{ marginBottom: 14, borderRadius: 8 }} />
-        <div style={{ marginBottom: 10 }}><strong>Case:</strong> <code>{caseData.caseReference}</code></div>
+        <Alert message="Application will be returned to ops queue for another ops to pick up." type="warning" showIcon style={{ marginBottom: 14, borderRadius: 8 }} />
+        <div style={{ marginBottom: 10 }}><strong>Application:</strong> <code>{caseData.caseReference}</code></div>
         <Form.Item label="Reason for returning *" required style={{ marginBottom: 0 }}>
           <TextArea
             rows={4}

@@ -146,7 +146,7 @@ const ProcessCasesUpdates = () => {
         setTotal(res.pagination?.total || res.total || 0);
       }
     } catch {
-      message.error('Failed to load cases');
+      message.error('Failed to load applications');
     } finally {
       setLoading(false);
     }
@@ -177,7 +177,7 @@ const ProcessCasesUpdates = () => {
         correctionNotes: resubNotes || 'Corrections completed and resubmitted.',
       });
       if (res?.success) {
-        message.success(`Case resubmitted successfully`);
+        message.success(`Application resubmitted successfully`);
         setResubModal(false); setResubCase(null); setResubNotes('');
         fetchCases();
       } else {
@@ -470,10 +470,10 @@ const ProcessCasesUpdates = () => {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12 }}>
           <div>
             <h1 style={{ margin: 0, fontSize: screens.md ? 26 : 20, fontWeight: 800, color: '#fff', lineHeight: 1.2 }}>
-              Process Cases
+              Process Applications
             </h1>
             <p style={{ margin: '4px 0 0', fontSize: 13, color: 'rgba(255,255,255,0.7)' }}>
-              Track and manage all your mortgage cases across every stage
+              Track and manage all your mortgage applications across every stage
             </p>
           </div>
           <button
@@ -487,7 +487,7 @@ const ProcessCasesUpdates = () => {
         {/* Summary stats */}
         <div style={{ display: 'flex', gap: 10, marginTop: 20, flexWrap: 'wrap' }}>
           {[
-            { label: 'Total Cases',  value: total,     color: '#fff',    bg: 'rgba(255,255,255,0.15)', icon: BarChart3 },
+            { label: 'Total Applications',  value: total,     color: '#fff',    bg: 'rgba(255,255,255,0.15)', icon: BarChart3 },
             { label: 'Active',       value: active,    color: '#bfdbfe', bg: 'rgba(59,130,246,0.2)',   icon: TrendingUp },
             { label: 'Disbursed',    value: disbursed, color: '#6ee7b7', bg: 'rgba(16,185,129,0.2)',   icon: CheckCircle2 },
             { label: 'Need Action',  value: returned,  color: '#fde68a', bg: 'rgba(245,158,11,0.2)',   icon: AlertTriangle },
@@ -523,7 +523,7 @@ const ProcessCasesUpdates = () => {
                     fontSize: 12, fontWeight: 700, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 5, transition: 'all .15s',
                   }}
                 >
-                  {s === 'all' ? 'All Cases' : (cfg?.label || s)}
+                  {s === 'all' ? 'All Applications' : (cfg?.label || s)}
                   <span style={{ background: isActive ? (cfg?.color || PRIMARY) : '#f1f5f9', color: isActive ? '#fff' : '#64748b', borderRadius: 99, padding: '0px 6px', fontSize: 10, fontWeight: 800 }}>{count}</span>
                 </button>
               );
@@ -537,15 +537,15 @@ const ProcessCasesUpdates = () => {
         {loading ? (
           <div style={{ textAlign: 'center', padding: '80px 0' }}>
             <Spin size="large" />
-            <p style={{ color: '#94a3b8', marginTop: 14, fontSize: 14 }}>Loading cases…</p>
+            <p style={{ color: '#94a3b8', marginTop: 14, fontSize: 14 }}>Loading applications…</p>
           </div>
         ) : filtered.length === 0 ? (
           <div style={{ background: '#fff', borderRadius: 16, padding: '72px 24px', textAlign: 'center', boxShadow: '0 2px 12px rgba(0,0,0,0.05)' }}>
             <div style={{ width: 72, height: 72, borderRadius: '50%', background: '#f5f3ff', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
               <FileText size={36} color="#d8b4fe" />
             </div>
-            <h3 style={{ color: '#374151', margin: '0 0 8px', fontSize: 18, fontWeight: 700 }}>No cases found</h3>
-            <p style={{ color: '#94a3b8', margin: 0 }}>{activeTab !== 'all' ? `No cases with status "${activeTab}"` : 'No cases yet'}</p>
+            <h3 style={{ color: '#374151', margin: '0 0 8px', fontSize: 18, fontWeight: 700 }}>No applications found</h3>
+            <p style={{ color: '#94a3b8', margin: 0 }}>{activeTab !== 'all' ? `No applications with status "${activeTab}"` : 'No applications yet'}</p>
           </div>
         ) : screens.sm ? (
           <div style={{ background: '#fff', borderRadius: 16, overflow: 'hidden', boxShadow: '0 4px 20px rgba(0,0,0,0.07)' }}>
@@ -572,7 +572,7 @@ const ProcessCasesUpdates = () => {
 
       {/* ── Resubmit Modal ── */}
       <Modal
-        title={<div style={{ display: 'flex', alignItems: 'center', gap: 10 }}><RotateCcw size={18} color={GREEN} /><span style={{ fontWeight: 700 }}>Resubmit Case</span></div>}
+        title={<div style={{ display: 'flex', alignItems: 'center', gap: 10 }}><RotateCcw size={18} color={GREEN} /><span style={{ fontWeight: 700 }}>Resubmit Application</span></div>}
         open={resubModal}
         onCancel={() => { setResubModal(false); setResubCase(null); setResubNotes(''); }}
         footer={[

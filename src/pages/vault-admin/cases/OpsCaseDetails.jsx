@@ -333,7 +333,7 @@ export default function OpsCaseDetails() {
           </div>
 
           <h2 style={{ fontSize: 22, fontWeight: 800, color: C.text, marginBottom: 6 }}>
-            Analyzing Case
+            Analyzing Application
           </h2>
           <p style={{ fontSize: 14, color: C.gray, marginBottom: 32, lineHeight: 1.5 }}>
             Running AI‑powered analysis on applicant profile,<br />
@@ -423,7 +423,7 @@ export default function OpsCaseDetails() {
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
           <button className="back-btn" onClick={() => navigate(-1)}
             style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 16px", background: C.white, border: `1px solid ${C.grayBord}`, borderRadius: 10, fontSize: 13, fontWeight: 600, color: C.textSub, cursor: "pointer", transition: "all .2s" }}>
-            <ChevronLeft size={15} /> Back to Cases
+            <ChevronLeft size={15} /> Back to Applications
           </button>
 
           <button className="edit-btn" onClick={openEdit}
@@ -443,7 +443,7 @@ export default function OpsCaseDetails() {
         {/* ── SLA banner ── */}
         {sla.breached && (
           <div style={{ marginBottom: 14, padding: "10px 16px", borderRadius: 10, background: C.redSoft, color: "#991B1B", border: `1px solid ${C.redBord}`, fontWeight: 600, display: "flex", alignItems: "center", gap: 8, fontSize: 13 }}>
-            <AlertTriangle size={15} /> SLA Breached — This case requires immediate attention.
+            <AlertTriangle size={15} /> SLA Breached — This application requires immediate attention.
           </div>
         )}
 
@@ -728,13 +728,13 @@ export default function OpsCaseDetails() {
 
           {activeTab === "status" && (
             <div className="moc-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
-              <Section icon={ClipboardList} title="Case Status">
+              <Section icon={ClipboardList} title="Application Status">
                 <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 16px", borderRadius: 10, background: statusCfg.bg, border: `1px solid ${statusCfg.border}`, marginBottom: 16 }}>
                   <div style={{ width: 10, height: 10, borderRadius: "50%", background: statusCfg.color, flexShrink: 0 }} />
                   <span style={{ fontSize: 13, color: C.gray }}>Current Status:</span>
                   <span style={{ fontSize: 13, fontWeight: 700, color: statusCfg.color }}>{status}</span>
                 </div>
-                <DRow label="Case Reference"  value={caseData.caseRef} copy />
+                <DRow label="Application Reference"  value={caseData.caseRef} copy />
                 <DRow label="Priority"        value={caseData.priority} />
                 <DRow label="Created At"      value={fmtDT(caseData.createdAt)} />
                 <DRow label="Last Updated"    value={fmtDT(caseData.updatedAt)} />
@@ -755,8 +755,8 @@ export default function OpsCaseDetails() {
                 </Section>
 
                 <Section icon={Shield} title="System Info">
-                  <DRow label="Case ID"   value={caseData._id} copy mono />
-                  <DRow label="Case Ref"  value={caseData.caseRef} copy />
+                  <DRow label="Application ID"   value={caseData._id} copy mono />
+                  <DRow label="Application Ref"  value={caseData.caseRef} copy />
                   <DRow label="Advisor ID"value={at.advisorId} copy />
                 </Section>
               </div>

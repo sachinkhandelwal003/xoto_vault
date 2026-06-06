@@ -98,11 +98,11 @@ const QueueCases = () => {
         });
         setAvailableBanks(response.filters?.availableBanks || []);
       } else {
-        showToast(response?.message || "Failed to load queue cases", "error");
+        showToast(response?.message || "Failed to load queue applications", "error");
       }
     } catch (err) {
       console.error("Error fetching queue:", err);
-      showToast(err?.response?.data?.message || "Failed to load queue cases", "error");
+      showToast(err?.response?.data?.message || "Failed to load queue applications", "error");
     } finally {
       setLoading(false);
     }
@@ -158,7 +158,7 @@ const QueueCases = () => {
     try {
       const response = await apiService.post(`/vault/cases/ops/pickup/${id}`);
       if (response?.success) {
-        showToast(`Case "${pickupModal.caseReference}" picked up successfully âœ…`);
+        showToast(`Application "${pickupModal.caseReference}" picked up successfully âœ…`);
         setPickupModal(null);
         fetchQueueCases(currentPage, itemsPerPage, statusFilter, search, bankFilter);
         // Navigate to review page
@@ -183,7 +183,7 @@ const QueueCases = () => {
   const columns = [
     {
       key: "caseReference",
-      title: "Case ID",
+      title: "Application ID",
       render: (_, row) => (
         <div style={{ padding: "4px 0" }}>
           <p style={{ fontSize: 14, fontWeight: 600, color: PURPLE }}>
@@ -319,7 +319,7 @@ const QueueCases = () => {
                 cursor: "pointer", transition: "all 0.2s"
               }}
             >
-              <Eye size={13} /> View
+              <Eye size={13} /> View Application
             </button>
 
             {/* Pickup Button */}
@@ -439,7 +439,7 @@ const QueueCases = () => {
     }}>
       <div style={{ display: "flex", flexWrap: "wrap", gap: 12, flex: 1 }}>
         <Input
-          placeholder="Search by case ID or client name..."
+          placeholder="Search by application ID or client name..."
           value={search}
           onChange={handleSearch}
           style={{ width: 260 }}
@@ -464,7 +464,7 @@ const QueueCases = () => {
           onChange={handleStatusChange}
           style={{ width: 160 }}
         >
-          <Select.Option value="all">All Cases</Select.Option>
+          <Select.Option value="all">All Applications</Select.Option>
           <Select.Option value="overdue">Overdue (24-48h)</Select.Option>
           <Select.Option value="urgent">Urgent </Select.Option>
         </Select>
@@ -497,7 +497,7 @@ const QueueCases = () => {
 
     return (
       <Modal
-        title={`Case Details: ${viewModal.caseReference}`}
+        title={`Application Details: ${viewModal.caseReference}`}
         open={!!viewModal}
         onCancel={() => setViewModal(null)}
         width={900}
@@ -512,7 +512,7 @@ const QueueCases = () => {
             }}
             style={{ background: PURPLE }}
           >
-            Pick Up Case
+            Pick Up Application
           </Button>,
           <Button 
             key="review" 
@@ -521,7 +521,7 @@ const QueueCases = () => {
               handleReviewCase(viewModal._id);
             }}
           >
-            Review Case
+            Review Application
           </Button>
         ]}
       >
@@ -529,7 +529,7 @@ const QueueCases = () => {
           {/* Queue Status Banner */}
           <Alert
             message={`Queue Status: ${queueStatus.text}`}
-            description={`Case has been in queue for ${viewModal.hoursInQueue} hours`}
+            description={`Application has been in queue for ${viewModal.hoursInQueue} hours`}
             type={viewModal.queueStatus === 'urgent' ? 'error' : viewModal.queueStatus === 'overdue' ? 'warning' : 'success'}
             showIcon
             style={{ marginBottom: 16 }}
@@ -605,7 +605,7 @@ const QueueCases = () => {
 
     return (
       <Modal
-        title="Confirm Case Pickup"
+        title="Confirm Application Pickup"
         open={!!pickupModal}
         onCancel={() => setPickupModal(null)}
         footer={[
@@ -623,16 +623,16 @@ const QueueCases = () => {
       >
         <div style={{ textAlign: "center", padding: "20px 0" }}>
           <CheckCircleOutlined style={{ fontSize: 48, color: PURPLE }} />
-          <h3 style={{ marginTop: 16, marginBottom: 8 }}>Pick up this case?</h3>
+          <h3 style={{ marginTop: 16, marginBottom: 8 }}>Pick up this application?</h3>
           <Descriptions bordered column={1} size="small" style={{ marginTop: 16, textAlign: "left" }}>
-            <Descriptions.Item label="Case ID">{pickupModal.caseReference}</Descriptions.Item>
+            <Descriptions.Item label="Application ID">{pickupModal.caseReference}</Descriptions.Item>
             <Descriptions.Item label="Client">{pickupModal.clientFullName}</Descriptions.Item>
             <Descriptions.Item label="Bank">{pickupModal.selectedBank}</Descriptions.Item>
             <Descriptions.Item label="Loan Amount">{formatCurrency(pickupModal.requestedLoanAmount)}</Descriptions.Item>
             <Descriptions.Item label="Time in Queue">{pickupModal.hoursInQueue} hours</Descriptions.Item>
           </Descriptions>
           <Alert 
-            message="Once you pick up this case, it will be assigned to you and removed from the queue."
+            message="Once you pick up this application, it will be assigned to you and removed from the queue."
             type="info"
             showIcon
             style={{ marginTop: 16 }}

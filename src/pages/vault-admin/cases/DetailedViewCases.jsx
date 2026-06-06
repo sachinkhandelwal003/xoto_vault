@@ -583,9 +583,9 @@ const DetailedViewCases = () => {
 
   if (!caseData) return (
     <div style={{ padding: 48, textAlign: 'center' }}>
-      <Text type="secondary" style={{ fontSize: 16 }}>Case not found</Text>
+      <Text type="secondary" style={{ fontSize: 16 }}>Application not found</Text>
       <br /><br />
-      <Button onClick={() => navigate(-1)}>Back to Cases</Button>
+      <Button onClick={() => navigate(-1)}>Back to Applications</Button>
     </div>
   );
 
@@ -637,13 +637,13 @@ const DetailedViewCases = () => {
           onClick={() => navigate(-1)}
           style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: '#fff', border: '1px solid #ede9fe', borderRadius: 10, padding: '8px 18px', cursor: 'pointer', marginBottom: 24, fontWeight: 600, color: PRIMARY, fontSize: 13, boxShadow: '0 1px 4px rgba(92,3,156,0.08)' }}
         >
-          <ArrowLeftOutlined /> Back to Cases
+          <ArrowLeftOutlined /> Back to Applications
         </button>
 
         {/* Hero header */}
         <div style={{ background: `linear-gradient(135deg, ${PRIMARY} 0%, #7c3aed 60%, #4f46e5 100%)`, borderRadius: 18, padding: '28px 32px', color: '#fff', marginBottom: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 20, boxShadow: `0 8px 32px ${PRIMARY}40` }}>
           <div>
-            <div style={{ fontSize: 11, fontWeight: 600, opacity: 0.65, textTransform: 'uppercase', letterSpacing: 1.5, marginBottom: 6 }}>Case Details</div>
+            <div style={{ fontSize: 11, fontWeight: 600, opacity: 0.65, textTransform: 'uppercase', letterSpacing: 1.5, marginBottom: 6 }}>Application Details</div>
             <h1 style={{ margin: 0, fontSize: 26, fontWeight: 800, color: '#fff' }}>{caseData.caseReference}</h1>
             <div style={{ marginTop: 6, fontSize: 13, opacity: 0.75 }}>
               {ci.fullName} &nbsp;•&nbsp; Created {dayjs(caseData.createdAt).format('DD MMM YYYY')}
@@ -705,7 +705,7 @@ const DetailedViewCases = () => {
             <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #ede9fe', padding: '20px 24px', boxShadow: '0 2px 8px rgba(92,3,156,0.06)' }}>
               <div style={{ fontWeight: 700, fontSize: 15, color: '#111827', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
                 <span style={{ width: 6, height: 20, background: `linear-gradient(180deg, ${PRIMARY}, #7c3aed)`, borderRadius: 3, display: 'inline-block' }} />
-                Case Pipeline
+                Application Pipeline
               </div>
               <StatusStepBar steps={statusSteps} current={currentStepIndex} />
             </div>
@@ -868,7 +868,7 @@ const DetailedViewCases = () => {
               <div style={{ padding: '20px' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                   {[
-                    { label: 'Case Reference', value: caseData.caseReference },
+                    { label: 'Application Reference', value: caseData.caseReference },
                     { label: 'Current Status', value: caseData.currentStatus },
                     { label: 'Bank', value: bankProductInfo?.name || '—' },
                     { label: 'Product', value: bankProductInfo?.productTitle || '—' },

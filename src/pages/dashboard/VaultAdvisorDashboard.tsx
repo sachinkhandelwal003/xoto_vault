@@ -233,7 +233,7 @@ const VaultAdvisorDashboard: React.FC = () => {
       <Row gutter={[20, 20]} style={{ marginBottom: 24 }}>
         {[
           { label: "Active Pipeline", value: kpis.totalLeads,   icon: <LineChartOutlined />,  color: P,   bg: PL  },
-          { label: "Active Cases",    value: kpis.activeCases,  icon: <FileTextOutlined />,  color: BL,  bg: BLL },
+          { label: "Active Applications", value: kpis.activeCases,  icon: <FileTextOutlined />,  color: BL,  bg: BLL },
           { label: "Disbursed",       value: kpis.disbursedLeads, icon: <CheckCircleOutlined />, color: GN,  bg: GNL },
           { label: "SLA Compliance",  value: `${kpis.slaComplianceRate}%`, icon: <CheckCircleOutlined />, color: AMB, bg: AML },
         ].map((k, i) => (

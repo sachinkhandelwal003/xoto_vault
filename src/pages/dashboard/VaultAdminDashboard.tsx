@@ -180,7 +180,7 @@ const VaultAdminDashboard = () => {
   const timelineData = allDates.map((date: string) => ({
     name: fmtDate(date, timeFilter),
     Leads: (graphs.leadsOverTime ?? []).find((d: any) => d.date === date)?.count ?? 0,
-    Cases: (graphs.casesOverTime ?? []).find((d: any) => d.date === date)?.count ?? 0,
+    Applications: (graphs.casesOverTime ?? []).find((d: any) => d.date === date)?.count ?? 0,
   }));
 
   const disbData = (graphs.disbursementsOverTime ?? []).map((d: any) => ({
@@ -215,9 +215,9 @@ const VaultAdminDashboard = () => {
           <Row gutter={[16, 16]}>
             {[
               { title: "Total Leads",     value: kpis.totalLeads,       icon: Target,      color: BL,  bg: "#eff6ff", trend: `Conversion: ${(kpis.leadToCaseConversionRate ?? 0).toFixed(1)}%`, onClick: () => navigate("/dashboard/vault-admin/vault/agent-leads") },
-              { title: "Active Cases",    value: kpis.activeCases,      icon: FolderOpen,  color: AMB, bg: "#fffbeb", onClick: () => navigate("/dashboard/vault-admin/case/view") },
-              { title: "Disbursed Cases", value: kpis.disbursedCases,   icon: DollarSign,  color: GN,  bg: "#ecfdf5", onClick: () => navigate("/dashboard/vault-admin/case/disbursed") },
-              { title: "Pending Cases",   value: kpis.pendingCases,     icon: Clock,       color: "#F97316", bg: "#fff7ed" },
+              { title: "Active Applications",    value: kpis.activeCases,      icon: FolderOpen,  color: AMB, bg: "#fffbeb", onClick: () => navigate("/dashboard/vault-admin/case/view") },
+              { title: "Disbursed Applications", value: kpis.disbursedCases,   icon: DollarSign,  color: GN,  bg: "#ecfdf5", onClick: () => navigate("/dashboard/vault-admin/case/disbursed") },
+              { title: "Pending Applications",   value: kpis.pendingCases,     icon: Clock,       color: "#F97316", bg: "#fff7ed" },
               { title: "SLA Breached",    value: kpis.slaBreachedLeads, icon: AlertCircle, color: RD,  bg: "#fef2f2" },
             ].map(p => (
               <Col key={p.title} xs={24} sm={12} lg={5}><KpiCard {...p} loading={loading} /></Col>
@@ -235,7 +235,7 @@ const VaultAdminDashboard = () => {
           <Row gutter={[16, 16]}>
             <Col xs={24} lg={16}>
               <div style={{ background: "#fff", borderRadius: 20, border: "1px solid #ede9ff", padding: 24, boxShadow: "0 2px 12px rgba(92,3,155,0.06)" }}>
-                <SectionHeader title="Activity Timeline" subtitle="Leads & Cases over time" extra={<Tag color="purple">{timeFilter}</Tag>} />
+                <SectionHeader title="Activity Timeline" subtitle="Leads & Applications over time" extra={<Tag color="purple">{timeFilter}</Tag>} />
                 {timelineData.length === 0
                   ? <div style={{ height: 200, display: "flex", alignItems: "center", justifyContent: "center", color: "#94a3b8" }}>No data for this period</div>
                   : (
@@ -251,7 +251,7 @@ const VaultAdminDashboard = () => {
                         <ReTooltip content={<GlassTip />} />
                         <Legend wrapperStyle={{ fontSize: 12, paddingTop: 16 }} />
                         <Line type="monotone" dataKey="Leads" stroke={AMB} strokeWidth={3} dot={{ fill: "#fff", stroke: AMB, r: 5, strokeWidth: 2 }} activeDot={{ r: 7, fill: AMB }} />
-                        <Line type="monotone" dataKey="Cases" stroke={P}   strokeWidth={3} dot={{ fill: "#fff", stroke: P,   r: 5, strokeWidth: 2 }} activeDot={{ r: 7, fill: P }} />
+                        <Line type="monotone" dataKey="Applications" stroke={P}   strokeWidth={3} dot={{ fill: "#fff", stroke: P,   r: 5, strokeWidth: 2 }} activeDot={{ r: 7, fill: P }} />
                       </LineChart>
                     </ResponsiveContainer>
                   )}
@@ -399,15 +399,15 @@ const VaultAdminDashboard = () => {
     },
     {
       key: "cases",
-      label: <span style={{ display: "flex", alignItems: "center", gap: 6 }}><FolderOpen size={14} />Cases</span>,
+      label: <span style={{ display: "flex", alignItems: "center", gap: 6 }}><FolderOpen size={14} />Applications</span>,
       children: (
         <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
           <Row gutter={[16, 16]}>
             {[
-              { title: "Active Cases",  value: kpis.activeCases,                        icon: FolderOpen,  color: AMB, bg: "#fffbeb" },
-              { title: "Disbursed",     value: kpis.disbursedCases,                     icon: DollarSign,  color: GN,  bg: "#ecfdf5" },
-              { title: "Pending",       value: kpis.pendingCases,                       icon: Clock,       color: P,   bg: "#f5f0ff" },
-              { title: "At Bank",       value: inner?.caseStatus?.bankApplication ?? 0, icon: Building2,   color: BL,  bg: "#eff6ff" },
+              { title: "Active Applications",  value: kpis.activeCases,                        icon: FolderOpen,  color: AMB, bg: "#fffbeb" },
+              { title: "Disbursed",            value: kpis.disbursedCases,                     icon: DollarSign,  color: GN,  bg: "#ecfdf5" },
+              { title: "Pending",              value: kpis.pendingCases,                       icon: Clock,       color: P,   bg: "#f5f0ff" },
+              { title: "At Bank",              value: inner?.caseStatus?.bankApplication ?? 0, icon: Building2,   color: BL,  bg: "#eff6ff" },
             ].map(p => (
               <Col key={p.title} xs={24} sm={12} lg={6}><KpiCard {...p} loading={loading} /></Col>
             ))}
@@ -463,7 +463,7 @@ const VaultAdminDashboard = () => {
               <div style={{ background: GRAD, borderRadius: 20, padding: 28, color: "#fff", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: 320, textAlign: "center", boxShadow: "0 8px 28px rgba(92,3,155,0.3)" }}>
                 <DollarSign size={48} style={{ opacity: 0.9, marginBottom: 16 }} />
                 <div style={{ fontSize: 48, fontWeight: 900, lineHeight: 1 }}>{loading ? "—" : kpis.disbursedCases ?? 0}</div>
-                <div style={{ fontSize: 14, opacity: 0.8, marginTop: 8 }}>Cases Disbursed</div>
+                <div style={{ fontSize: 14, opacity: 0.8, marginTop: 8 }}>Applications Disbursed</div>
                 <div style={{ fontSize: 12, opacity: 0.6, marginTop: 4 }}>Successfully completed</div>
                 <button
                   onClick={() => navigate("/dashboard/vault-admin/case/disbursed")}

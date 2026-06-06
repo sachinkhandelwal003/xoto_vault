@@ -408,7 +408,7 @@ const CreateCase = () => {
   // ==================== CREATE CASE ====================
   const createCase = async () => {
     if (!selectedLead) {
-      message.error('Please select a lead to create a case');
+      message.error('Please select a lead to create an application');
       return;
     }
 
@@ -498,13 +498,13 @@ const CreateCase = () => {
       const res = await apiService.post('/vault/cases', payload);
       if (res?.success) {
         setCreatedCase(res.data);
-        message.success(`✅ Case ${formData.caseReference} created!`);
+        message.success(`✅ Application ${formData.caseReference} created!`);
         setStep('success');
       } else {
-        message.error(res?.message || 'Failed to create case');
+        message.error(res?.message || 'Failed to create application');
       }
     } catch (err) {
-      message.error(err?.response?.data?.message || 'Error creating case');
+      message.error(err?.response?.data?.message || 'Error creating application');
     } finally {
       setSubmitting(false);
     }
@@ -659,7 +659,7 @@ const CreateCase = () => {
     <div>
       <Title level={4} style={{ color: P, marginBottom: 8 }}>Step 1: Select Qualified Lead</Title>
       <p style={{ color: '#94a3b8', fontSize: 13, marginBottom: 20 }}>
-        Select a qualified lead to create a mortgage case. Only leads with "Qualified" status are shown.
+        Select a qualified lead to create a mortgage application. Only leads with "Qualified" status are shown.
       </p>
 
       {selectedLead && (
@@ -767,7 +767,7 @@ const CreateCase = () => {
     
     return (
       <div>
-        <Title level={4} style={{ color: P, marginBottom: 24 }}>Step 4: Review & Create Case</Title>
+        <Title level={4} style={{ color: P, marginBottom: 24 }}>Step 4: Review & Create Application</Title>
         
         {/* Eligibility Summary Banner */}
         {leadEligibility && (
@@ -1073,7 +1073,7 @@ const CreateCase = () => {
           </Col>
         </Row>
         
-        <NavBar onBack={() => setStep(2)} onNext={createCase} nextLabel={submitting ? 'Creating...' : 'Create Case'} nextDisabled={submitting} nextIcon={<SaveOutlined />} />
+        <NavBar onBack={() => setStep(2)} onNext={createCase} nextLabel={submitting ? 'Creating...' : 'Create Application'} nextDisabled={submitting} nextIcon={<SaveOutlined />} />
       </div>
     );
   };
@@ -1083,7 +1083,7 @@ const CreateCase = () => {
     <div style={{ textAlign: 'center' }}>
       <div style={{ background: `linear-gradient(135deg, ${P}, ${PM})`, borderRadius: 20, padding: 40, color: '#fff', marginBottom: 28 }}>
         <div style={{ fontSize: 64, marginBottom: 12 }}>✅</div>
-        <Title level={2} style={{ color: '#fff' }}>Case Created Successfully!</Title>
+        <Title level={2} style={{ color: '#fff' }}>Application Created Successfully!</Title>
         <div style={{ fontSize: 16, marginBottom: 20 }}>{formData.caseReference}</div>
         <Row gutter={[16, 12]} style={{ maxWidth: 600, margin: '0 auto' }}>
           {[
@@ -1103,8 +1103,8 @@ const CreateCase = () => {
       </div>
       
       <Space>
-        <Button size="large" onClick={reset}>Create Another Case</Button>
-        <Button type="primary" size="large" onClick={() => navigate(`${basePath}/case/view`)} style={{ background: P }}>Go to My Cases</Button>
+        <Button size="large" onClick={reset}>Create Another Application</Button>
+        <Button type="primary" size="large" onClick={() => navigate(`${basePath}/case/view`)} style={{ background: P }}>Go to My Applications</Button>
       </Space>
     </div>
   );
@@ -1133,8 +1133,8 @@ const CreateCase = () => {
             <ThunderboltOutlined style={{ color: '#fff', fontSize: 22 }} />
           </div>
           <div>
-            <Title level={2} style={{ margin: 0, color: '#1e1b4b', fontWeight: 800 }}>Create Case from Lead</Title>
-            <Text type="secondary">Qualified Lead → Bank → Product → Create Case</Text>
+            <Title level={2} style={{ margin: 0, color: '#1e1b4b', fontWeight: 800 }}>Create Application from Lead</Title>
+            <Text type="secondary">Qualified Lead → Bank → Product → Create Application</Text>
           </div>
         </div>
       </div>

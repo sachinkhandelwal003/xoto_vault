@@ -119,10 +119,10 @@ export default function OpsAssignedcases() {
         setTotal(res.total || res.pagination?.total || res.data?.length || 0);
         setTotalPages(res.pagination?.totalPages || 1);
       } else {
-        message.error(res?.message || 'Failed to load cases');
+        message.error(res?.message || 'Failed to load applications');
       }
     } catch (err) {
-      message.error(err?.response?.data?.message || 'Failed to load cases');
+      message.error(err?.response?.data?.message || 'Failed to load applications');
     } finally {
       setLoading(false);
     }
@@ -161,8 +161,8 @@ export default function OpsAssignedcases() {
         <div style={{ maxWidth: 1400, margin: '0 auto' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, marginBottom: 20 }}>
             <div>
-              <div style={{ fontSize: 22, fontWeight: 800, color: '#fff', letterSpacing: '-0.3px' }}>My Assigned Cases</div>
-              <div style={{ fontSize: 13, color: 'rgba(255,255,255,.75)', marginTop: 2 }}>Review and process cases assigned to you</div>
+              <div style={{ fontSize: 22, fontWeight: 800, color: '#fff', letterSpacing: '-0.3px' }}>My Assigned Applications</div>
+              <div style={{ fontSize: 13, color: 'rgba(255,255,255,.75)', marginTop: 2 }}>Review and process applications assigned to you</div>
             </div>
             <button
               onClick={() => fetchCases(page, limit, status, search)}
@@ -200,7 +200,7 @@ export default function OpsAssignedcases() {
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
               onKeyDown={handleSearch}
-              placeholder="Search case ID or client name… (Enter)"
+              placeholder="Search application ID or client name… (Enter)"
               style={{ border: 'none', background: 'none', outline: 'none', fontSize: 13, flex: 1 }}
             />
           </div>
@@ -246,7 +246,7 @@ export default function OpsAssignedcases() {
         {/* Results info */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14, flexWrap: 'wrap', gap: 8 }}>
           <span style={{ fontSize: 13, color: SLATE }}>
-            Showing <strong>{cases.length}</strong> of <strong>{total}</strong> cases
+            Showing <strong>{cases.length}</strong> of <strong>{total}</strong> applications
             {status !== 'all' && ` · filtered by "${ALL_STATUSES.find(s => s.key === status)?.label}"`}
           </span>
           <span style={{ fontSize: 12, color: '#9ca3af' }}>Page {page} of {totalPages}</span>
@@ -258,7 +258,7 @@ export default function OpsAssignedcases() {
         ) : cases.length === 0 ? (
           <div style={{ background: '#fff', borderRadius: 16, padding: '60px 24px', textAlign: 'center', boxShadow: '0 1px 4px rgba(0,0,0,.06)' }}>
             <div style={{ fontSize: 40, marginBottom: 12 }}>📂</div>
-            <div style={{ fontSize: 16, fontWeight: 700, color: '#374151', marginBottom: 6 }}>No cases found</div>
+            <div style={{ fontSize: 16, fontWeight: 700, color: '#374151', marginBottom: 6 }}>No applications found</div>
             <div style={{ fontSize: 13, color: '#9ca3af' }}>Try adjusting your filters</div>
           </div>
         ) : (
@@ -309,7 +309,7 @@ export default function OpsAssignedcases() {
                         <button
                           onClick={() => navigate(`/dashboard/${roleSlug}/case/view/${c._id}`)}
                           style={{ padding: '9px 18px', borderRadius: 10, border: `1.5px solid ${PRIMARY}`, background: '#faf5ff', color: PRIMARY, fontSize: 12, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5 }}>
-                          <EyeOutlined /> View Full Case
+                          <EyeOutlined /> View Application
                         </button>
                         <button
                           onClick={() => navigate(`/dashboard/${roleSlug}/case/assigned/view/${c._id}`)}
