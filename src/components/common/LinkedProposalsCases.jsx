@@ -37,7 +37,7 @@ const PIPELINE_STAGES = [
   {
     key: 'Draft',
     label: 'Draft',
-    tip: 'Case created and saved as draft. Advisor is filling in the details.',
+    tip: 'Application created and saved as draft. Advisor is filling in the details.',
   },
   {
     key: 'Submitted to Xoto',
@@ -47,7 +47,7 @@ const PIPELINE_STAGES = [
   {
     key: 'Ops Queue',
     label: 'Ops Queue',
-    tip: 'Case entered the operations queue awaiting assignment to an ops officer.',
+    tip: 'Application entered the operations queue awaiting assignment to an ops officer.',
     // Matches multiple statuses
     match: ['In Ops Queue - Pending Pick-up', 'Assigned - Pending Review'],
   },
@@ -60,7 +60,7 @@ const PIPELINE_STAGES = [
   {
     key: 'Submitted to Bank',
     label: 'At Bank',
-    tip: 'All documents verified. Case has been submitted to the bank for assessment.',
+    tip: 'All documents verified. Application has been submitted to the bank for assessment.',
   },
   {
     key: 'Pre-Approved',
@@ -130,8 +130,8 @@ function CasePipeline({ currentStatus }) {
       }}>
         <XCircle size={14} color={colorCfg.color} />
         <span style={{ fontSize: 12, fontWeight: 600, color: colorCfg.color }}>
-          {currentStatus === 'Lost' ? 'Lead Lost' : currentStatus === 'Not Proceeding' ? 'Not Proceeding' : `Case ${currentStatus}`}
-          {' '}— Case closed
+          {currentStatus === 'Lost' ? 'Lead Lost' : currentStatus === 'Not Proceeding' ? 'Not Proceeding' : `Application ${currentStatus}`}
+          {' '}— Application closed
         </span>
       </div>
     );
@@ -231,7 +231,7 @@ function CaseCard({ c, onView }) {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
         <div>
           <div style={{ fontWeight: 800, fontSize: 14, color: C.text }}>
-            {c.caseReference || 'Case'}
+            {c.caseReference || 'Application'}
           </div>
           <div style={{ fontSize: 11, color: C.textMuted, marginTop: 2 }}>
             Created {c.createdAt ? new Date(c.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}
@@ -281,7 +281,7 @@ function CaseCard({ c, onView }) {
           padding: '4px 10px', borderRadius: 8,
           background: C.primarySoft, border: `1px solid ${C.primaryBord}`,
         }}>
-          View Case <ChevronRight size={13} />
+          View Application <ChevronRight size={13} />
         </div>
       </div>
     </div>
@@ -329,7 +329,7 @@ export default function LinkedProposalsCases({ leadId, roleSlug }) {
         color: C.primary, fontSize: 13, fontWeight: 600,
       }}>
         <RefreshCw size={15} color={C.primary} style={{ animation: 'spin 1s linear infinite' }} />
-        Loading linked cases and proposals...
+        Loading linked applications and proposals...
       </div>
     );
   }
@@ -406,7 +406,7 @@ export default function LinkedProposalsCases({ leadId, roleSlug }) {
             <div style={{ width: 32, height: 32, borderRadius: 10, background: C.greenSoft, border: `1px solid ${C.greenBord}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <Briefcase size={15} color={C.green} />
             </div>
-            <span style={{ fontWeight: 800, color: C.text, fontSize: 14 }}>Linked Cases</span>
+            <span style={{ fontWeight: 800, color: C.text, fontSize: 14 }}>Linked Applications</span>
             <span style={{ marginLeft: 'auto', padding: '2px 8px', background: C.greenSoft, borderRadius: 99, fontSize: 11, fontWeight: 700, color: C.green }}>
               {cases.length}
             </span>

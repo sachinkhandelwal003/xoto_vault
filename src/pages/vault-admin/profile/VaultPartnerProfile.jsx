@@ -366,8 +366,8 @@ const VaultPartnerProfile = () => {
         {/* Stats Row */}
         <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
           {[
-            { icon: <BarChartOutlined />, label: "Cases Submitted", value: pm.totalCasesSubmitted ?? 0, color: PM },
-            { icon: <CheckCircleOutlined />, label: "Cases Approved", value: pm.totalCasesApproved ?? 0, color: GN },
+            { icon: <BarChartOutlined />, label: "Applications Submitted", value: pm.totalCasesSubmitted ?? 0, color: PM },
+            { icon: <CheckCircleOutlined />, label: "Applications Approved", value: pm.totalCasesApproved ?? 0, color: GN },
             { icon: <TrophyOutlined />, label: "Disbursed", value: pm.totalCasesDisbursed ?? 0, color: AMB },
             { icon: <DollarOutlined />, label: "Commission", value: `AED ${Number(pm.totalCommissionEarned || 0).toLocaleString()}`, color: GN },
             { icon: <PercentageOutlined />, label: "Conversion Rate", value: `${pm.conversionRate || 0}%`, color: BL },

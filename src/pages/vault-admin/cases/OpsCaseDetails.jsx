@@ -571,12 +571,10 @@ export default function OpsCaseDetails() {
                 <DRow label="Date of Birth"     value={fmtDate(applicant.dateOfBirth)} />
                 <DRow label="Nationality"       value={applicant.nationality} />
                 <DRow label="Marital Status"    value={applicant.maritalStatus} />
-                <DRow label="No. of Dependents" value={applicant.numberOfDependents} />
                 <DRow label="Email"             value={applicant.email} copy />
                 <DRow label="Mobile"            value={applicant.mobileNumber} copy />
                 <DRow label="Alt. Phone"        value={applicant.alternativePhone} />
                 <DRow label="WhatsApp"          value={applicant.whatsappNumber} />
-                <DRow label="Employer"          value={applicant.employer} />
                 <DRow label="Occupation"        value={applicant.occupation} />
                 <DRow label="Employment Type"   value={applicant.employmentType} />
                 <DRow label="Monthly Salary"    value={`AED ${fmt(applicant.monthlySalary)}`} />

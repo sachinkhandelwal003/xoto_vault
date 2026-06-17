@@ -1,4 +1,4 @@
-﻿﻿// src/pages/Cases/ViewCases.jsx
+// src/pages/Cases/ViewCases.jsx
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
@@ -294,7 +294,7 @@ const ViewCases = () => {
               <Avatar icon={<UserOutlined />} style={{ backgroundColor: THEME_COLOR }} size="large" />
               <div>
                 <Text strong style={{ fontSize: 16, display: 'block' }}>{clientName}</Text>
-                <Text type="secondary" style={{ fontSize: 11 }}>Case: {caseItem.caseReference}</Text>
+                <Text type="secondary" style={{ fontSize: 11 }}>Application: {caseItem.caseReference}</Text>
               </div>
             </div>
             <Badge
@@ -366,7 +366,7 @@ const ViewCases = () => {
           </div>
 
           {/* Submit Button */}
-          <Tooltip title={isReady ? "Submit case to Xoto team for processing" : `Please upload all required documents (${progress.required.total - progress.required.uploaded} remaining) before submitting`}>
+          <Tooltip title={isReady ? "Submit application to Xoto team for processing" : `Please upload all required documents (${progress.required.total - progress.required.uploaded} remaining) before submitting`}>
             <Button 
               type="primary"
               block

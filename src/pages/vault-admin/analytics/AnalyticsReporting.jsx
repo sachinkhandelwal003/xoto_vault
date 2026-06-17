@@ -60,6 +60,7 @@ export default function AnalyticsReporting() {
     loanType: ""
   });
   const [dateRange, setDateRange] = useState(null);
+  const [groupBy, setGroupBy] = useState("month");
 
   // Fetch Dropdown Options on Mount
   useEffect(() => {
@@ -92,6 +93,9 @@ export default function AnalyticsReporting() {
         reportType,
         ...Object.fromEntries(Object.entries(filters).filter(([, v]) => v))
       });
+      if (reportType === "lead_volume") {
+        params.set("groupBy", groupBy);
+      }
 
       const res = await apiService.get(`/vault/reports?${params.toString()}`);
       if (res?.success) {
@@ -104,11 +108,11 @@ export default function AnalyticsReporting() {
     } finally {
       setLoading(false);
     }
-  }, [reportType, filters]);
+  }, [reportType, filters, groupBy]);
 
   useEffect(() => {
     fetchReport();
-  }, [reportType, fetchReport]);
+  }, [reportType, groupBy, fetchReport]);
 
   const handleDateRangeChange = (dates) => {
     setDateRange(dates);
@@ -126,23 +130,14 @@ export default function AnalyticsReporting() {
         format,
         ...Object.fromEntries(Object.entries(filters).filter(([, v]) => v))
       });
+      if (reportType === "lead_volume") {
+        params.set("groupBy", groupBy);
+      }
 
       message.loading({ content: `Generating ${format.toUpperCase()}...`, key: "exporting" });
 
-      // Fetch file as blob securely with auth headers
-      const res = await apiService.get(`/vault/reports/export?${params.toString()}`, {
-        responseType: "blob"
-      });
-
-      const blob = new Blob([res], { type: format === "pdf" ? "application/pdf" : "text/csv" });
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.setAttribute("download", `report_${reportType}_${dayjs().format("YYYYMMDD_HHmmss")}.${format}`);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(url);
+      const fileName = `report_${reportType}_${dayjs().format("YYYYMMDD_HHmmss")}.${format}`;
+      await apiService.download(`/vault/reports/export?${params.toString()}`, fileName);
 
       message.success({ content: `${format.toUpperCase()} exported!`, key: "exporting" });
     } catch (err) {
@@ -186,6 +181,86 @@ export default function AnalyticsReporting() {
     ];
   }, [reportData, reportType]);
 
+  const quickStats = useMemo(() => {
+    if (!reportData) return null;
+    
+    switch (reportType) {
+      case "lead_volume": {
+        const totalLeads = reportData.reduce((sum, item) => sum + (Number(item.count) || 0), 0);
+        const uniqueSources = new Set(reportData.map(item => item.source)).size;
+        const avgLeadsPerSource = uniqueSources ? Math.round(totalLeads / uniqueSources) : 0;
+        return [
+          { label: "Total Leads Generated", value: totalLeads.toLocaleString(), color: P, bg: PL },
+          { label: "Lead Sources Tracked", value: uniqueSources.toLocaleString(), color: "#3B82F6", bg: "#EFF6FF" },
+          { label: "Avg Leads per Source", value: avgLeadsPerSource.toLocaleString(), color: "#10B981", bg: "#ECFDF5" }
+        ];
+      }
+      case "applications_pipeline": {
+        const { pipeline = [], averages = [] } = reportData;
+        const totalApps = pipeline.reduce((sum, item) => sum + (Number(item.count) || 0), 0);
+        const avgTime = averages.length ? (averages.reduce((sum, item) => sum + (Number(item.avgHours) || 0), 0) / averages.length).toFixed(1) : "0";
+        const totalStages = pipeline.length;
+        return [
+          { label: "Active Applications", value: totalApps.toLocaleString(), color: P, bg: PL },
+          { label: "Workflow Stages", value: totalStages.toLocaleString(), color: "#3B82F6", bg: "#EFF6FF" },
+          { label: "Avg Stage Duration", value: `${avgTime} hrs`, color: "#F59E0B", bg: "#FFFBEB" }
+        ];
+      }
+      case "conversion_funnel": {
+        const firstStage = reportData[0]?.count || 0;
+        const lastStage = reportData[reportData.length - 1]?.count || 0;
+        const overallConv = reportData[reportData.length - 1]?.conversion || 0;
+        return [
+          { label: "Funnel Intake (Leads)", value: firstStage.toLocaleString(), color: "#3B82F6", bg: "#EFF6FF" },
+          { label: "Funnel Output (Disbursed)", value: lastStage.toLocaleString(), color: "#10B981", bg: "#ECFDF5" },
+          { label: "Net Conversion Rate", value: `${overallConv}%`, color: P, bg: PL }
+        ];
+      }
+      case "advisor_performance": {
+        const totalAdv = reportData.length;
+        const totalLeads = reportData.reduce((sum, item) => sum + (Number(item.leadsAssigned) || 0), 0);
+        const avgSla = totalAdv ? Math.round(reportData.reduce((sum, item) => sum + (Number(item.slaComplianceRate) || 0), 0) / totalAdv) : 0;
+        return [
+          { label: "Active Xoto Advisors", value: totalAdv.toLocaleString(), color: "#3B82F6", bg: "#EFF6FF" },
+          { label: "Total Allocated Leads", value: totalLeads.toLocaleString(), color: P, bg: PL },
+          { label: "Avg SLA Compliance", value: `${avgSla}%`, color: "#10B981", bg: "#ECFDF5" }
+        ];
+      }
+      case "ops_performance": {
+        const totalOps = reportData.length;
+        const totalApps = reportData.reduce((sum, item) => sum + (Number(item.applicationsAssigned) || 0), 0);
+        const avgSla = totalOps ? Math.round(reportData.reduce((sum, item) => sum + (Number(item.slaComplianceRate) || 0), 0) / totalOps) : 0;
+        return [
+          { label: "Ops Executives", value: totalOps.toLocaleString(), color: "#3B82F6", bg: "#EFF6FF" },
+          { label: "Total Applications", value: totalApps.toLocaleString(), color: P, bg: PL },
+          { label: "Avg SLA Compliance", value: `${avgSla}%`, color: "#10B981", bg: "#ECFDF5" }
+        ];
+      }
+      case "referral_performance": {
+        const totalRef = reportData.length;
+        const totalLeads = reportData.reduce((sum, item) => sum + (Number(item.leadsSubmitted) || 0), 0);
+        const totalComm = reportData.reduce((sum, item) => sum + (Number(item.commissionEarned) || 0), 0);
+        return [
+          { label: "Active Referral Partners", value: totalRef.toLocaleString(), color: "#3B82F6", bg: "#EFF6FF" },
+          { label: "Total Submitted Leads", value: totalLeads.toLocaleString(), color: P, bg: PL },
+          { label: "Total Payouts Earned", value: `AED ${totalComm.toLocaleString()}`, color: "#10B981", bg: "#ECFDF5" }
+        ];
+      }
+      case "partner_performance": {
+        const totalPart = reportData.length;
+        const totalApps = reportData.reduce((sum, item) => sum + (Number(item.applicationsSubmitted) || 0), 0);
+        const totalComm = reportData.reduce((sum, item) => sum + (Number(item.totalCommission) || 0), 0);
+        return [
+          { label: "Active Company Partners", value: totalPart.toLocaleString(), color: "#3B82F6", bg: "#EFF6FF" },
+          { label: "Applications Handled", value: totalApps.toLocaleString(), color: P, bg: PL },
+          { label: "Total Platform Earnings", value: `AED ${totalComm.toLocaleString()}`, color: "#10B981", bg: "#ECFDF5" }
+        ];
+      }
+      default:
+        return null;
+    }
+  }, [reportData, reportType]);
+
   // ==================== REPORT CONTENT RENDERER ====================
 
   const renderReportContent = () => {
@@ -195,10 +270,10 @@ export default function AnalyticsReporting() {
       case "lead_volume":
         return (
           <Row gutter={[24, 24]}>
-            <Col xs={24} lg={11}>
+            <Col span={24}>
               <Card title={<span style={{ fontWeight: 700, color: P }}>Lead Count Trend</span>} bordered={false} style={{ borderRadius: 12, border: '1px solid #ede9f6' }}>
                 {leadVolumeChartData.length > 0 ? (
-                  <ResponsiveContainer width="100%" height={260}>
+                  <ResponsiveContainer width="100%" height={350}>
                     <AreaChart data={leadVolumeChartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                       <defs>
                         <linearGradient id="leadGrad" x1="0" y1="0" x2="0" y2="1">
@@ -216,7 +291,7 @@ export default function AnalyticsReporting() {
                 ) : <Empty description="No trend metrics available" />}
               </Card>
             </Col>
-            <Col xs={24} lg={13}>
+            <Col span={24}>
               <CustomTable
                 data={reportData}
                 columns={[
@@ -236,17 +311,17 @@ export default function AnalyticsReporting() {
         const totalCases = pipeline.reduce((sum, item) => sum + (Number(item.count) || 0), 0);
         return (
           <Row gutter={[24, 24]}>
-            <Col xs={24} lg={10}>
+            <Col span={24}>
               <Card title={<span style={{ fontWeight: 700, color: P }}>Workflow Distribution</span>} bordered={false} style={{ borderRadius: 12, border: '1px solid #ede9f6' }}>
                 {pipeline.length > 0 && totalCases > 0 ? (
-                  <ResponsiveContainer width="100%" height={260}>
+                  <ResponsiveContainer width="100%" height={320}>
                     <PieChart>
                       <Pie
                         data={pipeline.map(item => ({ name: item.status, value: Number(item.count) || 0 }))}
                         cx="50%"
                         cy="50%"
-                        innerRadius={50}
-                        outerRadius={75}
+                        innerRadius={60}
+                        outerRadius={90}
                         paddingAngle={3}
                         dataKey="value"
                       >
@@ -255,13 +330,13 @@ export default function AnalyticsReporting() {
                         ))}
                       </Pie>
                       <ChartTooltip contentStyle={{ borderRadius: 8 }} />
-                      <Legend iconType="circle" wrapperStyle={{ fontSize: 11 }} layout="vertical" align="right" verticalAlign="middle" />
+                      <Legend iconType="circle" wrapperStyle={{ fontSize: 11 }} layout="horizontal" align="center" verticalAlign="bottom" />
                     </PieChart>
                   </ResponsiveContainer>
                 ) : <Empty description="No pipeline metrics available" />}
               </Card>
             </Col>
-            <Col xs={24} lg={14}>
+            <Col span={24}>
               <Space direction="vertical" size={16} style={{ width: "100%" }}>
                 <Card title="Average Time In Each Stage" size="small" bordered style={{ borderRadius: 12 }}>
                   <CustomTable
@@ -284,7 +359,7 @@ export default function AnalyticsReporting() {
                   <CustomTable
                     data={pipeline}
                     columns={[
-                      { title: "Case Workflow Status", key: "status" },
+                      { title: "Application Workflow Status", key: "status" },
                       { title: "Count", key: "count" }
                     ]}
                     showSearch={false}
@@ -298,9 +373,9 @@ export default function AnalyticsReporting() {
       case "conversion_funnel":
         return (
           <Row gutter={[24, 24]}>
-            <Col xs={24} lg={11}>
+            <Col span={24}>
               <Card title={<span style={{ fontWeight: 700, color: P }}>Funnel Stage Dropoffs</span>} bordered={false} style={{ borderRadius: 12, border: '1px solid #ede9f6' }}>
-                <ResponsiveContainer width="100%" height={280}>
+                <ResponsiveContainer width="100%" height={350}>
                   <BarChart data={reportData} layout="vertical" margin={{ left: -10, right: 10 }}>
                     <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f1f5f9" />
                     <XAxis type="number" tickLine={false} axisLine={false} tick={{ fill: '#64748b', fontSize: 10 }} />
@@ -316,7 +391,7 @@ export default function AnalyticsReporting() {
                 </ResponsiveContainer>
               </Card>
             </Col>
-            <Col xs={24} lg={13}>
+            <Col span={24}>
               <Card title={<span style={{ fontWeight: 700 }}>Conversion Funnel Analytics</span>} bordered={false} style={{ borderRadius: 12, border: '1px solid #ede9f6' }}>
                 <Paragraph style={{ color: "#6b7280", marginBottom: 20 }}>
                   Shows the step-by-step conversion from leads down to disbursals.
@@ -327,10 +402,10 @@ export default function AnalyticsReporting() {
                       <div style={{ width: 140, fontWeight: 700, color: P, textAlign: "right" }}>{step.stage}</div>
                       <div style={{ flex: 1 }}>
                         <Progress
-                          percent={step.conversion}
-                          strokeColor={idx === 0 ? "#3b82f6" : idx === 4 ? "#10b981" : PM}
-                          format={() => `${step.count} items`}
-                          strokeWidth={14}
+                           percent={step.conversion}
+                           strokeColor={idx === 0 ? "#3b82f6" : idx === 4 ? "#10b981" : PM}
+                           format={() => `${step.count} items`}
+                           strokeWidth={14}
                         />
                       </div>
                       <div style={{ width: 60, fontWeight: 600, color: "#9ca3af" }}>
@@ -347,10 +422,10 @@ export default function AnalyticsReporting() {
       case "advisor_performance":
         return (
           <Row gutter={[24, 24]}>
-            <Col xs={24} lg={11}>
+            <Col span={24}>
               <Card title={<span style={{ fontWeight: 700, color: P }}>Advisor Allocation & Conversion</span>} bordered={false} style={{ borderRadius: 12, border: '1px solid #ede9f6' }}>
                 {reportData.length > 0 ? (
-                  <ResponsiveContainer width="100%" height={270}>
+                  <ResponsiveContainer width="100%" height={350}>
                     <BarChart data={reportData}>
                       <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
                       <XAxis dataKey="advisor" tickLine={false} axisLine={false} tick={{ fill: '#64748b', fontSize: 10 }} />
@@ -365,7 +440,7 @@ export default function AnalyticsReporting() {
                 ) : <Empty description="No advisor metrics loaded" />}
               </Card>
             </Col>
-            <Col xs={24} lg={13}>
+            <Col span={24}>
               <CustomTable
                 data={reportData}
                 columns={[
@@ -385,10 +460,10 @@ export default function AnalyticsReporting() {
       case "ops_performance":
         return (
           <Row gutter={[24, 24]}>
-            <Col xs={24} lg={11}>
+            <Col span={24}>
               <Card title={<span style={{ fontWeight: 700, color: P }}>Ops Volume vs Handling Hours</span>} bordered={false} style={{ borderRadius: 12, border: '1px solid #ede9f6' }}>
                 {reportData.length > 0 ? (
-                  <ResponsiveContainer width="100%" height={270}>
+                  <ResponsiveContainer width="100%" height={350}>
                     <BarChart data={reportData}>
                       <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
                       <XAxis dataKey="opsName" tickLine={false} axisLine={false} tick={{ fill: '#64748b', fontSize: 10 }} />
@@ -402,7 +477,7 @@ export default function AnalyticsReporting() {
                 ) : <Empty description="No operations metrics loaded" />}
               </Card>
             </Col>
-            <Col xs={24} lg={13}>
+            <Col span={24}>
               <CustomTable
                 data={reportData}
                 columns={[
@@ -421,10 +496,10 @@ export default function AnalyticsReporting() {
       case "referral_performance":
         return (
           <Row gutter={[24, 24]}>
-            <Col xs={24} lg={11}>
+            <Col span={24}>
               <Card title={<span style={{ fontWeight: 700, color: P }}>Referral Lead Volume & Commission</span>} bordered={false} style={{ borderRadius: 12, border: '1px solid #ede9f6' }}>
                 {reportData.length > 0 ? (
-                  <ResponsiveContainer width="100%" height={270}>
+                  <ResponsiveContainer width="100%" height={350}>
                     <BarChart data={reportData}>
                       <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
                       <XAxis dataKey="partnerName" tickLine={false} axisLine={false} tick={{ fill: '#64748b', fontSize: 10 }} />
@@ -439,7 +514,7 @@ export default function AnalyticsReporting() {
                 ) : <Empty description="No referral metrics loaded" />}
               </Card>
             </Col>
-            <Col xs={24} lg={13}>
+            <Col span={24}>
               <CustomTable
                 data={reportData}
                 columns={[
@@ -457,10 +532,10 @@ export default function AnalyticsReporting() {
       case "partner_performance":
         return (
           <Row gutter={[24, 24]}>
-            <Col xs={24} lg={11}>
+            <Col span={24}>
               <Card title={<span style={{ fontWeight: 700, color: P }}>Company Submissions & Earnings</span>} bordered={false} style={{ borderRadius: 12, border: '1px solid #ede9f6' }}>
                 {reportData.length > 0 ? (
-                  <ResponsiveContainer width="100%" height={270}>
+                  <ResponsiveContainer width="100%" height={350}>
                     <BarChart data={reportData}>
                       <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
                       <XAxis dataKey="partnerName" tickLine={false} axisLine={false} tick={{ fill: '#64748b', fontSize: 10 }} />
@@ -468,19 +543,19 @@ export default function AnalyticsReporting() {
                       <YAxis yAxisId="right" orientation="right" tickLine={false} axisLine={false} tick={{ fill: '#64748b', fontSize: 10 }} />
                       <ChartTooltip contentStyle={{ borderRadius: 8 }} />
                       <Legend iconType="circle" wrapperStyle={{ fontSize: 11 }} />
-                      <Bar yAxisId="left" dataKey="applicationsSubmitted" fill="#6366f1" radius={[4, 4, 0, 0]} name="Cases" />
+                      <Bar yAxisId="left" dataKey="applicationsSubmitted" fill="#6366f1" radius={[4, 4, 0, 0]} name="Applications" />
                       <Bar yAxisId="right" dataKey="totalCommission" fill="#10b981" radius={[4, 4, 0, 0]} name="Commission (AED)" />
                     </BarChart>
                   </ResponsiveContainer>
                 ) : <Empty description="No partner metrics loaded" />}
               </Card>
             </Col>
-            <Col xs={24} lg={13}>
+            <Col span={24}>
               <CustomTable
                 data={reportData}
                 columns={[
                   { title: "Company Partner", key: "partnerName" },
-                  { title: "Cases Handled", key: "applicationsSubmitted" },
+                  { title: "Applications Handled", key: "applicationsSubmitted" },
                   { title: "Disbursement Rate", key: "disbursementRate", render: (r) => `${r}%` },
                   { title: "Platform Commission Paid/Owed", key: "totalCommission", render: (v) => `AED ${Number(v || 0).toLocaleString()}` }
                 ]}
@@ -521,24 +596,32 @@ export default function AnalyticsReporting() {
         return (
           <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
             {/* ── Summary cards ── */}
-            <Row gutter={[12, 12]}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 16 }}>
               {[
-                { label: "Bank Commission Received by Xoto", value: totalBankToXoto,    color: P,        bg: PL,        tip: "Total 1% bank commission Xoto received across all disbursed cases" },
+                { label: "Bank Commission Received by Xoto", value: totalBankToXoto,    color: P,        bg: PL,        tip: "Total 1% bank commission Xoto received across all disbursed applications" },
                 { label: "Paid Out to Partners/Agents",      value: totalPaidOut,        color: "#2563eb", bg: "#eff6ff", tip: "Commission already paid to referral partners and company partners" },
                 { label: "Outstanding / Pending",            value: totalOutstanding,    color: "#d97706", bg: "#fffbeb", tip: "Commission owed but not yet paid" },
                 { label: "Xoto Internal (Admin Leads)",      value: xotoInternalProfit, color: "#059669", bg: "#ecfdf5", tip: "Leads created by Admin — Xoto keeps 100% of commission" },
                 { label: "Xoto Net Profit",                  value: xotoNetProfit,       color: "#5b21b6", bg: "#f5f3ff", tip: "Bank commission received minus all payouts" },
               ].map(card => (
-                <Col xs={24} sm={12} lg={5} key={card.label}>
-                  <Tooltip title={card.tip}>
-                    <div style={{ background: card.bg, borderRadius: 14, padding: "16px 18px", border: "1px solid #ede9f6", cursor: "default" }}>
-                      <div style={{ fontSize: 10, fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 6 }}>{card.label}</div>
-                      <div style={{ fontSize: 20, fontWeight: 800, color: card.color }}>AED {Number(card.value).toLocaleString()}</div>
-                    </div>
-                  </Tooltip>
-                </Col>
+                <Tooltip title={card.tip} key={card.label}>
+                  <div
+                    className="hover-card"
+                    style={{
+                      background: card.bg,
+                      borderRadius: 14,
+                      padding: "16px 18px",
+                      border: "1px solid #ede9f6",
+                      boxShadow: "0 2px 8px rgba(92,3,155,0.02)",
+                      cursor: "default"
+                    }}
+                  >
+                    <div style={{ fontSize: 10, fontWeight: 700, color: "#8B7BAE", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 6 }}>{card.label}</div>
+                    <div style={{ fontSize: 20, fontWeight: 800, color: card.color }}>AED {Number(card.value).toLocaleString()}</div>
+                  </div>
+                </Tooltip>
               ))}
-            </Row>
+            </div>
 
             {/* ── Charts row ── */}
             <Row gutter={[20, 20]}>
@@ -588,7 +671,7 @@ export default function AnalyticsReporting() {
                 showSearch
                 columns={[
                   {
-                    key: "caseReference", title: "Case",
+                    key: "caseReference", title: "Application",
                     render: (_, r) => (
                       <div>
                         <div style={{ fontWeight: 700, fontSize: 12, color: "#1a0533" }}>{r.caseReference}</div>
@@ -701,7 +784,7 @@ export default function AnalyticsReporting() {
             <Button
               icon={<FileExcelOutlined />}
               onClick={() => handleExport("csv")}
-              style={{ borderRadius: 10, borderColor: "#bbf7d0", color: "#16a34a", background: "#f0fdf4" }}
+              style={{ borderRadius: 10, borderColor: PB, color: P, background: PL, fontWeight: 600, height: 38 }}
             >
               Export CSV
             </Button>
@@ -709,7 +792,7 @@ export default function AnalyticsReporting() {
               type="primary"
               icon={<FilePdfOutlined />}
               onClick={() => handleExport("pdf")}
-              style={{ borderRadius: 10, background: "#dc2626", borderColor: "#dc2626", color: "white" }}
+              style={{ borderRadius: 10, background: P, borderColor: P, color: "white", fontWeight: 600, height: 38 }}
             >
               Export PDF
             </Button>
@@ -737,6 +820,20 @@ export default function AnalyticsReporting() {
                 {REPORT_TYPES.map(r => <Option key={r.value} value={r.value}>{r.label}</Option>)}
               </Select>
             </Col>
+            
+            {reportType === "lead_volume" && (
+              <Col xs={24} sm={12} md={6} lg={3}>
+                <Select
+                  placeholder="Group By"
+                  style={{ width: "100%" }}
+                  value={groupBy}
+                  onChange={(v) => setGroupBy(v)}
+                >
+                  <Option value="month">Monthly Trend</Option>
+                  <Option value="day">Daily Trend</Option>
+                </Select>
+              </Col>
+            )}
             
             <Col xs={24} sm={12} md={6} lg={5}>
               <RangePicker
@@ -870,8 +967,40 @@ export default function AnalyticsReporting() {
           </div>
         </Card>
 
+        {/* ── Dynamic Quick Stats ── */}
+        {quickStats && reportType !== "commission_report" && !loading && (
+          <Row gutter={[16, 16]} style={{ marginBottom: 20 }}>
+            {quickStats.map((stat, i) => (
+              <Col xs={24} sm={8} key={i}>
+                <div
+                  className="hover-card"
+                  style={{
+                    background: stat.bg,
+                    borderRadius: 14,
+                    padding: "16px 20px",
+                    border: "1px solid #ede9f6",
+                    boxShadow: "0 2px 8px rgba(92,3,155,0.02)",
+                    cursor: "default"
+                  }}
+                >
+                  <div style={{ fontSize: 10, fontWeight: 700, color: "#8B7BAE", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>
+                    {stat.label}
+                  </div>
+                  <div style={{ fontSize: 22, fontWeight: 800, color: stat.color }}>
+                    {stat.value}
+                  </div>
+                </div>
+              </Col>
+            ))}
+          </Row>
+        )}
+
         {/* Report Content */}
         <Card style={{ borderRadius: 16, border: "1px solid #ede9f6", minHeight: 400 }} bodyStyle={{ padding: 24 }}>
+          <style>{`
+            .hover-card { transition: all 0.3s ease; }
+            .hover-card:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(92,3,155,0.06) !important; border-color: ${PM} !important; }
+          `}</style>
           {loading ? (
             <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: 350, flexDirection: "column", gap: 16 }}>
               <Spin size="large" />

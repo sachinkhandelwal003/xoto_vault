@@ -261,7 +261,7 @@ const CommissionManagement = () => {
                 </div>
                 <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">{s.label}</div>
                 <div className={`text-2xl font-black text-${s.color}-600`}>AED {s.value?.toLocaleString() || 0}</div>
-                <div className="text-[10px] text-gray-400 mt-1 font-medium italic">Auto-calculated from disbursed cases</div>
+                <div className="text-[10px] text-gray-400 mt-1 font-medium italic">Auto-calculated from disbursed applications</div>
               </Card>
             </Col>
           ))}
@@ -307,9 +307,9 @@ const CommissionManagement = () => {
 
             <Row gutter={[32, 32]}>
               <Col span={12}>
-                <h4 className="flex items-center gap-2 font-black text-gray-800 mb-4"><FileText size={16} className="text-purple-600" /> Case Information</h4>
+                <h4 className="flex items-center gap-2 font-black text-gray-800 mb-4"><FileText size={16} className="text-purple-600" /> Application Information</h4>
                 <Descriptions column={1} size="small" bordered={false}>
-                  <Descriptions.Item label={<span className="font-bold text-gray-400 text-xs">Case Ref</span>}>
+                  <Descriptions.Item label={<span className="font-bold text-gray-400 text-xs">Application Ref</span>}>
                     <span className="font-bold text-gray-800">{selectedCommission.caseReference}</span>
                   </Descriptions.Item>
                   <Descriptions.Item label={<span className="font-bold text-gray-400 text-xs">Customer</span>}>

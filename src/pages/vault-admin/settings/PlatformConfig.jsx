@@ -13,6 +13,7 @@ import {
 import { apiService } from "@/api/apiService";
 import CustomTable from "../../../components/common/CustomTable";
 import dayjs from "dayjs";
+import { useNavigate } from "react-router-dom";
 
 const { Title, Text, Paragraph } = Typography;
 const { Option } = Select;
@@ -35,11 +36,11 @@ const PERSONA_LABELS = {
 const EVENT_LABELS = {
   LEAD_ASSIGNED: "Lead Assigned to Advisor",
   LEAD_STATUS_CHANGED: "Lead Status Modified",
-  CASE_CREATED: "Case Record Initialized",
-  CASE_SUBMITTED_TO_XOTO: "Case Submitted to Xoto",
-  CASE_STATUS_CHANGED: "Case Status Updated",
-  CASE_DISBURSED: "Case Loan Disbursed ✅",
-  CASE_DECLINED: "Case Declined by Bank",
+  CASE_CREATED: "Application Record Initialized",
+  CASE_SUBMITTED_TO_XOTO: "Application Submitted to Xoto",
+  CASE_STATUS_CHANGED: "Application Status Updated",
+  CASE_DISBURSED: "Application Loan Disbursed ✅",
+  CASE_DECLINED: "Application Declined by Bank",
   DOCUMENT_UPLOADED: "Document Requirement Uploaded",
   DOCUMENT_VERIFIED: "Document Verified by Ops",
   COMMISSION_GENERATED: "Commission Record Generated",
@@ -49,6 +50,7 @@ const EVENT_LABELS = {
 };
 
 const PlatformConfig = () => {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("notifications");
 
   // ── Notification Prefs State ──
@@ -508,7 +510,7 @@ const PlatformConfig = () => {
                 onChange={v => setAuditFilters(p => ({ ...p, entityType: v || "" }))}
                 allowClear
               >
-                {["LEAD", "CASE", "APPLICATION", "DOCUMENT", "COMMISSION", "USER", "OPS", "PARTNER", "AGENT", "SYSTEM"].map(t => (
+                {["LEAD", "APPLICATION", "DOCUMENT", "COMMISSION", "USER", "OPS", "PARTNER", "AGENT", "SYSTEM"].map(t => (
                   <Option key={t} value={t}>{t}</Option>
                 ))}
               </Select>
@@ -641,11 +643,21 @@ const PlatformConfig = () => {
       <div style={{ maxWidth: 1200, margin: "0 auto" }}>
         
         {/* Header */}
-        <div style={{ marginBottom: 24 }}>
-          <h1 style={{ fontSize: 24, fontWeight: 800, color: "#1a0533", margin: 0 }}>Platform Configuration</h1>
-          <p style={{ fontSize: 13, color: "#8B7BAE", margin: "4px 0 0" }}>
-            Admin portal content control, notification controls, and immutable log audits.
-          </p>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
+          <div>
+            <h1 style={{ fontSize: 24, fontWeight: 800, color: "#1a0533", margin: 0 }}>Platform Configuration</h1>
+            <p style={{ fontSize: 13, color: "#8B7BAE", margin: "4px 0 0" }}>
+              Admin portal content control, notification controls, and immutable log audits.
+            </p>
+          </div>
+          <Button
+            type="primary"
+            icon={<SafetyCertificateOutlined />}
+            onClick={() => navigate("/dashboard/vault-admin/audit")}
+            style={{ background: P, borderColor: P, borderRadius: 10, fontWeight: 600, height: 40 }}
+          >
+            System Audit Log
+          </Button>
         </div>
 
         {/* Premium Dashboard Tabs */}
@@ -671,15 +683,6 @@ const PlatformConfig = () => {
                 </span>
               ),
               children: renderAnnouncementsTab()
-            },
-            {
-              key: "audit",
-              label: (
-                <span>
-                  <SafetyCertificateOutlined /> System Audit Log
-                </span>
-              ),
-              children: renderAuditLogsTab()
             }
           ]}
         />

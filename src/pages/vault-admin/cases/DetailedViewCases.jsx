@@ -492,10 +492,10 @@ const DetailedViewCases = () => {
         setCaseData(res.data.case);
         setDocuments(res.data.documents || []);
       } else {
-        message.error('Failed to load case details');
+        message.error('Failed to load application details');
       }
     } catch (err) {
-      message.error(err.response?.data?.message || 'Failed to load case details');
+      message.error(err.response?.data?.message || 'Failed to load application details');
     } finally {
       setLoading(false);
       setRefreshing(false);

@@ -281,11 +281,11 @@ const VaultAgentLeadList = () => {
   // Open status update modal
   const openStatusModal = (record) => {
     if (record?.conversionInfo?.convertedToApplication) {
-      message.warning("Status is locked — a Case has already been created for this lead");
+      message.warning("Status is locked — an Application has already been created for this lead");
       return;
     }
     if (QUALIFIED_LOCK.includes(record?.currentStatus)) {
-      message.warning("Lead is locked after qualification — create a Case to continue");
+      message.warning("Lead is locked after qualification — create an Application to continue");
       return;
     }
     setStatusTarget(record);
@@ -462,14 +462,14 @@ const VaultAgentLeadList = () => {
 
             {/* Locked badge */}
             {isAffiliatedAgent && isLocked && (
-              <Tooltip title={caseCreated ? "Case created — status is auto-managed by the case workflow" : "Lead is Qualified — create a Case to continue"}>
+              <Tooltip title={caseCreated ? "Application created — status is auto-managed by the application workflow" : "Lead is Qualified — create an Application to continue"}>
                 <span style={{ fontSize: 10, fontWeight: 600, color: caseCreated ? "#2563eb" : "#059669", background: caseCreated ? "#eff6ff" : "#ecfdf5", border: `1px solid ${caseCreated ? "#bfdbfe" : "#a7f3d0"}`, borderRadius: 6, padding: "3px 8px" }}>
-                  {caseCreated ? "🔒 Case Created" : "🔒 Qualified"}
+                  {caseCreated ? "🔒 Application Created" : "🔒 Qualified"}
                 </span>
               </Tooltip>
             )}
 
-            {/* Create Proposal / Case — only when Qualified and no case yet */}
+            {/* Create Proposal / Application — only when Qualified and no application yet */}
             {canCreateCase && (
               <>
                 <Button
@@ -484,7 +484,7 @@ const VaultAgentLeadList = () => {
                   onClick={() => navigate(`/dashboard/${roleSlug}/case/create?leadId=${leadId}`)}
                   style={{ borderRadius: 6, fontSize: 11, fontWeight: 600, color: "#2563eb", borderColor: "#bfdbfe", background: "#eff6ff" }}
                 >
-                  Case
+                  Application
                 </Button>
               </>
             )}
@@ -620,7 +620,7 @@ const VaultAgentLeadList = () => {
                     background: "#eff6ff",
                   }}
                 >
-                  Create Case
+                  Create Application
                 </Button>
               </>
             )}

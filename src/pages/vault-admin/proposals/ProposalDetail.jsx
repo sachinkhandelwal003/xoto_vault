@@ -3,13 +3,15 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { apiService } from "@/api/apiService";
 import {
-  Tabs, Button, Spin, message, Modal, Form, Input, Select,
+  Button, Spin, message, Modal, Form, Input, Select,
   Tag, Avatar, Row, Col, Divider,
 } from 'antd';
 import {
   ArrowLeftOutlined, BankOutlined, UserOutlined,
   MailOutlined, StarFilled, SendOutlined,
   CheckCircleOutlined, CloseCircleOutlined, FilePdfOutlined,
+  LockOutlined, FileTextOutlined, HomeOutlined,
+  InfoCircleOutlined, ThunderboltOutlined, WarningOutlined,
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 
@@ -48,7 +50,7 @@ const InfoRow = ({ label, value }) => (
 );
 
 /* ── Single Bank comparison card ────────────────────────────────── */
-const BankCompareCard = ({ bank }) => {
+const BankCompareCard = ({ bank, style }) => {
   const dbr = bank.dbrBreakdown || {};
   const dbrStyle = DBR_STYLE[dbr.dbrStatus] || DBR_STYLE.Eligible;
 
@@ -58,111 +60,119 @@ const BankCompareCard = ({ bank }) => {
       border: `2px solid ${bank.isRecommended ? GN : '#e5e7eb'}`,
       borderRadius: 20, padding: 24, position: 'relative',
       boxShadow: bank.isRecommended ? `0 4px 24px ${GN}25` : '0 2px 8px rgba(0,0,0,0.06)',
-      marginTop: bank.isRecommended ? 14 : 0,
-    }}>
-      {bank.isRecommended && (
-        <div style={{
-          position: 'absolute', top: -13, left: '50%', transform: 'translateX(-50%)',
-          background: GN, color: '#fff', padding: '3px 16px',
-          borderRadius: 20, fontSize: 11, fontWeight: 700, whiteSpace: 'nowrap', zIndex: 1,
-        }}>
-          <StarFilled style={{ marginRight: 4 }} />Recommended
-        </div>
-      )}
-
-      {/* Bank header */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-        {bank.bankLogo ? (
-          <img src={bank.bankLogo} alt={bank.bankName}
-            style={{ width: 48, height: 48, objectFit: 'contain', borderRadius: 10, border: '1px solid #f0f0f0', background: '#fafafa', padding: 4 }}
-            onError={e => { e.currentTarget.style.display = 'none'; }} />
-        ) : (
-          <Avatar size={48} icon={<BankOutlined />} style={{ background: PL, color: P }} />
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'space-between',
+      height: '100%',
+      ...style,
+    }} className="hover-card">
+      <div>
+        {bank.isRecommended && (
+          <div style={{
+            position: 'absolute', top: -13, left: '50%', transform: 'translateX(-50%)',
+            background: GN, color: '#fff', padding: '3px 16px',
+            borderRadius: 20, fontSize: 11, fontWeight: 700, whiteSpace: 'nowrap', zIndex: 1,
+          }}>
+            <StarFilled style={{ marginRight: 4 }} />Recommended
+          </div>
         )}
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontWeight: 800, fontSize: 15, color: '#0f172a' }}>{bank.bankName}</div>
-          <div style={{ fontSize: 12, color: '#64748b' }}>{bank.productName}</div>
-          <Tag style={{ background: bank.mortgageType === 'Islamic' ? GNL : BLL, color: bank.mortgageType === 'Islamic' ? GN : BL, border: 'none', borderRadius: 6, fontSize: 10, fontWeight: 700, marginTop: 4 }}>
-            {bank.mortgageType}
-          </Tag>
-        </div>
-        <div style={{ textAlign: 'right', flexShrink: 0 }}>
-          <div style={{ fontSize: 28, fontWeight: 900, color: P, lineHeight: 1 }}>{bank.snapshotRate}%</div>
-          <div style={{ fontSize: 10, color: '#94a3b8' }}>{bank.snapshotRateType}</div>
-        </div>
-      </div>
 
-      {/* EMI hero */}
-      <div style={{ background: PL, borderRadius: 14, padding: '14px 16px', marginBottom: 14, textAlign: 'center' }}>
-        <div style={{ fontSize: 10, color: '#7c3aed', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 3 }}>Monthly EMI</div>
-        <div style={{ fontSize: 28, fontWeight: 900, color: P }}>AED {bank.snapshotEMI?.toLocaleString()}</div>
-      </div>
-
-      {/* DBR */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-        <span style={{ fontSize: 12, color: '#64748b', fontWeight: 600 }}>DBR</span>
-        <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-          <span style={{ fontWeight: 800, color: '#0f172a' }}>{dbr.dbrPercentage ?? bank.dbr}%</span>
-          <Tag style={{ background: dbrStyle.bg, color: dbrStyle.color, border: 'none', borderRadius: 8, fontWeight: 700, fontSize: 10, margin: 0 }}>
-            {dbr.dbrStatus || 'Eligible'}
-          </Tag>
-        </div>
-      </div>
-
-      <Divider style={{ margin: '12px 0' }} />
-
-      {/* Fees grid */}
-      <Row gutter={[8, 8]} style={{ marginBottom: 12 }}>
-        {[
-          { label: 'Processing Fee',  val: `AED ${(bank.snapshotProcessingFee || 0).toLocaleString()}` },
-          { label: 'Valuation Fee',   val: `AED ${(bank.snapshotValuationFee || 0).toLocaleString()}`  },
-          { label: 'Pre-Approval',    val: bank.snapshotPreApprovalFee ? `AED ${bank.snapshotPreApprovalFee.toLocaleString()}` : 'Free' },
-          { label: 'Max LTV',         val: `${bank.maxLTV}%` },
-          { label: 'Loan LTV',        val: `${bank.snapshotLTV}%` },
-          { label: 'Follow-on Rate',  val: bank.snapshotFollowOnRate || '—' },
-        ].map(({ label, val }) => (
-          <Col span={12} key={label}>
-            <div style={{ background: '#f9f8ff', borderRadius: 10, padding: '8px 10px' }}>
-              <div style={{ fontSize: 9, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', marginBottom: 2 }}>{label}</div>
-              <div style={{ fontWeight: 800, color: '#0f172a', fontSize: 12 }}>{val}</div>
-            </div>
-          </Col>
-        ))}
-      </Row>
-
-      {/* Insurance */}
-      {(bank.lifeInsurance?.value || bank.propertyInsurance?.value) && (
-        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 12 }}>
-          {bank.lifeInsurance?.value && (
-            <Tag style={{ background: GNL, color: GN, border: 'none', borderRadius: 8, fontSize: 10, fontWeight: 600 }}>
-              Life: AED {bank.lifeInsurance.value.toLocaleString()}/{bank.lifeInsurance.frequency}
-            </Tag>
+        {/* Bank header */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+          {bank.bankLogo ? (
+            <img src={bank.bankLogo} alt={bank.bankName}
+              style={{ width: 48, height: 48, objectFit: 'contain', borderRadius: 10, border: '1px solid #f0f0f0', background: '#fafafa', padding: 4 }}
+              onError={e => { e.currentTarget.style.display = 'none'; }} />
+          ) : (
+            <Avatar size={48} icon={<BankOutlined />} style={{ background: PL, color: P }} />
           )}
-          {bank.propertyInsurance?.value && (
-            <Tag style={{ background: BLL, color: BL, border: 'none', borderRadius: 8, fontSize: 10, fontWeight: 600 }}>
-              Prop: AED {bank.propertyInsurance.value.toLocaleString()}/{bank.propertyInsurance.frequency}
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontWeight: 800, fontSize: 15, color: '#0f172a' }}>{bank.bankName}</div>
+            <div style={{ fontSize: 12, color: '#64748b' }}>{bank.productName}</div>
+            <Tag style={{ background: bank.mortgageType === 'Islamic' ? GNL : BLL, color: bank.mortgageType === 'Islamic' ? GN : BL, border: 'none', borderRadius: 6, fontSize: 10, fontWeight: 700, marginTop: 4 }}>
+              {bank.mortgageType}
             </Tag>
-          )}
-        </div>
-      )}
-
-      {/* Key features */}
-      {bank.keyFeatures?.length > 0 && (
-        <div>
-          <div style={{ fontSize: 10, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', marginBottom: 6 }}>Key Features</div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-            {bank.keyFeatures.map((f, i) => (
-              <div key={i} style={{ fontSize: 11, color: '#475569', display: 'flex', alignItems: 'flex-start', gap: 6 }}>
-                <CheckCircleOutlined style={{ color: GN, fontSize: 11, marginTop: 1, flexShrink: 0 }} />
-                {f}
-              </div>
-            ))}
+          </div>
+          <div style={{ textAlign: 'right', flexShrink: 0 }}>
+            <div style={{ fontSize: 28, fontWeight: 900, color: P, lineHeight: 1 }}>{bank.snapshotRate}%</div>
+            <div style={{ fontSize: 10, color: '#94a3b8' }}>{bank.snapshotRateType}</div>
           </div>
         </div>
-      )}
+
+        {/* EMI hero */}
+        <div style={{ background: PL, borderRadius: 14, padding: '14px 16px', marginBottom: 14, textAlign: 'center' }}>
+          <div style={{ fontSize: 10, color: '#7c3aed', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 3 }}>Monthly EMI</div>
+          <div style={{ fontSize: 28, fontWeight: 900, color: P }}>AED {bank.snapshotEMI?.toLocaleString()}</div>
+        </div>
+
+        {/* DBR */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+          <span style={{ fontSize: 12, color: '#64748b', fontWeight: 600 }}>DBR</span>
+          <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+            <span style={{ fontWeight: 800, color: '#0f172a' }}>{dbr.dbrPercentage ?? bank.dbr}%</span>
+            <Tag style={{ background: dbrStyle.bg, color: dbrStyle.color, border: 'none', borderRadius: 8, fontWeight: 700, fontSize: 10, margin: 0 }}>
+              {dbr.dbrStatus || 'Eligible'}
+            </Tag>
+          </div>
+        </div>
+
+        <Divider style={{ margin: '12px 0' }} />
+
+        {/* Fees grid */}
+        <Row gutter={[8, 8]} style={{ marginBottom: 12 }}>
+          {[
+            { label: 'Processing Fee',  val: `AED ${(bank.snapshotProcessingFee || 0).toLocaleString()}` },
+            { label: 'Valuation Fee',   val: `AED ${(bank.snapshotValuationFee || 0).toLocaleString()}`  },
+            { label: 'Pre-Approval',    val: bank.snapshotPreApprovalFee ? `AED ${bank.snapshotPreApprovalFee.toLocaleString()}` : 'Free' },
+            { label: 'Max LTV',         val: `${bank.maxLTV}%` },
+            { label: 'Loan LTV',        val: `${bank.snapshotLTV}%` },
+            { label: 'Follow-on Rate',  val: bank.snapshotFollowOnRate || '—' },
+          ].map(({ label, val }) => (
+            <Col span={12} key={label}>
+              <div style={{ background: '#f9f8ff', borderRadius: 10, padding: '8px 10px' }}>
+                <div style={{ fontSize: 9, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', marginBottom: 2 }}>{label}</div>
+                <div style={{ fontWeight: 800, color: '#0f172a', fontSize: 12 }}>{val}</div>
+              </div>
+            </Col>
+          ))}
+        </Row>
+
+        {/* Insurance */}
+        {(bank.lifeInsurance?.value || bank.propertyInsurance?.value) && (
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 12 }}>
+            {bank.lifeInsurance?.value && (
+              <Tag style={{ background: GNL, color: GN, border: 'none', borderRadius: 8, fontSize: 10, fontWeight: 600 }}>
+                Life: AED {bank.lifeInsurance.value.toLocaleString()}/{bank.lifeInsurance.frequency}
+              </Tag>
+            )}
+            {bank.propertyInsurance?.value && (
+              <Tag style={{ background: BLL, color: BL, border: 'none', borderRadius: 8, fontSize: 10, fontWeight: 600 }}>
+                Prop: AED {bank.propertyInsurance.value.toLocaleString()}/{bank.propertyInsurance.frequency}
+              </Tag>
+            )}
+          </div>
+        )}
+
+        {/* Key features */}
+        {bank.keyFeatures?.length > 0 && (
+          <div>
+            <div style={{ fontSize: 10, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', marginBottom: 6 }}>Key Features</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+              {bank.keyFeatures.map((f, i) => (
+                <div key={i} style={{ fontSize: 11, color: '#475569', display: 'flex', alignItems: 'flex-start', gap: 6 }}>
+                  <CheckCircleOutlined style={{ color: GN, fontSize: 11, marginTop: 1, flexShrink: 0 }} />
+                  {f}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
 
       {bank.salaryTransferRequired && (
-        <div style={{ fontSize: 11, color: AM, fontWeight: 600, marginTop: 8 }}>⚠ Salary transfer required</div>
+        <div style={{ fontSize: 11, color: AM, fontWeight: 600, marginTop: 12, display: 'flex', alignItems: 'center', gap: 4 }}>
+          <WarningOutlined /> Salary transfer required
+        </div>
       )}
     </div>
   );
@@ -306,7 +316,7 @@ const ProposalDetail = () => {
             { label: 'Recommended',     value: bankComparison.recommendedBank,                      sub: 'Advisor choice',              color: AM, bg: AML },
           ].map(({ label, value, sub, color, bg }) => (
             <Col span={6} key={label}>
-              <div style={{ background: bg, borderRadius: 16, padding: '14px 16px', textAlign: 'center' }}>
+              <div style={{ background: bg, borderRadius: 16, padding: '14px 16px', textAlign: 'center', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center' }} className="hover-card">
                 <div style={{ fontSize: 10, fontWeight: 700, color, textTransform: 'uppercase', marginBottom: 4 }}>{label}</div>
                 <div style={{ fontSize: 16, fontWeight: 900, color, lineHeight: 1.2 }}>{value || '—'}</div>
                 {sub && <div style={{ fontSize: 10, color, opacity: 0.7, marginTop: 3 }}>{sub}</div>}
@@ -316,29 +326,33 @@ const ProposalDetail = () => {
         </Row>
       )}
 
-      <Row gutter={[16, 16]}>
+      <Row gutter={[16, 16]} style={{ display: 'flex', alignItems: 'stretch', marginTop: 14 }}>
         {selectedBanks.map((bank, i) => (
-          <Col xs={24} md={12} lg={8} key={i}>
-            <BankCompareCard bank={bank} />
+          <Col xs={24} md={12} lg={8} key={i} style={{ display: 'flex' }}>
+            <BankCompareCard bank={bank} style={{ flex: 1, marginTop: 0 }} />
           </Col>
         ))}
       </Row>
 
       {/* Notes */}
       {(coverNote || internalNotes) && (
-        <Row gutter={[16, 16]} style={{ marginTop: 24 }}>
+        <Row gutter={[16, 16]} style={{ marginTop: 24, display: 'flex', alignItems: 'stretch' }}>
           {coverNote && (
-            <Col xs={24} md={12}>
-              <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #ede9ff', padding: 20 }}>
-                <div style={{ fontWeight: 700, color: '#0f172a', marginBottom: 10, fontSize: 14 }}>📝 Cover Note</div>
+            <Col xs={24} md={12} style={{ display: 'flex' }}>
+              <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #ede9ff', padding: 20, flex: 1 }} className="hover-card">
+                <div style={{ fontWeight: 700, color: '#0f172a', marginBottom: 10, fontSize: 14, display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <FileTextOutlined style={{ color: P }} /> Cover Note
+                </div>
                 <div style={{ fontSize: 13, color: '#475569', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{coverNote}</div>
               </div>
             </Col>
           )}
           {internalNotes && (
-            <Col xs={24} md={12}>
-              <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #ede9ff', padding: 20 }}>
-                <div style={{ fontWeight: 700, color: '#0f172a', marginBottom: 10, fontSize: 14 }}>🔒 Internal Notes</div>
+            <Col xs={24} md={12} style={{ display: 'flex' }}>
+              <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #ede9ff', padding: 20, flex: 1 }} className="hover-card">
+                <div style={{ fontWeight: 700, color: '#0f172a', marginBottom: 10, fontSize: 14, display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <LockOutlined style={{ color: AM }} /> Internal Notes
+                </div>
                 <div style={{ fontSize: 13, color: '#475569', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{internalNotes}</div>
               </div>
             </Col>
@@ -350,10 +364,12 @@ const ProposalDetail = () => {
 
   /* ── Tab: Customer Info ── */
   const CustomerTab = () => (
-    <Row gutter={[16, 16]}>
-      <Col xs={24} md={12}>
-        <div style={{ background: '#fff', borderRadius: 18, border: '1px solid #ede9ff', padding: 24 }}>
-          <div style={{ fontWeight: 800, color: '#0f172a', fontSize: 15, marginBottom: 16 }}>👤 Customer Details</div>
+    <Row gutter={[16, 16]} style={{ display: 'flex', alignItems: 'stretch' }}>
+      <Col xs={24} md={12} style={{ display: 'flex' }}>
+        <div style={{ background: '#fff', borderRadius: 18, border: '1px solid #ede9ff', padding: 24, flex: 1, display: 'flex', flexDirection: 'column' }} className="hover-card">
+          <div style={{ fontWeight: 800, color: '#0f172a', fontSize: 15, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <UserOutlined style={{ color: P }} /> Customer Details
+          </div>
           <InfoRow label="Full Name"         value={customerSnapshot.fullName} />
           <InfoRow label="Email"             value={customerSnapshot.email} />
           <InfoRow label="Mobile"            value={customerSnapshot.mobile} />
@@ -365,9 +381,11 @@ const ProposalDetail = () => {
           <InfoRow label="Monthly Debt"      value={customerSnapshot.totalMonthlyDebt ? `AED ${customerSnapshot.totalMonthlyDebt.toLocaleString()}` : 'None'} />
         </div>
       </Col>
-      <Col xs={24} md={12}>
-        <div style={{ background: '#fff', borderRadius: 18, border: '1px solid #ede9ff', padding: 24 }}>
-          <div style={{ fontWeight: 800, color: '#0f172a', fontSize: 15, marginBottom: 16 }}>🏠 Property Details</div>
+      <Col xs={24} md={12} style={{ display: 'flex' }}>
+        <div style={{ background: '#fff', borderRadius: 18, border: '1px solid #ede9ff', padding: 24, flex: 1, display: 'flex', flexDirection: 'column' }} className="hover-card">
+          <div style={{ fontWeight: 800, color: '#0f172a', fontSize: 15, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <HomeOutlined style={{ color: P }} /> Property Details
+          </div>
           <InfoRow label="Property Value"    value={`AED ${(propertySnapshot.propertyValue || 0).toLocaleString()}`} />
           <InfoRow label="Loan Required"     value={`AED ${(propertySnapshot.loanAmountRequired || 0).toLocaleString()}`} />
           <InfoRow label="Down Payment"      value={`AED ${(propertySnapshot.downPaymentAmount || 0).toLocaleString()}`} />
@@ -383,10 +401,12 @@ const ProposalDetail = () => {
 
   /* ── Tab: PDF & Status ── */
   const StatusTab = () => (
-    <Row gutter={[16, 16]}>
-      <Col xs={24} md={14}>
-        <div style={{ background: '#fff', borderRadius: 18, border: '1px solid #ede9ff', padding: 28 }}>
-          <div style={{ fontWeight: 800, color: '#0f172a', fontSize: 15, marginBottom: 20 }}>📄 Proposal Status</div>
+    <Row gutter={[16, 16]} style={{ display: 'flex', alignItems: 'stretch' }}>
+      <Col xs={24} md={14} style={{ display: 'flex' }}>
+        <div style={{ background: '#fff', borderRadius: 18, border: '1px solid #ede9ff', padding: 28, flex: 1 }} className="hover-card">
+          <div style={{ fontWeight: 800, color: '#0f172a', fontSize: 15, marginBottom: 20, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <InfoCircleOutlined style={{ color: P }} /> Proposal Status
+          </div>
 
           {/* Current status */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 24, background: statusCfg.bg, borderRadius: 14, padding: '16px 20px' }}>
@@ -405,7 +425,9 @@ const ProposalDetail = () => {
           {pdf.sentAt && (
             <div style={{ background: BLL, borderRadius: 12, padding: '14px 18px', marginBottom: 16 }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, marginBottom: 6 }}>
-                <span style={{ fontWeight: 700, color: BL }}>📧 Sent to Customer</span>
+                <span style={{ fontWeight: 700, color: BL, display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <MailOutlined /> Sent to Customer
+                </span>
                 {pdf.pdfUrl && (
                   <Button
                     size="small"
@@ -428,7 +450,9 @@ const ProposalDetail = () => {
           {/* Customer preference */}
           {customerPreference.preferredBankName && (
             <div style={{ background: GNL, borderRadius: 12, padding: '14px 18px', marginBottom: 16 }}>
-              <div style={{ fontWeight: 700, color: GN, marginBottom: 6 }}>✅ Customer Preference Recorded</div>
+              <div style={{ fontWeight: 700, color: GN, marginBottom: 6, display: 'flex', alignItems: 'center', gap: 6 }}>
+                <CheckCircleOutlined /> Customer Preference Recorded
+              </div>
               <div style={{ fontSize: 14, fontWeight: 800, color: '#0f172a' }}>{customerPreference.preferredBankName}</div>
               {customerPreference.feedbackNote && (
                 <div style={{ fontSize: 12, color: '#475569', marginTop: 6, fontStyle: 'italic' }}>"{customerPreference.feedbackNote}"</div>
@@ -450,9 +474,11 @@ const ProposalDetail = () => {
         </div>
       </Col>
 
-      <Col xs={24} md={10}>
-        <div style={{ background: '#fff', borderRadius: 18, border: '1px solid #ede9ff', padding: 24, display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <div style={{ fontWeight: 800, color: '#0f172a', fontSize: 15, marginBottom: 4 }}>⚡ Actions</div>
+      <Col xs={24} md={10} style={{ display: 'flex' }}>
+        <div style={{ background: '#fff', borderRadius: 18, border: '1px solid #ede9ff', padding: 24, display: 'flex', flexDirection: 'column', gap: 12, flex: 1 }} className="hover-card">
+          <div style={{ fontWeight: 800, color: '#0f172a', fontSize: 15, marginBottom: 4, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <ThunderboltOutlined style={{ color: AM }} /> Actions
+          </div>
 
           {/* View PDF — only when generated */}
           {pdf.pdfUrl && (
@@ -574,18 +600,49 @@ const ProposalDetail = () => {
         </div>
       </div>
 
-      {/* Tabs */}
+      {/* Custom Tabs */}
       <div style={{ padding: '24px 32px' }}>
-        <Tabs
-          activeKey={activeTab}
-          onChange={setActiveTab}
-          items={[
-            { key: 'banks',    label: '🏦 Bank Comparison', children: <BanksTab /> },
-            { key: 'customer', label: '👤 Customer Info',   children: <CustomerTab /> },
-            { key: 'status',   label: '📄 PDF & Status',    children: <StatusTab /> },
-          ]}
-          tabBarStyle={{ marginBottom: 24 }}
-        />
+        <div style={{ display: 'flex', gap: 12, marginBottom: 28, flexWrap: 'wrap' }}>
+          {[
+            { key: 'banks', label: 'Bank Comparison', icon: <BankOutlined /> },
+            { key: 'customer', label: 'Customer Info', icon: <UserOutlined /> },
+            { key: 'status', label: 'PDF & Status', icon: <FileTextOutlined /> },
+          ].map(t => {
+            const isActive = activeTab === t.key;
+            return (
+              <button
+                key={t.key}
+                onClick={() => setActiveTab(t.key)}
+                className={isActive ? 'tab-btn tab-btn-active' : 'tab-btn'}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  padding: '12px 24px',
+                  borderRadius: 14,
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontWeight: 700,
+                  fontSize: 13,
+                  background: isActive ? P : '#fff',
+                  color: isActive ? '#fff' : '#64748b',
+                  boxShadow: isActive ? `0 4px 14px ${P}30` : '0 2px 8px rgba(0,0,0,0.05)',
+                  border: `1px solid ${isActive ? P : '#ede9ff'}`,
+                }}
+              >
+                {t.icon}
+                {t.label}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Tab Content */}
+        <div style={{ marginTop: 12 }}>
+          {activeTab === 'banks' && <BanksTab />}
+          {activeTab === 'customer' && <CustomerTab />}
+          {activeTab === 'status' && <StatusTab />}
+        </div>
       </div>
 
       {/* ── Send Modal ── */}
@@ -706,13 +763,32 @@ const ProposalDetail = () => {
       </Modal>
 
       <style>{`
-        .ant-tabs-ink-bar { background: ${P} !important; height: 3px !important; border-radius: 3px 3px 0 0 !important; }
-        .ant-tabs-tab-active .ant-tabs-tab-btn { color: ${P} !important; font-weight: 700 !important; }
-        .ant-tabs-tab:hover { color: ${P} !important; }
-        .ant-tabs-tab { font-size: 13px !important; font-weight: 600 !important; }
+        .hover-card {
+          transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+        }
+        .hover-card:hover {
+          transform: translateY(-4px);
+          box-shadow: 0 12px 30px rgba(92, 3, 155, 0.08) !important;
+          border-color: ${P}80 !important;
+        }
+        .tab-btn {
+          transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .tab-btn:hover {
+          background: #f7f2ff !important;
+          color: ${P} !important;
+          border-color: ${P}50 !important;
+        }
+        .tab-btn-active:hover {
+          background: ${P} !important;
+          color: #fff !important;
+          border-color: ${P} !important;
+          box-shadow: 0 4px 14px ${P}40 !important;
+        }
       `}</style>
     </div>
   );
 };
 
 export default ProposalDetail;
+

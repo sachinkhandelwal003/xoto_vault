@@ -105,14 +105,14 @@ const Commission = () => {
       bg: AML 
     },
     { 
-      label: "Confirmed Cases", 
+      label: "Confirmed Applications", 
       value: stats?.confirmedCount || 0, 
       icon: CheckCircle, 
       color: BL, 
       bg: BLL 
     },
     { 
-      label: "Total Lead Cases", 
+      label: "Total Lead Applications", 
       value: stats?.totalCount || 0, 
       icon: Briefcase, 
       color: P, 
@@ -128,7 +128,7 @@ const Commission = () => {
     },
     {
       key: "caseReference",
-      title: "Case Ref",
+      title: "Application Ref",
       render: (ref) => <span className="font-bold text-gray-700 text-xs">{ref}</span>,
     },
     {
@@ -320,7 +320,7 @@ const Commission = () => {
 
             <Row gutter={[32, 32]}>
               <Col span={12}>
-                <h4 className="flex items-center gap-2 font-black text-gray-800 mb-4"><FileText size={16} className="text-purple-600" /> Case Info</h4>
+                <h4 className="flex items-center gap-2 font-black text-gray-800 mb-4"><FileText size={16} className="text-purple-600" /> Application Info</h4>
                 <Descriptions column={1} size="small">
                   <Descriptions.Item label={<span className="font-bold text-gray-400 text-xs">Reference</span>}>
                     <span className="font-bold text-gray-800">{selectedCommission.caseReference}</span>

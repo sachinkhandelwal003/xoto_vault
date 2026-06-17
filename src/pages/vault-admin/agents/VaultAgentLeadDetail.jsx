@@ -346,13 +346,10 @@ export default function VaultAdminLeadDetail() {
                   <Row label="Residency" value={ci.residencyStatus} />
                   <Row label="Employment" value={ci.employmentStatus} />
                   <Row label="Monthly Salary"       value={ci.monthlySalary       ? `AED ${fmt(ci.monthlySalary)}`       : null} />
-                  <Row label="Salary Bank"          value={ci.salaryBankName}                                                       />
                   <Row label="Existing Liabilities" value={ci.existingLiabilities ? `AED ${fmt(ci.existingLiabilities)}` : null} />
                   <Row label="Date of Birth"        value={fmtDate(ci.dateOfBirth)}                                                  />
                   <Row label="Marital Status"       value={ci.maritalStatus}                                                         />
-                  <Row label="Dependents"           value={ci.numberOfDependents}                                                    />
                   <Row label="Occupation"           value={ci.occupation}                                                            />
-                  <Row label="Employer"             value={ci.employer}                                                              />
                 </div>
               </div>
 

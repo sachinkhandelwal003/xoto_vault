@@ -332,7 +332,7 @@ const VaultAllLeads = () => {
                     background: "#eff6ff",
                   }}
                 >
-                  Create Case
+                  Create Application
                 </Button>
               </>
             )}

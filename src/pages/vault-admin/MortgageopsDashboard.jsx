@@ -186,7 +186,7 @@ const MortgageOpsDashboard = () => {
 
   const caseColumns = [
     {
-      title: "Case Reference",
+      title: "Application Reference",
       dataIndex: "caseReference",
       key: "caseReference",
       width: 180,
@@ -293,24 +293,24 @@ const MortgageOpsDashboard = () => {
           </div>
         </Card>
 
-        {/* Stuck Cases Alert */}
+        {/* Stuck Applications Alert */}
         {workload.stuckCases > 0 && (
           <Alert
             message={
               <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                 <HourglassOutlined style={{ fontSize: 18, color: AMB }} />
                 <span>
-                  <strong>Stuck Cases Alert</strong> — {workload.stuckCases} case(s) have been pending for more than 7 days
+                  <strong>Stuck Applications Alert</strong> — {workload.stuckCases} application(s) have been pending for more than 7 days
                 </span>
               </div>
             }
-            description="Please review these cases and take appropriate action to move them forward."
+            description="Please review these applications and take appropriate action to move them forward."
             type="warning"
             showIcon={false}
             style={{ marginBottom: 24, borderRadius: 16, border: `1px solid #FDE68A`, background: "#FFFBEB" }}
             action={
               <Button size="small" style={{ borderColor: AMB, color: AMB }} onClick={() => navigate("/ops/cases?filter=stuck")}>
-                Review Stuck Cases
+                Review Stuck Applications
               </Button>
             }
           />
@@ -319,13 +319,13 @@ const MortgageOpsDashboard = () => {
         {/* KPI Stats Row */}
         <Row gutter={[18, 18]} style={{ marginBottom: 28 }}>
           <Col xs={24} sm={12} lg={6}>
-            <StatCard icon={<FileOutlined />} label="Total Cases" value={kpis.totalAssignedCases} color={P} loading={loading} />
+            <StatCard icon={<FileOutlined />} label="Total Applications" value={kpis.totalAssignedCases} color={P} loading={loading} />
           </Col>
           <Col xs={24} sm={12} lg={6}>
             <StatCard icon={<CheckCircleOutlined />} label="Completed" value={kpis.completed} color={GN} loading={loading} tooltip="Successfully disbursed" />
           </Col>
           <Col xs={24} sm={12} lg={6}>
-            <StatCard icon={<ClockCircleOutlined />} label="Active Cases" value={kpis.activeCases} color={AMB} loading={loading} />
+            <StatCard icon={<ClockCircleOutlined />} label="Active Applications" value={kpis.activeCases} color={AMB} loading={loading} />
           </Col>
           <Col xs={24} sm={12} lg={6}>
             <StatCard icon={<BankOutlined />} label="Bank Submissions" value={performance.totalBankSubmissions} color={BL} loading={loading} />
@@ -389,7 +389,7 @@ const MortgageOpsDashboard = () => {
               title={
                 <Space>
                   <BarChartOutlined style={{ color: P }} />
-                  <span style={{ fontWeight: 600, color: P }}>Cases Processed Over Time</span>
+                  <span style={{ fontWeight: 600, color: P }}>Applications Processed Over Time</span>
                 </Space>
               }
               extra={
@@ -411,7 +411,7 @@ const MortgageOpsDashboard = () => {
                     <XAxis dataKey="date" tick={{ fill: "#9b8ab0", fontSize: 11 }} />
                     <YAxis tick={{ fill: "#9b8ab0", fontSize: 11 }} />
                     <RechartsTooltip content={<CustomChartTooltip />} />
-                    <Line type="monotone" dataKey="count" stroke={P} strokeWidth={3} dot={{ fill: P, r: 4 }} name="Cases" />
+                    <Line type="monotone" dataKey="count" stroke={P} strokeWidth={3} dot={{ fill: P, r: 4 }} name="Applications" />
                   </LineChart>
                 ) : (
                   <BarChart data={casesOverTimeData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
@@ -419,7 +419,7 @@ const MortgageOpsDashboard = () => {
                     <XAxis dataKey="date" tick={{ fill: "#9b8ab0", fontSize: 11 }} />
                     <YAxis tick={{ fill: "#9b8ab0", fontSize: 11 }} />
                     <RechartsTooltip content={<CustomChartTooltip />} />
-                    <Bar dataKey="count" fill={P} radius={[6, 6, 0, 0]} name="Cases" />
+                    <Bar dataKey="count" fill={P} radius={[6, 6, 0, 0]} name="Applications" />
                   </BarChart>
                 )}
               </ResponsiveContainer>
@@ -507,7 +507,7 @@ const MortgageOpsDashboard = () => {
                 title={
                   <Space>
                     <PieChartOutlined style={{ color: P }} />
-                    <span style={{ fontWeight: 600, color: P }}>Case Status Distribution</span>
+                    <span style={{ fontWeight: 600, color: P }}>Application Status Distribution</span>
                   </Space>
                 }
               >
@@ -551,7 +551,7 @@ const MortgageOpsDashboard = () => {
                   <Space size={12}>
                     {quickActions.needsReview > 0 && (
                       <Button icon={<EyeOutlined />} onClick={() => navigate("/ops/cases?filter=needsReview")} style={{ borderRadius: 30, borderColor: AMB, color: AMB }}>
-                        Review {quickActions.needsReview} Cases
+                        Review {quickActions.needsReview} Applications
                       </Button>
                     )}
                     {quickActions.needsBankUpdate > 0 && (
@@ -571,13 +571,13 @@ const MortgageOpsDashboard = () => {
           </Row>
         )} */}
 
-        {/* Recent Cases Table */}
+        {/* Recent Applications Table */}
         <Card 
           bordered={false} 
           style={{ borderRadius: 20, boxShadow: "0 4px 20px rgba(92,3,155,0.06)", border: "1px solid #f0e8ff", overflow: "hidden" }} 
           bodyStyle={{ padding: "24px" }} 
           title={
-            <span style={{ fontSize: 16, fontWeight: 700, color: P }}>Recent Cases</span>
+            <span style={{ fontSize: 16, fontWeight: 700, color: P }}>Recent Applications</span>
           } 
           extra={
             <Space>
@@ -594,7 +594,7 @@ const MortgageOpsDashboard = () => {
             columns={caseColumns} 
             dataSource={recentCases} 
             rowKey="_id" 
-            pagination={{ pageSize: 10, showSizeChanger: true, showTotal: (total) => `Total ${total} cases` }}
+            pagination={{ pageSize: 10, showSizeChanger: true, showTotal: (total) => `Total ${total} applications` }}
             size="middle"
           />
         </Card>

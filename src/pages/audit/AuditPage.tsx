@@ -1,21 +1,21 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useSelector } from 'react-redux';
 import axios from 'axios';
+import { Select, Input, Button, Card, Spin } from 'antd';
+import { SearchOutlined, ReloadOutlined } from '@ant-design/icons';
 import {
   FiShield, FiRefreshCw, FiFilter, FiSearch, FiChevronDown, FiChevronUp,
   FiUser, FiFile, FiDollarSign, FiLock, FiActivity, FiAlertCircle,
 } from 'react-icons/fi';
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL
-  ? `${import.meta.env.VITE_API_BASE_URL}/api`
-  : 'http://localhost:5000/api';
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'https://xoto.ae/api';
 
 const PAGE_SIZE = 25;
 
 // ── Entity type config ─────────────────────────────────────────────
 const ENTITY_CONFIG: Record<string, { color: string; bg: string; icon: React.ReactNode; label: string }> = {
   LEAD:        { color: '#7c3aed', bg: '#f5f3ff', icon: <FiUser size={13} />,      label: 'Lead' },
-  CASE:        { color: '#dc2626', bg: '#fef2f2', icon: <FiFile size={13} />,      label: 'Case' },
+  CASE:        { color: '#dc2626', bg: '#fef2f2', icon: <FiFile size={13} />,      label: 'Application' },
   APPLICATION: { color: '#ea580c', bg: '#fff7ed', icon: <FiActivity size={13} />,  label: 'Application' },
   DOCUMENT:    { color: '#0891b2', bg: '#ecfeff', icon: <FiFile size={13} />,      label: 'Document' },
   COMMISSION:  { color: '#15803d', bg: '#f0fdf4', icon: <FiDollarSign size={13} />,label: 'Commission' },
@@ -44,7 +44,7 @@ const fmtDate = (iso: string) =>
     hour: '2-digit', minute: '2-digit',
   });
 
-const ENTITY_TYPES = ['', 'LEAD', 'CASE', 'APPLICATION', 'DOCUMENT', 'COMMISSION', 'USER', 'OPS', 'PARTNER', 'AGENT', 'SYSTEM'];
+const ENTITY_TYPES = ['', 'LEAD', 'APPLICATION', 'DOCUMENT', 'COMMISSION', 'USER', 'OPS', 'PARTNER', 'AGENT', 'SYSTEM'];
 
 // ── Expandable JSON diff ───────────────────────────────────────────
 const JsonDiff: React.FC<{ label: string; value: unknown; color?: string }> = ({ label, value, color = '#374151' }) => {
@@ -255,198 +255,212 @@ const AuditPage: React.FC = () => {
   const hasMore    = logs.length < total;
 
   return (
-    <div className="max-w-5xl mx-auto">
+    <div style={{ background: "#F4F0FA", minHeight: "100vh", padding: "28px 24px", fontFamily: "'Inter', sans-serif" }}>
+      <div style={{ maxWidth: 1200, margin: "0 auto" }}>
 
-      {/* ── Header ── */}
-      <div className="mb-6 flex items-start justify-between gap-4 flex-wrap">
-        <div className="flex items-center gap-3">
-          <div
-            className="flex items-center justify-center rounded-xl"
-            style={{
-              width: 42, height: 42,
-              background: 'linear-gradient(135deg, #5C039B, #03A4F4)',
-              boxShadow: '0 2px 12px rgba(92,3,155,0.25)',
-            }}
+        {/* ── Header ── */}
+        <div className="mb-6 flex items-center justify-between gap-4 flex-wrap">
+          <div className="flex items-center gap-3">
+            <div
+              className="flex items-center justify-center rounded-xl"
+              style={{
+                width: 42, height: 42,
+                background: 'linear-gradient(135deg, #5C039B, #03A4F4)',
+                boxShadow: '0 2px 12px rgba(92,3,155,0.25)',
+              }}
+            >
+              <FiShield size={20} className="text-white" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold" style={{ color: '#1a0533', margin: 0 }}>Audit Logs</h1>
+              <p className="text-xs mt-1" style={{ color: '#8B7BAE' }}>
+                Role-based activity trail — {total.toLocaleString()} total entries
+              </p>
+            </div>
+          </div>
+          <Button
+            onClick={() => { fetchLogs(1, true); fetchStats(); }}
+            icon={<ReloadOutlined />}
+            style={{ borderRadius: 10, borderColor: '#e5e7eb', color: '#374151', fontWeight: 600, height: 38 }}
+            loading={loading}
           >
-            <FiShield size={20} className="text-white" />
-          </div>
-          <div>
-            <h1 className="text-xl font-bold" style={{ color: '#111827' }}>Audit Logs</h1>
-            <p className="text-xs" style={{ color: '#9ca3af' }}>
-              Role-based activity trail — {total.toLocaleString()} total entries
-            </p>
-          </div>
+            Refresh
+          </Button>
         </div>
-        <button
-          onClick={() => { fetchLogs(1, true); fetchStats(); }}
-          className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors"
-        >
-          <FiRefreshCw size={14} />
-          Refresh
-        </button>
-      </div>
 
-      {/* ── Stats (admin only — hidden if API returns 403) ── */}
-      {stats && (
-        <div className="mb-5">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-3">
-            <StatCard label="Total Logs"  value={stats.totalLogs} color="#5C039B" />
-            {stats.byEntity.slice(0, 3).map(e => {
-              const cfg = getEntityCfg(e._id);
-              return <StatCard key={e._id} label={cfg.label} value={e.count} color={cfg.color} />;
-            })}
-          </div>
+        {/* ── Stats (admin only) ── */}
+        {stats && (
+          <div className="mb-6">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
+              <StatCard label="Total Logs" value={stats.totalLogs} color="#5C039B" />
+              {stats.byEntity.slice(0, 3).map(e => {
+                const cfg = getEntityCfg(e._id);
+                return <StatCard key={e._id} label={cfg.label} value={e.count} color={cfg.color} />;
+              })}
+            </div>
 
-          {/* By role mini pills */}
-          <div className="flex flex-wrap gap-2">
-            {stats.byRole.map(r => (
-              <button
-                key={r._id}
-                onClick={() => setPerformedByRole(performedByRole === r._id ? '' : r._id)}
-                className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border transition-colors"
-                style={{
-                  background: performedByRole === r._id ? `${ROLE_COLORS[r._id] ?? '#6b7280'}15` : '#fff',
-                  borderColor: performedByRole === r._id ? (ROLE_COLORS[r._id] ?? '#6b7280') : '#e5e7eb',
-                  color: ROLE_COLORS[r._id] ?? '#6b7280',
-                }}
-              >
-                {String(r._id || 'system').replace(/_/g, ' ')}
-                <span
-                  className="rounded-full px-1.5 py-0.5 text-xs font-bold"
-                  style={{ background: ROLE_COLORS[r._id] ?? '#6b7280', color: '#fff', fontSize: 9 }}
+            {/* By role mini pills */}
+            <div className="flex flex-wrap gap-2">
+              {stats.byRole.map(r => (
+                <button
+                  key={r._id}
+                  onClick={() => setPerformedByRole(performedByRole === r._id ? '' : r._id)}
+                  className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border transition-colors"
+                  style={{
+                    background: performedByRole === r._id ? `${ROLE_COLORS[r._id] ?? '#6b7280'}15` : '#fff',
+                    borderColor: performedByRole === r._id ? (ROLE_COLORS[r._id] ?? '#6b7280') : '#e5e7eb',
+                    color: ROLE_COLORS[r._id] ?? '#6b7280',
+                  }}
                 >
-                  {r.count}
-                </span>
-              </button>
-            ))}
+                  {String(r._id || 'system').toUpperCase().replace(/_/g, ' ')}
+                  <span
+                    className="rounded-full px-1.5 py-0.5 text-xs font-bold"
+                    style={{ background: ROLE_COLORS[r._id] ?? '#6b7280', color: '#fff', fontSize: 9 }}
+                  >
+                    {r.count}
+                  </span>
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* ── Filters ── */}
-      <div
-        className="p-4 rounded-xl border border-gray-100 mb-4"
-        style={{ background: '#fff', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}
-      >
-        <div className="flex items-center gap-2 mb-3">
-          <FiFilter size={13} style={{ color: '#9ca3af' }} />
-          <span className="text-xs font-semibold" style={{ color: '#374151' }}>Filters</span>
-          {hasFilters && (
-            <button onClick={clearFilters} className="text-xs text-violet-600 hover:text-violet-800 underline ml-2">
-              Clear all
-            </button>
-          )}
-        </div>
+        {/* ── Filters Card ── */}
+        <Card
+          bordered={false}
+          style={{ borderRadius: 16, marginBottom: 20, boxShadow: '0 4px 12px rgba(92,3,155,0.03)' }}
+          bodyStyle={{ padding: '20px' }}
+        >
+          <div className="flex items-center gap-2 mb-4">
+            <FiFilter size={15} style={{ color: '#7C3AED' }} />
+            <span className="text-sm font-bold" style={{ color: '#1a0533' }}>Filter Activity Logs</span>
+            {hasFilters && (
+              <Button
+                type="text"
+                danger
+                onClick={clearFilters}
+                size="small"
+                style={{ fontSize: 12, fontWeight: 600 }}
+              >
+                Clear all
+              </Button>
+            )}
+          </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-          {/* Entity type */}
-          <select
-            value={entityType}
-            onChange={e => setEntityType(e.target.value)}
-            className="text-xs rounded-lg border border-gray-200 px-2.5 py-2 outline-none col-span-1"
-            style={{ color: '#374151' }}
-          >
-            {ENTITY_TYPES.map(t => (
-              <option key={t} value={t}>{t || 'All Entity Types'}</option>
-            ))}
-          </select>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+            {/* Entity type */}
+            <Select
+              value={entityType || undefined}
+              onChange={v => setEntityType(v || '')}
+              placeholder="All Entity Types"
+              allowClear
+              style={{ width: '100%', height: 38 }}
+              className="custom-select"
+            >
+              {ENTITY_TYPES.map(t => (
+                <Select.Option key={t} value={t}>{t || 'All Entity Types'}</Select.Option>
+              ))}
+            </Select>
 
-          {/* Action search */}
-          <div className="relative col-span-1">
-            <FiSearch size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2" style={{ color: '#9ca3af' }} />
-            <input
+            {/* Action search */}
+            <Input
               value={action}
               onChange={e => setAction(e.target.value.toUpperCase())}
-              placeholder="Action (e.g. LEAD_CREATED)"
-              className="w-full text-xs rounded-lg border border-gray-200 pl-7 pr-2.5 py-2 outline-none"
-              style={{ color: '#374151' }}
+              placeholder="Search Action (e.g. LEAD)"
+              prefix={<SearchOutlined style={{ color: '#9ca3af' }} />}
+              allowClear
+              style={{ height: 38, borderRadius: 8 }}
+            />
+
+            {/* Role */}
+            <Select
+              value={performedByRole || undefined}
+              onChange={v => setPerformedByRole(v || '')}
+              placeholder="All Roles"
+              allowClear
+              style={{ width: '100%', height: 38 }}
+            >
+              {['', 'admin', 'advisor', 'partner', 'ops', 'referral_partner', 'partner_affiliated_agent'].map(r => (
+                <Select.Option key={r} value={r}>{r ? r.replace(/_/g, ' ').toUpperCase() : 'All Roles'}</Select.Option>
+              ))}
+            </Select>
+
+            {/* Date from */}
+            <input
+              type="date"
+              value={dateFrom}
+              onChange={e => setDateFrom(e.target.value)}
+              className="text-xs rounded-lg border px-3 py-2 outline-none w-full"
+              style={{ color: '#374151', height: 38, borderColor: '#d9d9d9', transition: 'all 0.3s' }}
+            />
+
+            {/* Date to */}
+            <input
+              type="date"
+              value={dateTo}
+              onChange={e => setDateTo(e.target.value)}
+              className="text-xs rounded-lg border px-3 py-2 outline-none w-full"
+              style={{ color: '#374151', height: 38, borderColor: '#d9d9d9', transition: 'all 0.3s' }}
             />
           </div>
+        </Card>
 
-          {/* Role */}
-          <select
-            value={performedByRole}
-            onChange={e => setPerformedByRole(e.target.value)}
-            className="text-xs rounded-lg border border-gray-200 px-2.5 py-2 outline-none col-span-1"
-            style={{ color: '#374151' }}
-          >
-            {['', 'admin', 'advisor', 'partner', 'ops', 'referral_partner', 'partner_affiliated_agent'].map(r => (
-              <option key={r} value={r}>{r ? r.replace(/_/g, ' ') : 'All Roles'}</option>
-            ))}
-          </select>
-
-          {/* Date from */}
-          <input
-            type="date"
-            value={dateFrom}
-            onChange={e => setDateFrom(e.target.value)}
-            className="text-xs rounded-lg border border-gray-200 px-2.5 py-2 outline-none col-span-1"
-            style={{ color: '#374151' }}
-          />
-
-          {/* Date to */}
-          <input
-            type="date"
-            value={dateTo}
-            onChange={e => setDateTo(e.target.value)}
-            className="text-xs rounded-lg border border-gray-200 px-2.5 py-2 outline-none col-span-1"
-            style={{ color: '#374151' }}
-          />
-        </div>
-      </div>
-
-      {/* ── Log list ── */}
-      <div
-        className="rounded-2xl border border-gray-100 overflow-hidden"
-        style={{ background: '#fff', boxShadow: '0 1px 8px rgba(0,0,0,0.06)' }}
-      >
-        {/* Table header */}
-        <div
-          className="flex items-center px-5 py-2.5 border-b border-gray-100"
-          style={{ background: '#f8fafc' }}
+        {/* ── Log list Card ── */}
+        <Card
+          bordered={false}
+          style={{ borderRadius: 16, boxShadow: '0 4px 12px rgba(92,3,155,0.03)', overflow: 'hidden' }}
+          bodyStyle={{ padding: 0 }}
         >
-          <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: '#9ca3af' }}>
-            {loading ? 'Loading...' : `${total.toLocaleString()} log${total !== 1 ? 's' : ''}`}
-          </span>
-        </div>
-
-        {loading && logs.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 gap-3">
-            <div className="w-10 h-10 rounded-full border-4 border-violet-100 border-t-violet-500 animate-spin" />
-            <p className="text-sm" style={{ color: '#9ca3af' }}>Loading audit logs...</p>
+          {/* Table header */}
+          <div
+            className="flex items-center px-5 py-3 border-b border-gray-100"
+            style={{ background: '#fcfaff' }}
+          >
+            <span className="text-xs font-bold uppercase tracking-wider" style={{ color: '#5C039B' }}>
+              {loading ? 'Loading...' : `${total.toLocaleString()} log${total !== 1 ? 's' : ''} found`}
+            </span>
           </div>
-        ) : logs.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 gap-4">
-            <div className="flex items-center justify-center rounded-2xl"
-              style={{ width: 60, height: 60, background: '#f3f4f6' }}>
-              <FiShield size={28} style={{ color: '#d1d5db' }} />
+
+          {loading && logs.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-20 gap-3">
+              <Spin size="large" />
+              <p className="text-sm mt-2" style={{ color: '#9ca3af' }}>Loading activity logs...</p>
             </div>
-            <p className="text-sm font-semibold" style={{ color: '#9ca3af' }}>No audit logs found</p>
-            <p className="text-xs" style={{ color: '#d1d5db' }}>
-              {hasFilters ? 'Try adjusting your filters' : 'Audit entries will appear here as actions are performed'}
-            </p>
-          </div>
-        ) : (
-          logs.map((log, i) => <AuditRow key={String(log._id ?? i)} log={log} />)
-        )}
+          ) : logs.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-20 gap-4">
+              <div className="flex items-center justify-center rounded-2xl"
+                style={{ width: 60, height: 60, background: '#f3f4f6' }}>
+                <FiShield size={28} style={{ color: '#d1d5db' }} />
+              </div>
+              <p className="text-sm font-bold" style={{ color: '#1a0533' }}>No audit logs found</p>
+              <p className="text-xs" style={{ color: '#9ca3af' }}>
+                {hasFilters ? 'Try adjusting your filter options' : 'Audit entries will appear here as actions are performed'}
+              </p>
+            </div>
+          ) : (
+            <div>
+              {logs.map((log, i) => <AuditRow key={String(log._id ?? i)} log={log} />)}
+            </div>
+          )}
 
-        {/* Load more */}
-        {hasMore && !loading && (
-          <div className="flex justify-center py-4 border-t border-gray-100">
-            <button
-              onClick={handleLoadMore}
-              className="px-5 py-2 rounded-lg text-sm font-medium border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors"
-            >
-              Load more ({(total - logs.length).toLocaleString()} remaining)
-            </button>
-          </div>
-        )}
+          {/* Load more */}
+          {hasMore && !loading && (
+            <div className="flex justify-center py-5 border-t border-gray-100 bg-gray-50/50">
+              <Button
+                onClick={handleLoadMore}
+                style={{ borderRadius: 10, borderColor: '#e5e7eb', color: '#5C039B', fontWeight: 600 }}
+              >
+                Load more ({(total - logs.length).toLocaleString()} remaining)
+              </Button>
+            </div>
+          )}
 
-        {loading && logs.length > 0 && (
-          <div className="flex justify-center py-4 border-t border-gray-100">
-            <div className="w-5 h-5 rounded-full border-2 border-violet-200 border-t-violet-500 animate-spin" />
-          </div>
-        )}
+          {loading && logs.length > 0 && (
+            <div className="flex justify-center py-5 border-t border-gray-100">
+              <Spin size="small" />
+            </div>
+          )}
+        </Card>
       </div>
     </div>
   );

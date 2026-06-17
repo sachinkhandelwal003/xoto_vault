@@ -448,9 +448,9 @@ export default function PartnerDetail() {
               {partner.suspensionReason && <InfoRow label="Suspension Reason" value={partner.suspensionReason} />}
             </SectionCard>
             <SectionCard title="Performance Metrics" icon={<Star size={16} />} color={C.amber}>
-              <InfoRow label="Cases Submitted" value={partner.performanceMetrics?.totalCasesSubmitted ?? 0} />
-              <InfoRow label="Cases Approved" value={partner.performanceMetrics?.totalCasesApproved ?? 0} />
-              <InfoRow label="Cases Disbursed" value={partner.performanceMetrics?.totalCasesDisbursed ?? 0} />
+              <InfoRow label="Applications Submitted" value={partner.performanceMetrics?.totalCasesSubmitted ?? 0} />
+              <InfoRow label="Applications Approved" value={partner.performanceMetrics?.totalCasesApproved ?? 0} />
+              <InfoRow label="Applications Disbursed" value={partner.performanceMetrics?.totalCasesDisbursed ?? 0} />
               <InfoRow label="Commission Earned" value={fmtAED(partner.performanceMetrics?.totalCommissionEarned ?? 0)} />
               <InfoRow label="Avg. Processing Days" value={partner.performanceMetrics?.averageProcessingDays ?? 0} />
               <InfoRow label="Conversion Rate" value={`${partner.performanceMetrics?.conversionRate ?? 0}%`} />

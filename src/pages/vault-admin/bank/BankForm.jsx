@@ -229,7 +229,7 @@ const BankForm = ({ mode = 'create', editData = null, onBack, onSuccess }) => {
                   <Space><BankOutlined style={{ color: PRIMARY }} /><Text strong>Basic Information</Text></Space>
                 </Divider>
                 <Row gutter={16}>
-                  <Col {...col2}>
+                  <Col {...(isEdit ? col2 : { span: 24 })}>
                     <Form.Item
                       name="bankName"
                       label="Bank Name"
@@ -238,15 +238,17 @@ const BankForm = ({ mode = 'create', editData = null, onBack, onSuccess }) => {
                       <Input placeholder="e.g. Emirates NBD" size="large" />
                     </Form.Item>
                   </Col>
-                  <Col {...col2}>
-                    <Form.Item
-                      name="bankCode"
-                      label="Bank Code"
-                      rules={[{ required: true, message: 'Enter bank code' }]}
-                    >
-                      <Input placeholder="e.g. ENBD" size="large" />
-                    </Form.Item>
-                  </Col>
+                  {isEdit && (
+                    <Col {...col2}>
+                      <Form.Item
+                        name="bankCode"
+                        label="Bank Code"
+                        rules={[{ required: true, message: 'Enter bank code' }]}
+                      >
+                        <Input placeholder="e.g. ENBD" size="large" />
+                      </Form.Item>
+                    </Col>
+                  )}
                   <Col span={24}>
                     <Form.Item
                       name="website"

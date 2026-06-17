@@ -698,7 +698,7 @@ const AdvisorViewCases = () => {
                 <thead>
                   <tr style={{ background: 'linear-gradient(135deg,#5C039B08,#03A4F408)' }}>
                     {[
-                      'Case Reference',
+                      'Application Reference',
                       'Client',
                       screens.md ? 'Bank / Product' : null,
                       'Loan Amount',

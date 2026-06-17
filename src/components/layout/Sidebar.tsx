@@ -23,7 +23,6 @@ const VAULT_NAV: Record<string, MenuItem[]> = {
       title: 'Lead Management', icon: 'fas fa-filter',
       submenus: [
         { title: 'Leads Queue',  to: '/dashboard/vault-admin/vault/agent-leads/unassigned' },
-        { title: 'Create Lead',  to: '/dashboard/vault-admin/leads/create' },
         { title: 'All Leads',    to: '/dashboard/vault-admin/vault/agent-leads' },
       ],
     },
@@ -34,36 +33,36 @@ const VAULT_NAV: Record<string, MenuItem[]> = {
         { title: 'Manage Applications',  to: '/dashboard/vault-admin/case/manage' },
       ],
     },
-    { title: 'Customer Management', icon: 'fas fa-user-friends', to: '/dashboard/vault-admin/customers' },
+
     {
       title: 'User & Profile', icon: 'fas fa-users-cog',
       submenus: [
-        { title: 'Xoto Advisors',              to: '/dashboard/vault-admin/advisor/list' },
-        { title: 'Mortgage Ops',               to: '/dashboard/vault-admin/mortgage-ops/list' },
+        { title: 'Customers',        to: '/dashboard/vault-admin/customers' },
+        { title: ' Advisors',              to: '/dashboard/vault-admin/advisor/list' },
+        { title: ' Ops',               to: '/dashboard/vault-admin/mortgage-ops/list' },
+                { title: 'Partners',                   to: '/dashboard/vault-admin/partners/list' },
+
         { title: 'Referral Partners',          to: '/dashboard/vault-admin/vault/agent-list' },
-        { title: 'Partners',                   to: '/dashboard/vault-admin/partners/list' },
       ],
     },
-    { title: 'Commission', icon: 'fas fa-percentage', to: '/dashboard/vault-admin/commission' },
+    { title: 'Commissions', icon: 'fas fa-percentage', to: '/dashboard/vault-admin/commission' },
     {
       title: 'Bank & Product Library', icon: 'fas fa-university',
       submenus: [
         { title: 'Banks',         to: '/dashboard/vault-admin/bank/list' },
         { title: 'Bank Products', to: '/dashboard/vault-admin/bank/products' },
-        { title: 'EIBOR Rates',   to: '/dashboard/vault-admin/eibor' },
       ],
     },
     {
-      title: 'Document Checklist', icon: 'fas fa-folder-open',
+      title: 'Document Management', icon: 'fas fa-folder-open',
       submenus: [
         { title: 'Global Documents', to: '/dashboard/vault-admin/documents/global' },
         { title: 'Bank Documents',   to: '/dashboard/vault-admin/documents/bank' },
       ],
     },
-    { title: 'Analytics & Reporting', icon: 'fas fa-chart-bar',  to: '/dashboard/vault-admin/analytics' },
-    { title: 'Audit Logs',            icon: 'fas fa-shield-alt', to: '/dashboard/vault-admin/audit' },
-    { title: 'Notifications',         icon: 'fas fa-bell',       to: '/dashboard/vault-admin/notifications' },
-    { title: 'Platform Config',       icon: 'fas fa-cogs',       to: '/dashboard/vault-admin/platform-config' },
+    { title: 'Reports', icon: 'fas fa-chart-bar', to: '/dashboard/vault-admin/analytics' },
+    { title: 'Content&Configuration',       icon: 'fas fa-cogs',       to: '/dashboard/vault-admin/platform-config' },
+
   ],
 
   // ── Partner Affiliated Agent (22_affiliated) ──────────────────────────────

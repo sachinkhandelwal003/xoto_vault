@@ -67,6 +67,17 @@ const Bankproductview = () => {
     ? `/dashboard/vault-admin/bank/products?bank=${bankId}`
     : '/dashboard/vault-admin/bank/products';
 
+  const handleTabChange = (key) => {
+    if (key === 'edit') {
+      const editUrl = bankId
+        ? `/dashboard/vault-admin/bank/products/manage/${productId}?bank=${bankId}`
+        : `/dashboard/vault-admin/bank/products/manage/${productId}`;
+      navigate(editUrl);
+    } else {
+      setMainTab(key);
+    }
+  };
+
   const fetchProduct = async () => {
     if (!productId) return;
     setLoading(true);
@@ -493,7 +504,7 @@ const Bankproductview = () => {
       <div style={{ padding: '24px 24px 0' }}>
         <Tabs
           activeKey={mainTab}
-          onChange={setMainTab}
+          onChange={handleTabChange}
           size="large"
           style={{ marginBottom: 20 }}
           tabBarStyle={{ background: '#fff', padding: '0 16px', borderRadius: 14, boxShadow: '0 2px 8px rgba(92,3,155,0.07)', marginBottom: 0 }}

@@ -553,7 +553,7 @@ const ProcessCasesUpdates = () => {
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
                   <tr style={{ background: 'linear-gradient(135deg,#5C039B08,#03A4F408)' }}>
-                    {['Case Reference', 'Client', screens.md ? 'Bank / Product' : null, 'Loan Amount', screens.lg ? 'Eligibility' : null, 'Status', 'Documents', ''].filter(Boolean).map((h, i) => (
+                    {['Application Reference', 'Client', screens.md ? 'Bank / Product' : null, 'Loan Amount', screens.lg ? 'Eligibility' : null, 'Status', 'Documents', ''].filter(Boolean).map((h, i) => (
                       <th key={i} style={{ padding: '13px 16px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: 0.7, borderBottom: '2px solid #f1f5f9', whiteSpace: 'nowrap' }}>{h}</th>
                     ))}
                   </tr>
@@ -617,7 +617,7 @@ const ProcessCasesUpdates = () => {
           {selCase && (
             <>
               <div style={{ background: '#f5f3ff', border: '1px solid #e9d5ff', borderRadius: 10, padding: '10px 14px', marginBottom: 16 }}>
-                <div style={{ fontSize: 12, color: '#6b7280' }}>Case: <strong>{selCase.caseReference}</strong></div>
+                <div style={{ fontSize: 12, color: '#6b7280' }}>Application: <strong>{selCase.caseReference}</strong></div>
                 <div style={{ fontSize: 12, color: '#6b7280', marginTop: 4 }}>Current: <StatusBadge status={selCase.currentStatus} /></div>
               </div>
               <div style={{ marginBottom: 16 }}>

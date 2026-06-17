@@ -13,9 +13,7 @@ import type { AuthContextType, AuthUser } from '../types/auth';
 
 export const AuthContext = createContext<AuthContextType | null>(null);
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL
-  ? `${import.meta.env.VITE_API_BASE_URL}/api`
-  : 'https://xoto.ae/api';
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'https://xoto.ae/api';
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const dispatch = useDispatch<AppDispatch>();

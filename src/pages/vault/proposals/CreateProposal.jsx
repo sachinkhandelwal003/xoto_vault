@@ -546,7 +546,11 @@ const CreateProposal = () => {
                 </div>
                 <div style={{ background: '#f8fafc', borderRadius: 14, padding: 12 }}>
                   <div style={{ fontSize: 10, color: '#94a3b8' }}>LTV</div>
-                  <div style={{ fontSize: 18, fontWeight: 800, color: '#0f172a' }}>{bank.ltv}%</div>
+                  <div style={{ fontSize: 18, fontWeight: 800, color: '#0f172a' }}>
+                    {bank.ltv && typeof bank.ltv === 'object'
+                      ? `${bank.ltv.max}%`
+                      : (String(bank.ltv || '').endsWith('%') ? bank.ltv : (bank.ltv ? `${bank.ltv}%` : '—'))}
+                  </div>
                 </div>
               </div>
             </Card>

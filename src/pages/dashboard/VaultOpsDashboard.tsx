@@ -317,7 +317,7 @@ const VaultOpsDashboard: React.FC = () => {
       {queueCases.length > 0 && (
         <Alert
           message={<span style={{ fontWeight: 800 }}>{queueCases.length} Applications Waiting in Queue — Pick one up now</span>}
-          description="High-priority cases need immediate review and assignment."
+          description="High-priority applications need immediate review and assignment."
           type="error" showIcon
           style={{ borderRadius: 16, marginBottom: 24, border: "none", boxShadow: "0 4px 12px rgba(239,68,68,0.1)" }}
           action={<Button size="small" danger onClick={() => navigate("/dashboard/vault-ops/case/queue/view")}>View Queue</Button>}
@@ -394,7 +394,7 @@ const VaultOpsDashboard: React.FC = () => {
         <Col xs={24} xl={16}>
           <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
             
-            {/* Cases Trend */}
+            {/* Applications Trend */}
             <div style={{ background: "#fff", borderRadius: 24, padding: 28, border: "1px solid #ede9ff", boxShadow: "0 2px 12px rgba(92,3,155,0.04)" }}>
               <h3 style={{ fontWeight: 900, color: "#1f2937", marginBottom: 24, fontSize: 16, display: "flex", alignItems: "center", gap: 10 }}>
                 <BarChartOutlined style={{ color: P }} /> Application Velocity Trend
@@ -411,7 +411,7 @@ const VaultOpsDashboard: React.FC = () => {
                   <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fill: "#94a3b8", fontSize: 11 }} />
                   <YAxis axisLine={false} tickLine={false} tick={{ fill: "#94a3b8", fontSize: 11 }} />
                   <ReTooltip content={<GlassTip />} />
-                  <Area type="monotone" dataKey="count" name="Cases" stroke={P} strokeWidth={4} fill="url(#caseGrad)" dot={{ r: 4, fill: P, strokeWidth: 2, stroke: "#fff" }} />
+                  <Area type="monotone" dataKey="count" name="Applications" stroke={P} strokeWidth={4} fill="url(#caseGrad)" dot={{ r: 4, fill: P, strokeWidth: 2, stroke: "#fff" }} />
                 </AreaChart>
               </ResponsiveContainer>
             </div>

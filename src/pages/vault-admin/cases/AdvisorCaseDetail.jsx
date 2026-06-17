@@ -55,6 +55,43 @@ const InfoRow = ({ label, value, icon }) => (
   </div>
 );
 
+/* ─── SLA Badge ─── */
+const SlaBadge = ({ sla, slaStatus }) => {
+  const [now, setNow] = React.useState(Date.now());
+  React.useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 60_000);
+    return () => clearInterval(t);
+  }, []);
+
+  if (!sla?.startedAt) return null;
+
+  const deadline  = new Date(sla.deadlineAt).getTime();
+  const remaining = deadline - now;
+  const hrs  = Math.floor(Math.abs(remaining) / 3_600_000);
+  const mins = Math.floor((Math.abs(remaining) % 3_600_000) / 60_000);
+  const overdue = remaining < 0;
+
+  const cfg = {
+    'on-track': { color: '#059669', bg: '#ecfdf5', label: 'On Track' },
+    'at-risk':  { color: '#d97706', bg: '#fffbeb', label: 'At Risk' },
+    'breached': { color: '#dc2626', bg: '#fef2f2', label: 'Breached' },
+  }[slaStatus] || { color: '#64748b', bg: '#f1f5f9', label: 'SLA' };
+
+  return (
+    <div style={{
+      display: 'flex', alignItems: 'center', gap: 6,
+      background: cfg.bg, color: cfg.color,
+      borderRadius: 8, padding: '6px 14px', fontWeight: 700, fontSize: 12, flexShrink: 0,
+    }}>
+      <ClockCircleOutlined style={{ fontSize: 13 }} />
+      <span>SLA {cfg.label}</span>
+      <span style={{ fontWeight: 400, opacity: 0.8 }}>
+        {overdue ? '+' : ''}{hrs}h {mins}m {overdue ? 'overdue' : 'left'}
+      </span>
+    </div>
+  );
+};
+
 const SectionCard = ({ title, icon, children, style }) => (
   <Card
     bordered={false}
@@ -411,7 +448,6 @@ const CaseOverview = ({ data }) => {
             <InfoRow label="Residency"            value={c.residencyStatus}   icon={<SafetyOutlined />} />
             <InfoRow label="Employment"           value={c.employmentStatus}  icon={<AuditOutlined />} />
             <InfoRow label="Monthly Salary"       value={(c.monthlySalary || c.fixedMonthlySalary) ? `AED ${Number(c.monthlySalary || c.fixedMonthlySalary).toLocaleString()}` : null} />
-            <InfoRow label="Salary Bank"          value={c.salaryBankName} />
             <InfoRow label="Existing Liabilities" value={c.existingLiabilities ? `AED ${Number(c.existingLiabilities).toLocaleString()}` : null} />
             <InfoRow label="Mortgage Term"        value={c.mortgageTerm ? `${c.mortgageTerm} years` : null} />
             <InfoRow label="Fee Financing"        value={c.feeFinancingRequired != null ? (c.feeFinancingRequired ? 'Yes' : 'No') : null} />
@@ -1132,6 +1168,9 @@ const fileUrl =
         <div style={{ background: sc.bg, color: sc.color, borderRadius: 8, padding: '6px 14px', fontWeight: 700, fontSize: 13, flexShrink: 0 }}>
           {caseData.currentStatus}
         </div>
+
+        {/* SLA badge */}
+        <SlaBadge sla={caseData.sla} slaStatus={caseData.slaStatus} />
       </div>
 
       {/* Resubmit Banner */}

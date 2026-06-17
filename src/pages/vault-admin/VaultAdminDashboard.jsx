@@ -112,7 +112,7 @@ const VaultAdminDashboard = () => {
   const kpiCards = [
     { label: "Total Leads",      value: kpis.totalLeads ?? 0,       icon: Target,      color: BL,  bg: BLL },
     { label: "Unassigned",       value: kpis.unassignedLeads ?? 0,  icon: Zap,         color: P,   bg: PL  },
-    { label: "Active Cases",     value: kpis.activeCases ?? 0,      icon: FolderOpen,  color: AM,  bg: AML },
+    { label: "Active Applications", value: kpis.activeCases ?? 0,      icon: FolderOpen,  color: AM,  bg: AML },
     { label: "Disbursed",        value: kpis.disbursedCases ?? 0,   icon: DollarSign,  color: GN,  bg: GNL },
     { label: "Conversion Rate",  value: `${(kpis.conversionRate ?? 0).toFixed(1)}%`,icon: TrendingUp, color: CY, bg: CYL },
     { label: "SLA Breached",     value: kpis.slaBreachedLeads ?? 0, icon: AlertCircle, color: RD,  bg: RDL },
@@ -121,7 +121,7 @@ const VaultAdminDashboard = () => {
   const timelineData = (graphs.leadsOverTime ?? []).map((d) => ({
     name: dayjs(d.date).format("DD MMM"),
     Leads: d.count,
-    Cases: (graphs.casesOverTime ?? []).find((c) => c.date === d.date)?.count ?? 0,
+    Applications: (graphs.casesOverTime ?? []).find((c) => c.date === d.date)?.count ?? 0,
   }));
 
   const commissionData = (graphs.commissionSummary ?? []).map((d) => ({
@@ -270,7 +270,7 @@ const VaultAdminDashboard = () => {
               </h3>
               <div className="flex gap-2">
                 <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-blue-500" /> <span className="text-[10px] font-bold text-gray-400">LEADS</span></div>
-                <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-purple-600" /> <span className="text-[10px] font-bold text-gray-400">CASES</span></div>
+                <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-purple-600" /> <span className="text-[10px] font-bold text-gray-400">APPLICATIONS</span></div>
               </div>
             </div>
             <ResponsiveContainer width="100%" height={280}>
@@ -290,7 +290,7 @@ const VaultAdminDashboard = () => {
                 <YAxis axisLine={false} tickLine={false} tick={{ fill: "#9ca3af", fontSize: 11 }} />
                 <Tooltip content={<CustomTooltip />} />
                 <Area type="monotone" dataKey="Leads" stroke={BL} strokeWidth={3} fill="url(#lGrad)" />
-                <Area type="monotone" dataKey="Cases" stroke={P} strokeWidth={3} fill="url(#cGrad)" />
+                <Area type="monotone" dataKey="Applications" stroke={P} strokeWidth={3} fill="url(#cGrad)" />
               </AreaChart>
             </ResponsiveContainer>
           </div>
@@ -448,7 +448,7 @@ const VaultAdminDashboard = () => {
         <Col xs={24} lg={12}>
           <div className="bg-white rounded-[24px] p-6 shadow-sm border border-gray-100">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-black text-gray-800 m-0">Recent Cases</h3>
+              <h3 className="text-lg font-black text-gray-800 m-0">Recent Applications</h3>
               <Button type="link" className="text-purple-600 font-bold p-0" onClick={() => navigate("/dashboard/vault-admin/case/view/all")}>
                 View All <ArrowRight size={14} className="ml-1" />
               </Button>

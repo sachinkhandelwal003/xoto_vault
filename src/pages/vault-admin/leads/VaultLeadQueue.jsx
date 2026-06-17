@@ -555,7 +555,7 @@ const VaultLeadQueue = () => {
           <Button
             type="primary"
             icon={<PlusOutlined />}
-            onClick={() => setCreateOpen(true)}
+            onClick={() => navigate('/dashboard/vault-admin/leads/create')}
             style={{ borderRadius: 10, background: P, borderColor: P, fontWeight: 600 }}
           >
             Create Lead

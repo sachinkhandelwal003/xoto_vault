@@ -106,8 +106,8 @@ export default function PartnerAnalytics() {
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 14, marginBottom: 28 }}>
           {[
             { label: "Total Leads",       value: kpis.totalLeads ?? 0,                           icon: "fas fa-user-plus",     color: BL,  bg: "#eff6ff" },
-            { label: "Active Cases",      value: kpis.activeCases ?? 0,                          icon: "fas fa-briefcase",     color: P,   bg: PL },
-            { label: "Disbursed Cases",   value: kpis.disbursedCases ?? 0,                       icon: "fas fa-check-circle",  color: GN,  bg: "#ecfdf5" },
+            {label: "Active Applications", value: kpis.activeCases ?? 0,                          icon: "fas fa-briefcase",     color: P,   bg: PL },
+            {label: "Disbursed Applications", value: kpis.disbursedCases ?? 0,                       icon: "fas fa-check-circle",  color: GN,  bg: "#ecfdf5" },
             { label: "Conversion Rate",   value: `${(kpis.conversionRate ?? 0).toFixed(1)}%`,    icon: "fas fa-chart-line",    color: AMB, bg: "#fffbeb" },
             { label: "Commission Earned", value: fmt(kpis.totalCommissionEarned ?? 0),           icon: "fas fa-wallet",        color: "#7c3aed", bg: "#f5f3ff" },
             { label: "Pending Commission",value: fmt(kpis.pendingCommission ?? 0),               icon: "fas fa-clock",         color: RD,  bg: "#fef2f2" },

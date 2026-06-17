@@ -80,7 +80,7 @@ const VAULT_ROLES: VaultRole[] = [
 
 const FEATURES = [
   'End-to-end mortgage processing',
-  'Real-time case tracking & updates',
+  'Real-time application tracking & updates',
   'Secure document management',
   'Multi-role team collaboration',
 ];

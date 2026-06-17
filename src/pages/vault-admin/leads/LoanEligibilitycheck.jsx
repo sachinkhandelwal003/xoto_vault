@@ -85,11 +85,10 @@ export default function VaultAgentLeadEditEligibility() {
   const [eligibilityLoading, setEligibilityLoading] = useState(false);
   const [flashMsg, setFlashMsg] = useState({ type: "", text: "" });
 
-  // Form States
   const [basicInfo, setBasicInfo] = useState({
     firstName: "", lastName: "", fullName: "", email: "", mobileNumber: "",
-    nationality: "", dateOfBirth: null, maritalStatus: "", numberOfDependents: 0,
-    occupation: "", employer: "", gender: "", residencyStatus: "",
+    nationality: "", dateOfBirth: null, maritalStatus: "",
+    occupation: "", gender: "", residencyStatus: "",
     employmentStatus: "",
     monthlySalary: 0, existingMonthlyLiabilities: 0
   });
@@ -225,9 +224,7 @@ export default function VaultAgentLeadEditEligibility() {
         nationality: ci.nationality || "",
         dateOfBirth: ci.dateOfBirth ? dayjs(ci.dateOfBirth) : null,
         maritalStatus: ci.maritalStatus || "",
-        numberOfDependents: ci.numberOfDependents || 0,
         occupation: ci.occupation || "",
-        employer: ci.employer || "",
         gender: ci.gender || "",
         residencyStatus: ci.residencyStatus || "UAE Resident",
         employmentStatus: ci.employmentStatus || "",
@@ -338,7 +335,6 @@ export default function VaultAgentLeadEditEligibility() {
         maritalStatus: basicInfo.maritalStatus,
         employmentStatus: basicInfo.employmentStatus,
         occupation: basicInfo.occupation,
-        employer: basicInfo.employer,
         monthlySalary: basicInfo.monthlySalary,
         existingMonthlyLiabilities: basicInfo.existingMonthlyLiabilities
       };
@@ -387,7 +383,6 @@ export default function VaultAgentLeadEditEligibility() {
           gender: values.gender || null,
           maritalStatus: values.maritalStatus || null,
           occupation: values.occupation || null,
-          employer: values.employer || null,
           employmentStatus: values.employmentStatus || null,
           monthlySalary: values.monthlySalary || 0,
           existingMonthlyLiabilities: values.existingMonthlyLiabilities || 0,
@@ -406,7 +401,6 @@ export default function VaultAgentLeadEditEligibility() {
           gender: values.gender,
           maritalStatus: values.maritalStatus,
           occupation: values.occupation,
-          employer: values.employer,
           employmentStatus: values.employmentStatus,
           monthlySalary: values.monthlySalary,
           existingMonthlyLiabilities: values.existingMonthlyLiabilities
@@ -471,7 +465,6 @@ export default function VaultAgentLeadEditEligibility() {
     { name: "maritalStatus", label: "Marital Status", type: "select", options: ["Single", "Married", "Divorced", "Widowed"] },
     { name: "employmentStatus", label: "Employment Status", type: "select", options: ["Salaried", "Self-Employed"] },
     { name: "occupation", label: "Occupation", type: "text" },
-    { name: "employer", label: "Employer", type: "text" },
     { name: "monthlySalary", label: "Monthly Salary (AED)", type: "number" },
     { name: "existingMonthlyLiabilities", label: "Existing Liabilities (EMIs + Cards)", type: "number" }
   ];

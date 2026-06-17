@@ -156,7 +156,7 @@ const STATUS_INFO = {
     color: SL,
     requiresNote: true,
     noteLabel: 'Reason *',
-    notePlaceholder: 'Why is this case being marked as lost?',
+    notePlaceholder: 'Why is this application being marked as lost?',
     requiresAmount: false,
     requiresBankRef: false,
   },
@@ -906,7 +906,6 @@ export default function OpsAssignedReview() {
                   <InfoRow label="Residency"            value={ci.residencyStatus} />
                   <InfoRow label="Employment"           value={ci.employmentStatus}/>
                   <InfoRow label="Monthly Salary"       value={ci.monthlySalary || ci.fixedMonthlySalary ? `AED ${Number(ci.monthlySalary || ci.fixedMonthlySalary).toLocaleString()}` : null} />
-                  <InfoRow label="Salary Bank"          value={ci.salaryBankName} />
                   <InfoRow label="Liabilities/mo"       value={ci.existingLiabilities ? `AED ${Number(ci.existingLiabilities).toLocaleString()}` : null} />
                   <InfoRow label="Mortgage Term"        value={ci.mortgageTerm ? `${ci.mortgageTerm} years` : null} />
                   <InfoRow label="Fee Financing"        value={ci.feeFinancingRequired != null ? (ci.feeFinancingRequired ? 'Yes' : 'No') : null} />

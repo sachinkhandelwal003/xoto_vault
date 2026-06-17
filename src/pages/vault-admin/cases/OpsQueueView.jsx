@@ -483,7 +483,7 @@ export default function OpsQueueView() {
         <div style={{ background: '#fff', borderRadius: 14, padding: '12px 16px', boxShadow: '0 8px 28px rgba(0,0,0,.1)', display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
           <Input
             prefix={<SearchOutlined style={{ color: '#94a3b8' }} />}
-            placeholder="Search name, email, case ref…"
+            placeholder="Search name, email, application ref…"
             value={search} onChange={e=>{ setSearch(e.target.value); setPage(1); }}
             allowClear
             style={{ borderRadius: 9, flex: '1 1 200px', maxWidth: 300 }}
@@ -623,7 +623,7 @@ export default function OpsQueueView() {
                             {/* utilisation bar */}
                             <div style={{ marginTop: 6 }}>
                               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: '#94a3b8', marginBottom: 3 }}>
-                                <span>{o.currentApplications} / {o.maxCapacity} cases</span>
+                                <span>{o.currentApplications} / {o.maxCapacity} applications</span>
                                 <span style={{ fontWeight: 700, color: uc.text }}>{o.utilization}%</span>
                               </div>
                               <div style={{ height: 5, background: '#f1f5f9', borderRadius: 6, overflow: 'hidden' }}>

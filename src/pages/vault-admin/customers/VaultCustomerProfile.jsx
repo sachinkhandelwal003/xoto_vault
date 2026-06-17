@@ -199,7 +199,7 @@ const VaultCustomerProfile = () => {
         <StatPill icon={<FileOutlined />}         label="Total Leads"  value={stats?.totalLeads}  color={P}  bg={PL} />
         <StatPill icon={<SafetyCertificateOutlined />} label="Qualified" value={stats?.qualified}  color="#7c3aed" bg="#f5f3ff" />
         <StatPill icon={<CheckCircleOutlined />}  label="Disbursed"    value={stats?.disbursed}   color={GN} bg="#d1fae5" />
-        <StatPill icon={<GlobalOutlined />}       label="Active Cases" value={stats?.activeCases} color="#0891b2" bg="#ecfeff" />
+        <StatPill icon={<GlobalOutlined />}       label="Active Applications" value={stats?.activeCases} color="#0891b2" bg="#ecfeff" />
       </div>
 
       {/* Customer Details */}
@@ -229,9 +229,9 @@ const VaultCustomerProfile = () => {
         }
       </SectionCard>
 
-      {/* Vault Cases */}
+      {/* Vault Applications */}
       {(vaultCases?.length ?? 0) > 0 && (
-        <SectionCard title={`Vault Cases (${vaultCases.length})`} borderColor="#d1fae5">
+        <SectionCard title={`Vault Applications (${vaultCases.length})`} borderColor="#d1fae5">
           <Table
             columns={caseColumns}
             dataSource={vaultCases.map((c, i) => ({ ...c, key: c._id || i }))}

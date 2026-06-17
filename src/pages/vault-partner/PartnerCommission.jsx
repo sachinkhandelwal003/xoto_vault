@@ -73,7 +73,7 @@ const PartnerCommission = () => {
   const kpiCards = [
     { label: "Total Earned", value: `AED ${stats?.totalEarned?.toLocaleString() || 0}`, icon: Wallet, color: GN, bg: GNL },
     { label: "Pending Payout", value: `AED ${stats?.pending?.toLocaleString() || 0}`, icon: Clock, color: AM, bg: AML },
-    { label: "Total Cases", value: stats?.totalCount || 0, icon: Briefcase, color: BL, bg: BLL },
+    { label: "Total Applications", value: stats?.totalCount || 0, icon: Briefcase, color: BL, bg: BLL },
     { label: "Paid Count", value: stats?.paidCount || 0, icon: CheckCircle, color: P, bg: PL },
   ];
 
@@ -85,7 +85,7 @@ const PartnerCommission = () => {
     },
     {
       key: "caseReference",
-      title: "Case Ref",
+      title: "Application Ref",
       render: (ref) => <span className="font-bold text-gray-700 text-xs">{ref}</span>,
     },
     {
@@ -276,7 +276,7 @@ const PartnerCommission = () => {
 
             <Row gutter={[32, 32]}>
               <Col span={12}>
-                <h4 className="flex items-center gap-2 font-black text-gray-800 mb-4"><FileText size={16} className="text-purple-600" /> Case Info</h4>
+                <h4 className="flex items-center gap-2 font-black text-gray-800 mb-4"><FileText size={16} className="text-purple-600" /> Application Info</h4>
                 <Descriptions column={1} size="small">
                   <Descriptions.Item label={<span className="font-bold text-gray-400 text-xs">Reference</span>}>
                     <span className="font-bold text-gray-800">{selectedCommission.caseReference}</span>

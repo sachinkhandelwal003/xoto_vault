@@ -15,11 +15,16 @@ export const EVENT_META: Record<string, { color: string; bg: string; label: stri
   LEAD_ASSIGNED:        { color: '#d97706', bg: '#fffbeb', label: 'Lead Assigned' },
   LEAD_STATUS_UPDATED:  { color: '#059669', bg: '#ecfdf5', label: 'Lead Updated' },
   PROPOSAL_CREATED:     { color: '#7c3aed', bg: '#faf5ff', label: 'Proposal' },
-  CASE_CREATED:         { color: '#dc2626', bg: '#fef2f2', label: 'New Case' },
-  CASE_SUBMITTED:       { color: '#ea580c', bg: '#fff7ed', label: 'Case Submitted' },
-  CASE_PICKED_UP:       { color: '#0284c7', bg: '#f0f9ff', label: 'Case Picked Up' },
+  CASE_CREATED:         { color: '#dc2626', bg: '#fef2f2', label: 'New Application' },
+  CASE_SUBMITTED:       { color: '#ea580c', bg: '#fff7ed', label: 'Application Submitted' },
+  CASE_PICKED_UP:       { color: '#0284c7', bg: '#f0f9ff', label: 'Application Picked Up' },
   CASE_ASSIGNED_TO_OPS: { color: '#7c3aed', bg: '#f5f3ff', label: 'Ops Assigned' },
-  CASE_STATUS_UPDATED:  { color: '#0f766e', bg: '#f0fdfa', label: 'Case Updated' },
+  CASE_STATUS_UPDATED:  { color: '#0f766e', bg: '#f0fdfa', label: 'Application Updated' },
+  APPLICATION_CREATED:         { color: '#dc2626', bg: '#fef2f2', label: 'New Application' },
+  APPLICATION_SUBMITTED:       { color: '#ea580c', bg: '#fff7ed', label: 'Application Submitted' },
+  APPLICATION_PICKED_UP:       { color: '#0284c7', bg: '#f0f9ff', label: 'Application Picked Up' },
+  APPLICATION_ASSIGNED_TO_OPS: { color: '#7c3aed', bg: '#f5f3ff', label: 'Ops Assigned' },
+  APPLICATION_STATUS_UPDATED:  { color: '#0f766e', bg: '#f0fdfa', label: 'Application Updated' },
   COMMISSION_CREATED:   { color: '#15803d', bg: '#f0fdf4', label: 'Commission' },
   COMMISSION_CONFIRMED: { color: '#1d4ed8', bg: '#eff6ff', label: 'Confirmed' },
   COMMISSION_PAID:      { color: '#166534', bg: '#dcfce7', label: 'Paid ✓' },
@@ -116,11 +121,7 @@ const VaultNotificationBell: React.FC = () => {
 
   const handleViewAll = () => {
     setOpen(false);
-    if (slug === 'vault-admin') {
-      navigate('/dashboard/vault-admin/platform-config');
-    } else {
-      navigate(`/dashboard/${slug}/notifications`);
-    }
+    navigate(`/dashboard/${slug}/notifications`);
   };
 
   // Show max 8 in dropdown preview

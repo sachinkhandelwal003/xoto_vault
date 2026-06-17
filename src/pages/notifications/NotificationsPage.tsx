@@ -9,9 +9,7 @@ import { EVENT_META, getMeta, timeAgo } from '../../components/common/VaultNotif
 import type { VaultNotification } from '../../hooks/useVaultSocket';
 import { useVaultSocket } from '../../hooks/useVaultSocket';
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL
-  ? `${import.meta.env.VITE_API_BASE_URL}/api`
-  : 'http://localhost:5000/api';
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'https://xoto.ae/api';
 
 const PAGE_SIZE = 20;
 

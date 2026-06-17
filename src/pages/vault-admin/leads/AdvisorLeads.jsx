@@ -64,7 +64,7 @@ const TAB_LIST = [
   { key: "Qualified",            label: "Qualified",       icon: <CheckCircleOutlined /> },
   { key: "Collecting Documents", label: "Collecting Docs", icon: <FileTextOutlined /> },
   { key: "Documents Complete",   label: "Docs Complete",   icon: <CheckCircleOutlined /> },
-  { key: "Application Opened",   label: "Case Opened",     icon: <FolderOpenOutlined /> },
+  { key: "Application Opened",   label: "Application Opened",     icon: <FolderOpenOutlined /> },
   { key: "Not Proceeding",       label: "Not Proceeding",  icon: <CloseCircleOutlined /> },
 ];
 
@@ -144,10 +144,10 @@ const AdvisorLeads = () => {
   /* ── Status update ── */
   const openStatusModal = (record, status = "") => {
     if (record?.conversionInfo?.convertedToApplication) {
-      message.warning("Status locked — a Case has been created"); return;
+      message.warning("Status locked — an Application has been created"); return;
     }
     if (QUALIFIED_LOCK.includes(record?.currentStatus)) {
-      message.warning("Lead is locked — create a Case to continue"); return;
+      message.warning("Lead is locked — create an Application to continue"); return;
     }
     setStatusTarget(record);
     setSelectedStatus(status);
@@ -316,12 +316,12 @@ const AdvisorLeads = () => {
                 </button>
               )}
 
-              {/* Create Case / Proposal */}
+              {/* Create Application / Proposal */}
               {QUALIFIED_LOCK.includes(st) && !caseCreated && (
                 <>
                   <button onClick={() => navigate(`/dashboard/${roleSlug}/case/create?leadId=${id}`)}
                     style={{ padding: "5px 11px", borderRadius: 8, border: "none", background: `linear-gradient(135deg,${P},#7C3AED)`, color: "#fff", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>
-                    + Create Case
+                    + Create Application
                   </button>
                   <button onClick={() => navigate(`/dashboard/${roleSlug}/proposals/create?leadId=${id}`)}
                     style={{ padding: "5px 11px", borderRadius: 8, border: "1px solid #ddd6fe", background: "#faf5ff", color: "#7c3aed", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>
@@ -333,7 +333,7 @@ const AdvisorLeads = () => {
               {/* Locked */}
               {locked && (
                 <span style={{ fontSize: 10, fontWeight: 700, borderRadius: 8, padding: "4px 8px", color: caseCreated ? "#2563eb" : "#059669", background: caseCreated ? "#eff6ff" : "#ecfdf5", border: `1px solid ${caseCreated ? "#bfdbfe" : "#a7f3d0"}` }}>
-                  {caseCreated ? "🔒 Case Created" : "🔒 Qualified"}
+                  {caseCreated ? "🔒 Application Created" : "🔒 Qualified"}
                 </span>
               )}
             </div>

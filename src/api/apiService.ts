@@ -1,11 +1,14 @@
 import axios from 'axios';
 import { showToast } from '../utils/toast';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
-  ? `${import.meta.env.VITE_API_BASE_URL}/api/`
-  : 'https://xoto.ae/api/';
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'https://xoto.ae/api';
 
-const api = axios.create({ baseURL: API_BASE_URL });
+// Resolves both '/vault/cases/...' and 'bank/products/...' correctly.
+const resolve = (path: string) => `${API_BASE}/${path.replace(/^\//, '')}`;
+
+// No baseURL on the instance — we build the full URL manually so that leading-slash
+// paths like '/vault/cases/...' don't strip the /api segment via URL resolution.
+const api = axios.create();
 
 api.interceptors.request.use(
   (config) => {
@@ -40,27 +43,27 @@ api.interceptors.response.use(
 
 export const apiService = {
   get: async <T = unknown>(url: string, params: Record<string, unknown> = {}): Promise<T> => {
-    const response = await api.get<T>(url, { params });
+    const response = await api.get<T>(resolve(url), { params });
     return response.data;
   },
 
   post: async <T = unknown>(url: string, data?: unknown): Promise<T> => {
-    const response = await api.post<T>(url, data);
+    const response = await api.post<T>(resolve(url), data);
     return response.data;
   },
 
   put: async <T = unknown>(url: string, data?: unknown): Promise<T> => {
-    const response = await api.put<T>(url, data);
+    const response = await api.put<T>(resolve(url), data);
     return response.data;
   },
 
   patch: async <T = unknown>(url: string, data?: unknown): Promise<T> => {
-    const response = await api.patch<T>(url, data);
+    const response = await api.patch<T>(resolve(url), data);
     return response.data;
   },
 
   delete: async <T = unknown>(url: string): Promise<T> => {
-    const response = await api.delete<T>(url);
+    const response = await api.delete<T>(resolve(url));
     return response.data;
   },
 
@@ -69,7 +72,7 @@ export const apiService = {
     formData: FormData,
     onUploadProgress?: (e: { loaded: number; total?: number }) => void
   ): Promise<T> => {
-    const response = await api.post<T>(url, formData, {
+    const response = await api.post<T>(resolve(url), formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
       onUploadProgress,
     });
@@ -77,7 +80,7 @@ export const apiService = {
   },
 
   download: async (url: string, fileName: string): Promise<boolean> => {
-    const response = await api.get(url, { responseType: 'blob' });
+    const response = await api.get(resolve(url), { responseType: 'blob' });
     const urlBlob = window.URL.createObjectURL(new Blob([response.data as BlobPart]));
     const link = document.createElement('a');
     link.href = urlBlob;

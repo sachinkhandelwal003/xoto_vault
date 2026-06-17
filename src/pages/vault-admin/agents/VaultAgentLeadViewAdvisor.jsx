@@ -324,7 +324,7 @@ export default function VaultAgentLeadDetail() {
               <div style={{ display: "flex", gap: 10, flexWrap: "wrap", justifyContent: "flex-end" }}>
                 {isLeadLocked ? (
                   <div style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "10px 18px", background: "#F3F4F6", color: "#6B7280", border: "1px solid #D1D5DB", borderRadius: 12, fontSize: 13, fontWeight: 700 }}>
-                    <Shield size={15} /> Status Locked — Case Created
+                    <Shield size={15} /> Status Locked — Application Created
                   </div>
                 ) : (
                   <button
@@ -405,7 +405,6 @@ export default function VaultAgentLeadDetail() {
                 <DRow label="Date of Birth" value={fmtDate(ci?.dateOfBirth)} />
                 <DRow label="Age" value={customerAge ? `${customerAge} years` : null} />
                 <DRow label="Occupation" value={show(ci?.occupation)} />
-                <DRow label="Employer" value={show(ci?.employer)} />
               </Section>
 
               <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>

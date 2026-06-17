@@ -3,9 +3,7 @@ import { jwtDecode } from 'jwt-decode';
 import axios from 'axios';
 import type { AuthState, AuthUser, Permission } from '../types/auth';
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL
-  ? `${import.meta.env.VITE_API_BASE_URL}/api`
-  : 'https://xoto.ae/api';
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'https://xoto.ae/api';
 
 const VAULT_ROLE_CODES = ['18', '21', '22', '23', '26'];
 

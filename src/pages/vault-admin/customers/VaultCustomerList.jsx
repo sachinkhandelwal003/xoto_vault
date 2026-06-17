@@ -176,7 +176,7 @@ const VaultCustomerList = () => {
       ),
     },
     {
-      title: 'Active Cases',
+      title: 'Active Applications',
       key: 'activeCases',
       render: (_, row) => (
         <div style={{ textAlign: 'center' }}>

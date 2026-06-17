@@ -17,10 +17,8 @@ export interface VaultNotification {
   createdAt: string;
 }
 
-const SOCKET_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
-const API_BASE   = import.meta.env.VITE_API_BASE_URL
-  ? `${import.meta.env.VITE_API_BASE_URL}/api`
-  : 'http://localhost:5000/api';
+const SOCKET_URL = import.meta.env.VITE_API_BASE_URL || 'https://xoto.ae';
+const API_BASE   = import.meta.env.VITE_API_BASE_URL || 'https://xoto.ae/api';
 const MAX_NOTIFICATIONS = 100;
 
 export const useVaultSocket = () => {

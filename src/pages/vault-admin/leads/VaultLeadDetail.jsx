@@ -470,7 +470,7 @@ const LeadStatusPanel = ({ lead, roleCode, onRefetch }) => {
         <div className="px-6 pb-4 pt-3 border-t border-gray-50">
           <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-sky-50 border border-sky-200">
             <Shield size={14} className="text-sky-600 flex-shrink-0" />
-            <span className="text-xs text-sky-700 font-semibold">Status locked — this lead is linked to an active Case.</span>
+            <span className="text-xs text-sky-700 font-semibold">Status locked — this lead is linked to an active Application.</span>
           </div>
         </div>
       )}
@@ -579,9 +579,7 @@ const VaultLeadDetail = () => {
                 <InfoRow label="Residency"       value={customerInfo.residencyStatus} />
                 <InfoRow label="Employment"      value={customerInfo.employmentStatus} icon={Building} />
                 <InfoRow label="Monthly Salary"  value={formatCurrency(customerInfo.monthlySalary)} icon={Banknote} />
-                <InfoRow label="Salary Bank"     value={customerInfo.salaryBankName} icon={Building} />
-                <InfoRow label="Liabilities/mo"  value={formatCurrency(customerInfo.existingLiabilities ?? customerInfo.existingMonthlyLiabilities)} icon={DollarSign} />
-                <InfoRow label="Employer"        value={customerInfo.employer} last />
+                <InfoRow label="Liabilities/mo"  value={formatCurrency(customerInfo.existingLiabilities ?? customerInfo.existingMonthlyLiabilities)} icon={DollarSign} last />
               </DetailCard>
 
               <DetailCard icon={Home} title="Property Details" accentColor="#10b981">
