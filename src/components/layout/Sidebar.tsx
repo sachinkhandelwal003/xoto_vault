@@ -389,7 +389,7 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, mobileOpen, onCloseMobile 
 
           {/* Vault logo — big & centered */}
           <img
-            src="/KGT-RealEstate.png"
+            src="/vault-logo.png"
             alt="Xoto Vault"
             style={{
               width:  collapsed ? 44 : 110,
