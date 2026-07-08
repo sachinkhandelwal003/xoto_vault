@@ -1,7 +1,6 @@
 import axios from 'axios';
 import { showToast } from '../utils/toast';
-
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'https://xoto.ae/api';
+import { API_BASE } from '../config/urls';
 
 // Resolves both '/vault/cases/...' and 'bank/products/...' correctly.
 const resolve = (path: string) => `${API_BASE}/${path.replace(/^\//, '')}`;

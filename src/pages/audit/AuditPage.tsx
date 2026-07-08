@@ -7,8 +7,7 @@ import {
   FiShield, FiRefreshCw, FiFilter, FiSearch, FiChevronDown, FiChevronUp,
   FiUser, FiFile, FiDollarSign, FiLock, FiActivity, FiAlertCircle,
 } from 'react-icons/fi';
-
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'https://xoto.ae/api';
+import { API_BASE } from '../../config/urls';
 
 const PAGE_SIZE = 25;
 

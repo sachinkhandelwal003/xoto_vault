@@ -8,8 +8,7 @@ import type { RootState } from '../../store/store';
 import { EVENT_META, getMeta, timeAgo } from '../../components/common/VaultNotificationBell';
 import type { VaultNotification } from '../../hooks/useVaultSocket';
 import { useVaultSocket } from '../../hooks/useVaultSocket';
-
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'https://xoto.ae/api';
+import { API_BASE } from '../../config/urls';
 
 const PAGE_SIZE = 20;
 

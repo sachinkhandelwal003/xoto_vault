@@ -191,7 +191,9 @@ const App: React.FC = () => (
     
     <Routes>
       {/* ── Public ── */}
-      <Route path="/login" element={<VaultLogin />} />
+      <Route path="/login" element={<Navigate to="/admin" replace />} />
+      <Route path="/admin" element={<VaultLogin mode="team" />} />
+      <Route path="/partner-login" element={<VaultLogin mode="partner" />} />
       <Route path="/auth/callback" element={<AuthCallback />} />
       <Route path="/unauthorized" element={<Unauthorized />} />
       <Route path="/" element={<RoleRedirect />} />
@@ -409,7 +411,7 @@ const App: React.FC = () => (
       </Route>
 
       {/* Fallback */}
-      <Route path="*" element={<Navigate to="/login" replace />} />
+      <Route path="*" element={<Navigate to="/admin" replace />} />
     </Routes>
   </Suspense>
 );

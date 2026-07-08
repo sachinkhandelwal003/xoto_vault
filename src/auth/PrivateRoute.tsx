@@ -17,7 +17,9 @@ const PrivateRoute: React.FC<PrivateRouteProps> = ({
   const { user, token, isAuthenticated } = useSelector((s: RootState) => s.auth);
 
   if (!isAuthenticated || !token || !user) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
+    const isPartnerRoute = location.pathname.includes('/dashboard/vaultagent') || location.pathname.includes('/dashboard/vaultpartner');
+    const redirectPath = isPartnerRoute ? '/partner-login' : '/admin';
+    return <Navigate to={redirectPath} state={{ from: location }} replace />;
   }
 
   const roleCode =
@@ -33,7 +35,7 @@ const PrivateRoute: React.FC<PrivateRouteProps> = ({
 export const RoleRedirect: React.FC = () => {
   const { user, isAuthenticated } = useSelector((s: RootState) => s.auth);
 
-  if (!isAuthenticated || !user) return <Navigate to="/login" replace />;
+  if (!isAuthenticated || !user) return <Navigate to="/admin" replace />;
 
   const roleCode =
     typeof user.role === 'object' ? String(user.role.code) : String(user.role);

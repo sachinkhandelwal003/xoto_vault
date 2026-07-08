@@ -620,7 +620,6 @@ const ProposalDetail = () => {
                   gap: 8,
                   padding: '12px 24px',
                   borderRadius: 14,
-                  border: 'none',
                   cursor: 'pointer',
                   fontWeight: 700,
                   fontSize: 13,

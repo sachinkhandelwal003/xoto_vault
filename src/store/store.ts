@@ -1,14 +1,13 @@
 import { configureStore } from '@reduxjs/toolkit';
 import authReducer, { logoutUser } from './authSlice';
 import axios from 'axios';
+import { API_BASE } from '../config/urls';
 
 export const store = configureStore({
   reducer: {
     auth: authReducer,
   },
 });
-
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'https://xoto.ae/api';
 
 axios.defaults.baseURL = API_BASE;
 

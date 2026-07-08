@@ -3,6 +3,7 @@ import { io, Socket } from 'socket.io-client';
 import { useSelector } from 'react-redux';
 import type { RootState } from '../store/store';
 import axios from 'axios';
+import { API_BASE, SOCKET_URL } from '../config/urls';
 
 export interface VaultNotification {
   _id: string;
@@ -16,9 +17,6 @@ export interface VaultNotification {
   isRead: boolean;
   createdAt: string;
 }
-
-const SOCKET_URL = import.meta.env.VITE_API_BASE_URL || 'https://xoto.ae';
-const API_BASE   = import.meta.env.VITE_API_BASE_URL || 'https://xoto.ae/api';
 const MAX_NOTIFICATIONS = 100;
 
 export const useVaultSocket = () => {
